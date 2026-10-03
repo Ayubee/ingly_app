@@ -343,40 +343,6 @@ export default function AuthScreen() {
                   })}
                 </View>
 
-                {/* Kunlik Maqsad */}
-                <Text style={styles.fieldLabel}>Kunlik maqsad (Daily Goal):</Text>
-                <View style={styles.goalsContainer}>
-                  {GOALS.map((g) => {
-                    const isSelected = regGoal === g.words;
-                    return (
-                      <TouchableOpacity
-                        key={g.words}
-                        activeOpacity={0.8}
-                        onPress={() => setRegGoal(g.words)}
-                        style={[
-                          styles.goalCard,
-                          isSelected && styles.goalCardActive,
-                        ]}
-                      >
-                        <View style={styles.goalRadio}>
-                          {isSelected && <View style={styles.goalRadioInner} />}
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text
-                            style={[
-                              styles.goalTitle,
-                              isSelected && styles.goalTitleActive,
-                            ]}
-                          >
-                            {g.title}
-                          </Text>
-                          <Text style={styles.goalDesc}>{g.desc}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
                 {/* Ro'yxatdan o'tish Tugmasi */}
                 <TouchableOpacity
                   style={styles.submitBtn}
