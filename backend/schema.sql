@@ -30,15 +30,7 @@ $$ LANGUAGE plpgsql;
 -- 3.1. FOYDALANUVCHILAR JADVALI (users)
 -- Mobil ilovadan ro'yxatdan o'tgan foydalanuvchilar ma'lumotlari
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    full_name VARCHAR(255) NOT NULL,
-    phone VARCHAR(50) UNIQUE,
-    username VARCHAR(100) UNIQUE,
-    email VARCHAR(255) UNIQUE,
-    password_hash VARCHAR(255),
-    google_id VARCHAR(255) UNIQUE,
-    avatar_url TEXT,
+
     is_blocked BOOLEAN NOT NULL DEFAULT false,
     is_premium BOOLEAN NOT NULL DEFAULT false,
     premium_until TIMESTAMPTZ,

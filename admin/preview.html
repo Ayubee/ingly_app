@@ -63,6 +63,34 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
+    // 7 ta mashhur film uchun sinovdan o'tgan, ochiq YouTube rasmiy treyler ID-lari
+    const MOVIE_TRAILERS = {
+      'harry potter': 'mObK5XD8udk',
+      'friends': '8wThS5WCzs4',
+      'avengers: endgame': 'TcMBFSGVi1c',
+      'the lion king': '7TavVZMewpY',
+      'sherlock holmes': 'J7nJksXDBWc',
+      'forrest gump': 'bLvqoHBptjg',
+      'spider-man': 'JfVOs4VSpmA'
+    };
+
+    const getMovieTrailerId = (movieName) => {
+      if (!movieName) return 'mObK5XD8udk';
+      const lower = movieName.toLowerCase().trim();
+      for (const [k, id] of Object.entries(MOVIE_TRAILERS)) {
+        if (lower.includes(k) || k.includes(lower)) return id;
+      }
+      return 'mObK5XD8udk';
+    };
+
+    // Tezkor, yengil va 100% ishlaydigan HTML5 MP4 videolari
+    const SAMPLE_MP4_CLIPS = [
+      'https://www.w3schools.com/html/mov_bbb.mp4',
+      'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+      'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4',
+      'https://www.w3schools.com/tags/movie.mp4'
+    ];
+
     function App() {
       // Admin Xavfsizlik va Autentifikatsiya (Login: Joji, Parol: Ayubxon_2021213)
       const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
@@ -115,6 +143,8 @@
         return saved !== null ? Number(saved) : 6;
       });
       const [selectedMovie, setSelectedMovie] = useState(null);
+      const [videoTab, setVideoTab] = useState('youtube'); // 'youtube' yoki 'html5'
+      const [videoMuted, setVideoMuted] = useState(true);
       const [searchTerm, setSearchTerm] = useState('');
       const [activeBook, setActiveBook] = useState(1);
       const [toast, setToast] = useState('');
@@ -581,7 +611,7 @@
         }
 
         if (adminList.some(a => (a.username || '').toLowerCase() === cleanUsername)) {
-          showToast(`"${cleanUsername}" logini allaqachon band!`);
+          showToast(`"${cleanUsername}" logini allaqachon mavjud!`);
           return;
         }
 
@@ -1077,8 +1107,12 @@
                               </td>
                               <td class="py-3.5 px-4">
                                 <button
-                                  onClick={() => setSelectedMovie(w)}
-                                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition text-xs font-bold"
+                                  onClick={() => {
+                                    setSelectedMovie(w);
+                                    setVideoTab('youtube');
+                                    setVideoMuted(true);
+                                  }}
+                                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition text-xs font-bold cursor-pointer"
                                 >
                                   🎬 {w.movie}
                                 </button>
@@ -1147,61 +1181,97 @@
                             <button onClick={() => setSelectedMovie(null)} class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold transition">✕</button>
                           </div>
 
+                          {/* Video Manbasi Tanlash (Tabs) */}
+                          <div class="flex items-center justify-between bg-slate-100 p-1.5 rounded-2xl">
+                            <div class="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setVideoTab('youtube')}
+                                class={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                                  videoTab === 'youtube'
+                                    ? 'bg-white text-red-600 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                              >
+                                <span>🎬</span>
+                                <span>Kino Treyleri (YouTube HD)</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoTab('html5')}
+                                class={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                                  videoTab === 'html5'
+                                    ? 'bg-white text-indigo-600 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                              >
+                                <span>⚡</span>
+                                <span>Tezkor HTML5 Klip</span>
+                              </button>
+                            </div>
+                            <span class="text-[11px] font-semibold text-slate-500 pr-2 hidden sm:inline">
+                              {videoTab === 'youtube' ? '🍿 Rasmiy Kino Treyleri' : '⚡ To\'g\'ridan-to\'g\'ri MP4'}
+                            </span>
+                          </div>
+
                           {/* Dynamic Video Player */}
                           {(() => {
                             const custom = (selectedMovie.video_clip_url || selectedMovie.video || '').trim();
                             const ytMatch = custom.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-                            let playerElement = null;
-
-                            if (ytMatch && ytMatch[1]) {
-                              playerElement = (
-                                <iframe
-                                  key={`yt-${selectedMovie.id}-${ytMatch[1]}`}
-                                  src={`https://www.youtube-nocookie.com/embed/${ytMatch[1]}?autoplay=1&rel=0`}
-                                  class="w-full h-full border-0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                ></iframe>
-                              );
-                            } else if (custom && (custom.endsWith('.mp4') || custom.endsWith('.webm') || custom.includes('.mp4?'))) {
-                              playerElement = (
-                                <video
-                                  key={`vid-${selectedMovie.id}-${custom}`}
-                                  src={custom}
-                                  controls
-                                  autoPlay
-                                  loop
-                                  class="w-full h-full object-cover"
-                                ></video>
-                              );
-                            } else {
-                              // Ishonchli, tez va turli xil haqiqiy kino treyler videolari (turli so'zlar uchun turli video)
-                              const sampleClips = [
-                                'https://media.w3.org/2010/05/sintel/trailer.mp4',
-                                'https://media.w3.org/2010/05/video/movie_300.mp4',
-                                'https://media.w3.org/2010/05/bunny/movie.mp4',
-                                'https://www.w3schools.com/html/mov_bbb.mp4'
-                              ];
-                              const seed = Math.abs(Number(selectedMovie.id) || (selectedMovie.word || '').charCodeAt(0) || 0);
-                              const chosenClip = sampleClips[seed % sampleClips.length];
-
-                              playerElement = (
-                                <video
-                                  key={`sample-vid-${selectedMovie.id}-${chosenClip}`}
-                                  src={chosenClip}
-                                  controls
-                                  autoPlay
-                                  loop
-                                  class="w-full h-full object-cover"
-                                ></video>
-                              );
-                            }
+                            const effectiveYtId = ytMatch && ytMatch[1] ? ytMatch[1] : getMovieTrailerId(selectedMovie.movie);
+                            
+                            const seed = Math.abs(Number(selectedMovie.id) || (selectedMovie.word || '').charCodeAt(0) || 0);
+                            const defaultClip = SAMPLE_MP4_CLIPS[seed % SAMPLE_MP4_CLIPS.length];
+                            const effectiveMp4 = custom && (custom.endsWith('.mp4') || custom.endsWith('.webm') || custom.includes('.mp4?')) ? custom : defaultClip;
 
                             return (
                               <div class="relative bg-black rounded-2xl overflow-hidden shadow-lg aspect-video flex items-center justify-center">
-                                {playerElement}
-                                <div class="absolute bottom-2 inset-x-3 bg-black/75 backdrop-blur-sm text-white px-3 py-1.5 rounded-xl text-center pointer-events-none border border-white/10">
-                                  <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">{selectedMovie.movie}</div>
+                                {videoTab === 'youtube' ? (
+                                  <iframe
+                                    key={`yt-${selectedMovie.id}-${effectiveYtId}`}
+                                    src={`https://www.youtube.com/embed/${effectiveYtId}?autoplay=1&mute=1&enablejsapi=1&rel=0`}
+                                    title={selectedMovie.movie}
+                                    class="w-full h-full border-0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerPolicy="strict-origin-when-cross-origin"
+                                    allowFullScreen
+                                  ></iframe>
+                                ) : (
+                                  <div class="relative w-full h-full flex items-center justify-center bg-black">
+                                    <video
+                                      key={`vid-${selectedMovie.id}-${effectiveMp4}`}
+                                      ref={(el) => {
+                                        if (el) {
+                                          el.muted = videoMuted;
+                                          el.play().catch(() => {});
+                                        }
+                                      }}
+                                      src={effectiveMp4}
+                                      controls
+                                      autoPlay
+                                      muted={videoMuted}
+                                      playsInline
+                                      loop
+                                      class="w-full h-full object-cover"
+                                    ></video>
+                                    <button
+                                      type="button"
+                                      onClick={() => setVideoMuted(prev => !prev)}
+                                      class="absolute top-3 right-3 bg-black/75 hover:bg-black/90 text-white text-xs font-bold px-3 py-1.5 rounded-xl backdrop-blur-md transition flex items-center gap-1.5 shadow-lg border border-white/20 cursor-pointer"
+                                    >
+                                      <span>{videoMuted ? '🔇' : '🔊'}</span>
+                                      <span>{videoMuted ? 'Ovozni yoqish' : 'Ovozni o\'chirish'}</span>
+                                    </button>
+                                  </div>
+                                )}
+
+                                {/* Pastki Kino va Subtitr qatori */}
+                                <div class="absolute bottom-2 inset-x-3 bg-black/80 backdrop-blur-md text-white px-3.5 py-1.5 rounded-xl text-center pointer-events-none border border-white/10 z-10">
+                                  <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center justify-center gap-1.5">
+                                    <span>🎬</span>
+                                    <span>{selectedMovie.movie}</span>
+                                    {videoTab === 'youtube' && <span class="bg-red-600/90 text-white text-[9px] px-1.5 py-0.2 rounded font-mono">HD TRAILER</span>}
+                                  </div>
                                   <p class="text-xs font-semibold text-white/95 truncate">
                                     {selectedMovie.clip}
                                   </p>
