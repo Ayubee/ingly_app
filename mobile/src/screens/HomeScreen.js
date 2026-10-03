@@ -4,7 +4,7 @@
  * 6 ta kitob bo'yicha dinamik statuslar va tezkor o'tishlar.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {
 import { colors } from '../theme.js';
 import CircularProgress from '../components/CircularProgress.js';
 import { useUser } from '../context/UserContext.js';
+import { onSettingsChange } from '../services/appSettingsService.js';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 44) / 2;
@@ -33,6 +34,18 @@ const BOOKS_METADATA = [
 
 export default function HomeScreen({ onNavigate }) {
   const { user } = useUser();
+  const [appSettings, setAppSettings] = useState({
+    ads_enabled: false,
+    premium_mode_enabled: false,
+    free_books_count: 6,
+  });
+
+  useEffect(() => {
+    const unsub = onSettingsChange((st) => {
+      if (st) setAppSettings({ ...st });
+    });
+    return () => unsub();
+  }, []);
 
   const userDailyGoal = user.dailyGoal && user.dailyGoal > 0 ? user.dailyGoal : 20;
   const userWordsToday = user.wordsLearnedToday || 0;
@@ -120,14 +133,46 @@ export default function HomeScreen({ onNavigate }) {
           </View>
         </View>
 
+        {/* Dynamic AdMob Banner when enabled from Admin */}
+        {appSettings.ads_enabled && (
+          <View style={styles.adBannerCard}>
+            <View style={styles.adBadge}>
+              <Text style={styles.adBadgeText}>AD</Text>
+            </View>
+            <View style={styles.adTextContent}>
+              <Text style={styles.adTitle}>Google AdMob Homiylik E'loni</Text>
+              <Text style={styles.adSubtitle}>Admin panel orqali faollashtirilgan</Text>
+            </View>
+          </View>
+        )}
+
         {/* 3. 6 Ta Kitob Bo'yicha Grid (Book 1 - Book 6) */}
         <View style={styles.booksGrid}>
           {BOOKS_METADATA.map((b) => {
             const progress = user.bookProgress[b.id] || 0;
             const isCompleted = progress === 100;
+            const isVipLocked = appSettings.premium_mode_enabled && b.id > appSettings.free_books_count;
             // Book 1 har doim ochiq. Boshqa kitoblar oldingi kitob tugatilganda ochiladi.
-            const isUnlocked = b.id === 1 || (user.bookProgress[b.id - 1] || 0) >= 100;
+            const isUnlocked = !isVipLocked && (b.id === 1 || (user.bookProgress[b.id - 1] || 0) >= 100);
             const isCurrentActive = isUnlocked && !isCompleted;
+
+            // Agar Admin tomonidan VIP obunaga qulflangan bo'lsa
+            if (isVipLocked) {
+              return (
+                <View key={b.id} style={[styles.bookCard, styles.bookCardLocked]}>
+                  <View style={styles.cardHeader}>
+                    <Text style={[styles.bookTitle, styles.lockedTitle]} numberOfLines={2}>{b.title}</Text>
+                    <View style={[styles.iconCircle, { backgroundColor: '#FEF3C7' }]}>
+                      <Text style={styles.bookIconEmoji}>👑</Text>
+                    </View>
+                  </View>
+                  <View style={styles.lockedBottom}>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#D97706', marginBottom: 2 }}>🔒 VIP OBUNA</Text>
+                    <Text style={styles.lockedDesc}>Admin tomonidan yopilgan</Text>
+                  </View>
+                </View>
+              );
+            }
 
             // 1. Tugatilgan kitob kartasi
             if (isCompleted) {
@@ -551,5 +596,43 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: '#94A3B8',
     fontWeight: '600',
+  },
+  adBannerCard: {
+    width: '100%',
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1.5,
+    borderColor: '#93C5FD',
+    borderRadius: 16,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 14,
+  },
+  adBadge: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  adBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  adTextContent: {
+    flex: 1,
+  },
+  adTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1E3A8A',
+  },
+  adSubtitle: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#3B82F6',
+    marginTop: 2,
   },
 });
