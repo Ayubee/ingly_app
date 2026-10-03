@@ -1175,15 +1175,25 @@
                                 ></video>
                               );
                             } else {
-                              const query = encodeURIComponent(`${selectedMovie.movie || ''} ${selectedMovie.word || ''} scene`);
+                              // Ishonchli, tez va turli xil haqiqiy kino treyler videolari (turli so'zlar uchun turli video)
+                              const sampleClips = [
+                                'https://media.w3.org/2010/05/sintel/trailer.mp4',
+                                'https://media.w3.org/2010/05/video/movie_300.mp4',
+                                'https://media.w3.org/2010/05/bunny/movie.mp4',
+                                'https://www.w3schools.com/html/mov_bbb.mp4'
+                              ];
+                              const seed = Math.abs(Number(selectedMovie.id) || (selectedMovie.word || '').charCodeAt(0) || 0);
+                              const chosenClip = sampleClips[seed % sampleClips.length];
+
                               playerElement = (
-                                <iframe
-                                  key={`yt-search-${selectedMovie.id}`}
-                                  src={`https://www.youtube-nocookie.com/embed?listType=search&list=${query}`}
-                                  class="w-full h-full border-0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                ></iframe>
+                                <video
+                                  key={`sample-vid-${selectedMovie.id}-${chosenClip}`}
+                                  src={chosenClip}
+                                  controls
+                                  autoPlay
+                                  loop
+                                  class="w-full h-full object-cover"
+                                ></video>
                               );
                             }
 
