@@ -94,6 +94,7 @@ export default function FlashcardScreen({ onNavigate }) {
       movieTitle: rawWord.movie || 'Cinema Context',
       movieQuote: rawWord.clip || `"${wordStr}" kontekstda`,
       movieYear: '2024',
+      videoClipUrl: rawWord.video_clip_url || rawWord.videoUrl || null,
       stats: {
         hardPercent: 20,
         reviewPercent: 35,
