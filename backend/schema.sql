@@ -826,7 +826,7 @@ SELECT
     'angry',
     '/ˈæŋɡri/',
     'adjective',
-    'jahli chiqqan, darg'azab',
+    'jahli chiqqan, darg''azab',
     'When someone is angry, they want to speak loudly or fight.',
     'Kimningdir jahli chiqqanda, u baqirib gapirishni yoki urushishni xohlaydi.',
     'She didn''t do her homework, so her father was angry.',
