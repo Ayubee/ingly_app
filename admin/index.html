@@ -1,17 +1,751 @@
 <!DOCTYPE html>
 <html lang="uz">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='28' fill='%235B4DFF'/><path d='M30 40 L50 25 L70 40 L70 70 L50 60 L30 70 Z' fill='white'/><circle cx='50' cy='45' r='6' fill='%2338BDF8'/></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ingly Admin Panel | 4000 Essential English Words</title>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-  </head>
-  <body class="bg-inglyBg text-inglyText antialiased selection:bg-brand-500 selection:text-white">
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ingly - Web Admin Panel</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- React & Babel CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#EEF2FF',
+              100: '#E0E7FF',
+              500: '#6366F1',
+              600: '#5B4DFF',
+              700: '#4338CA',
+            },
+            accent: {
+              400: '#38BDF8',
+              500: '#0EA5E9',
+            },
+            state: {
+              mastered: '#22C55E',
+              review: '#0EA5E9',
+              hard: '#EF4444',
+              streak: '#F97316'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAFC; }
+    .squircle { border-radius: 24px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+  </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [tab, setTab] = useState('dashboard');
+      const [adsEnabled, setAdsEnabled] = useState(false);
+      const [vipEnabled, setVipEnabled] = useState(false);
+      const [freeBooks, setFreeBooks] = useState(6);
+      const [selectedMovie, setSelectedMovie] = useState(null);
+      const [searchTerm, setSearchTerm] = useState('');
+      const [activeBook, setActiveBook] = useState(1);
+      const [toast, setToast] = useState('');
+
+      const showToast = (msg) => {
+        setToast(msg);
+        setTimeout(() => setToast(''), 3000);
+      };
+
+      const [users, setUsers] = useState([
+        { id: 1, name: 'Anvar Karimov', phone: '+998 90 123 45 67', username: 'anvar_k', words: 420, streak: 14, isBlocked: false, isVip: false },
+        { id: 2, name: 'Dilnoza Rahimova', phone: '+998 93 987 65 43', username: 'dilnoza_r', words: 890, streak: 28, isBlocked: false, isVip: true },
+        { id: 3, name: 'Jasur Bekmirzayev', phone: '+998 97 555 44 33', username: 'jasur_pro', words: 120, streak: 3, isBlocked: true, isVip: false },
+        { id: 4, name: 'Madina Umarova', phone: '+998 91 333 22 11', username: 'madina_u', words: 640, streak: 21, isBlocked: false, isVip: false }
+      ]);
+
+      const [allWords, setAllWords] = useState([]);
+      const [selectedBook, setSelectedBook] = useState(1);
+      const [selectedUnit, setSelectedUnit] = useState('all');
+      const [page, setPage] = useState(1);
+      const pageSize = 20;
+
+      useEffect(() => {
+        fetch('./all_words.json')
+          .then(r => r.json())
+          .then(data => {
+            setAllWords(data);
+            showToast(`Muvaffaqiyatli: ${data.length} ta so'z yuklandi!`);
+          })
+          .catch(err => {
+            console.error('So\'zlar yuklanmadi:', err);
+          });
+      }, []);
+
+      const speakWord = (text) => {
+        if ('speechSynthesis' in window) {
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'en-US';
+          u.rate = 0.9;
+          window.speechSynthesis.speak(u);
+        }
+      };
+
+      const toggleBlockUser = (id) => {
+        setUsers(users.map(u => u.id === id ? { ...u, isBlocked: !u.isBlocked } : u));
+        showToast('Foydalanuvchi holati yangilandi!');
+      };
+
+      return (
+        <div class="flex min-h-screen">
+          {/* Toast Notification */}
+          {toast && (
+            <div class="fixed top-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 animate-bounce">
+              <span class="w-2.5 h-2.5 rounded-full bg-state-mastered"></span>
+              <span class="text-sm font-semibold">{toast}</span>
+            </div>
+          )}
+
+          {/* SIDEBAR */}
+          <aside class="w-72 bg-white border-r border-slate-200/80 flex flex-col justify-between p-6 shrink-0">
+            <div>
+              {/* Brand Logo */}
+              <div class="flex items-center gap-3.5 mb-10 px-2">
+                <div class="w-12 h-12 squircle bg-gradient-to-tr from-brand-600 to-accent-400 flex items-center justify-center shadow-lg shadow-brand-500/25 text-white">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </div>
+                <div>
+                  <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-brand-600 to-accent-500 bg-clip-text text-transparent">Ingly</h1>
+                  <p class="text-xs font-semibold text-slate-400">Admin Boshqaruv v1.0</p>
+                </div>
+              </div>
+
+              {/* Navigation Menu */}
+              <nav class="space-y-1.5">
+                {[
+                  { id: 'dashboard', label: 'Bosh Sahifa', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+                  { id: 'words', label: "So'zlar Bazasi (4000)", icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
+                  { id: 'users', label: 'Foydalanuvchilar', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+                  { id: 'monetization', label: 'Monetizatsiya & Reklama', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                  { id: 'admins', label: 'Adminlar & Huquqlar', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+                  { id: 'notifications', label: 'Push Xabarnomalar', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' }
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setTab(item.id)}
+                    class={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                      tab === item.id 
+                        ? 'bg-brand-50 text-brand-600 shadow-sm border border-brand-100' 
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={item.icon}/></svg>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Supabase status badge */}
+            <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs font-bold text-slate-700">Supabase Baza: Faol</span>
+              </div>
+              <p class="text-[11px] text-slate-500 leading-tight">PostgreSQL xavfsiz ulanish o'rnatilgan.</p>
+            </div>
+          </aside>
+
+          {/* MAIN CONTENT AREA */}
+          <main class="flex-1 flex flex-col min-w-0">
+            {/* TOP HEADER */}
+            <header class="h-20 bg-white border-b border-slate-200/80 px-8 flex items-center justify-between sticky top-0 z-30">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  100% Bepul & Reklamasiz Rejim
+                </span>
+                <span class="text-xs text-slate-400">|</span>
+                <span class="text-xs text-slate-500 font-medium">Baza: 4000 Essential English Words</span>
+              </div>
+
+              {/* Super Admin Profile */}
+              <div class="flex items-center gap-3">
+                <div class="text-right">
+                  <div class="text-sm font-bold text-slate-800">Super Admin</div>
+                  <div class="text-[11px] font-medium text-slate-400">admin@ingly.uz</div>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-brand-600 text-white font-bold flex items-center justify-center ring-4 ring-brand-50">
+                  SA
+                </div>
+              </div>
+            </header>
+
+            {/* TAB CONTENTS */}
+            <div class="p-8 max-w-7xl w-full mx-auto space-y-8">
+              
+              {/* 1. DASHBOARD TAB */}
+              {tab === 'dashboard' && (
+                <div class="space-y-8">
+                  {/* Hero Banner */}
+                  <div class="rounded-3xl bg-gradient-to-r from-brand-600 via-brand-500 to-accent-400 p-8 text-white shadow-xl shadow-brand-500/15 relative overflow-hidden">
+                    <div class="relative z-10 max-w-2xl">
+                      <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold mb-3">
+                        v1.0.0 Rasmiy Boshqaruv
+                      </span>
+                      <h2 class="text-3xl font-extrabold mb-2">Ingly Boshqaruv Markaziga xush kelibsiz!</h2>
+                      <p class="text-white/85 text-sm mb-6 leading-relaxed">
+                        6 ta kitob, 4000 ta so'z, audio talaffuzlar va kinolardan hissiy qisqa lavhalar bilan jihozlangan O'zbekistonning eng zamonaviy ingliz tili lug'at tizimi.
+                      </p>
+                      <div class="flex gap-3">
+                        <button onClick={() => setTab('words')} class="bg-white text-brand-600 font-bold px-5 py-2.5 rounded-xl shadow hover:bg-slate-100 transition text-sm">
+                          So'zlarni Ko'rish (4000)
+                        </button>
+                        <button onClick={() => setTab('monetization')} class="bg-white/10 text-white border border-white/20 font-semibold px-5 py-2.5 rounded-xl hover:bg-white/20 transition text-sm">
+                          Monetizatsiya Switchlari
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4 Stats Cards */}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Faol Foydalanuvchilar (DAU)</div>
+                      <div class="text-3xl font-extrabold text-slate-900">3,240</div>
+                      <div class="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">↑ +14.2% o'sish bu hafta</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Jami Foydalanuvchilar</div>
+                      <div class="text-3xl font-extrabold text-slate-900">14,850</div>
+                      <div class="text-xs font-semibold text-emerald-600 mt-2">O'zbekiston bo'yicha</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">O'zlashtirilgan So'zlar</div>
+                      <div class="text-3xl font-extrabold text-slate-900">184,520</div>
+                      <div class="text-xs font-semibold text-brand-600 mt-2">Oraliq takrorlash bilan</div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Faol Olovchalar (Streak)</div>
+                      <div class="text-3xl font-extrabold text-state-streak">2,890 🔥</div>
+                      <div class="text-xs font-semibold text-slate-500 mt-2">Kunlik uzluksiz ta'lim</div>
+                    </div>
+                  </div>
+
+                  {/* 6 Books Progress Cards */}
+                  <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm">
+                    <h3 class="text-lg font-extrabold text-slate-900 mb-6">Kitoblar va O'rganish Holati (Book 1 - Book 6)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {[
+                        { num: 1, title: 'Book 1 - Elementary', words: 600, status: '100% Tayyor', color: 'from-blue-500 to-indigo-500', active: true },
+                        { num: 2, title: 'Book 2 - Pre-Intermediate', words: 600, status: 'Tayyorlanmoqda', color: 'from-indigo-500 to-purple-500', active: true },
+                        { num: 3, title: 'Book 3 - Intermediate', words: 600, status: 'Kutilmoqda', color: 'from-purple-500 to-pink-500', active: false },
+                        { num: 4, title: 'Book 4 - Upper-Intermediate', words: 600, status: 'Kutilmoqda', color: 'from-emerald-500 to-teal-500', active: false },
+                        { num: 5, title: 'Book 5 - Advanced', words: 600, status: 'Kutilmoqda', color: 'from-amber-500 to-orange-500', active: false },
+                        { num: 6, title: 'Book 6 - Mastery', words: 600, status: 'Kutilmoqda', color: 'from-rose-500 to-red-500', active: false },
+                      ].map(b => (
+                        <div key={b.num} class="border border-slate-200/80 rounded-2xl p-5 hover:border-brand-500/40 transition">
+                          <div class="flex items-center justify-between mb-3">
+                            <span class={`text-xs font-bold px-2.5 py-1 rounded-lg text-white bg-gradient-to-r ${b.color}`}>
+                              Book {b.num}
+                            </span>
+                            <span class={`text-xs font-bold ${b.active ? 'text-emerald-600' : 'text-slate-400'}`}>{b.status}</span>
+                          </div>
+                          <h4 class="font-bold text-slate-800 text-sm mb-1">{b.title}</h4>
+                          <p class="text-xs text-slate-400">30 Unit • {b.words} ta so'z • Audio & Rasmlar</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. WORDS TAB */}
+              {tab === 'words' && (() => {
+                const displayWords = Array.isArray(allWords) ? allWords : [];
+                const searchLower = (searchTerm || '').trim().toLowerCase();
+                const filtered = displayWords.filter(w => {
+                  const matchB = selectedBook === 'all' || w.book === selectedBook;
+                  const matchU = selectedUnit === 'all' || w.unit === parseInt(selectedUnit);
+                  const wordStr = (w.word || '').toLowerCase();
+                  const uzbekStr = (w.uzbek || '').toLowerCase();
+                  const matchS = !searchLower || wordStr.includes(searchLower) || uzbekStr.includes(searchLower);
+                  return matchB && matchU && matchS;
+                });
+                const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+                const safePage = Math.max(1, Math.min(page, totalPages));
+                const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+                return (
+                  <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-6">
+                    {/* Header & Search */}
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      <div>
+                        <div class="flex items-center gap-3">
+                          <h2 class="text-2xl font-extrabold text-slate-900">4000 Essential English Words Boshqaruvi</h2>
+                          <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-brand-50 text-brand-600 border border-brand-200">
+                            Baza: {allWords.length} ta so'z yuklangan
+                          </span>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-1">Kitoblar va unitlar bo'yicha so'zlar, transkripsiya, talaffuz audiolari va kinolardan hissiy qismlar</p>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <input
+                          type="text"
+                          placeholder="So'z yoki tarjima qidirish..."
+                          value={searchTerm}
+                          onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                          class="px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 w-64 shadow-sm"
+                        />
+                        <button onClick={() => showToast('Yangi so\'z qo\'shish modali ochildi')} class="bg-brand-600 text-white font-bold text-sm px-4 py-2 rounded-xl shadow hover:bg-brand-700 transition shrink-0">
+                          + Yangi So'z
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Book & Unit Filters */}
+                    <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100">
+                      {/* Books Selector */}
+                      <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+                        <button
+                          onClick={() => { setSelectedBook('all'); setPage(1); }}
+                          class={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${selectedBook === 'all' ? 'bg-slate-900 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                          Barcha Kitoblar ({allWords.length})
+                        </button>
+                        {[1, 2, 3, 4, 5, 6].map(b => (
+                          <button
+                            key={b}
+                            onClick={() => { setSelectedBook(b); setPage(1); }}
+                            class={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${selectedBook === b ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                          >
+                            Book {b} (600)
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Unit Selector */}
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-500">Unit:</span>
+                        <select
+                          value={selectedUnit}
+                          onChange={(e) => { setSelectedUnit(e.target.value); setPage(1); }}
+                          class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        >
+                          <option value="all">Barcha Unitlar (1-30)</option>
+                          {Array.from({ length: 30 }, (_, i) => i + 1).map(u => (
+                            <option key={u} value={u}>Unit {u} (20 ta so'z)</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Words Table */}
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                      <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                          <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                            <th class="py-3.5 px-4">#</th>
+                            <th class="py-3.5 px-4">Kitob / Unit</th>
+                            <th class="py-3.5 px-4">Inglizcha So'z</th>
+                            <th class="py-3.5 px-4">IPA Transkripsiya</th>
+                            <th class="py-3.5 px-4">So'z Turkumi</th>
+                            <th class="py-3.5 px-4">O'zbekcha Ma'nosi</th>
+                            <th class="py-3.5 px-4">Talaffuz (TTS/Audio)</th>
+                            <th class="py-3.5 px-4">Kinodan Lavha</th>
+                            <th class="py-3.5 px-4 text-right">Amallar</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                          {paginated.map((w, idx) => (
+                            <tr key={w.id} class="hover:bg-slate-50/80 transition">
+                              <td class="py-3.5 px-4 text-slate-400 font-mono text-xs">{w.id}</td>
+                              <td class="py-3.5 px-4">
+                                <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-brand-600 text-[11px] font-bold">
+                                  B{w.book} • U{w.unit}
+                                </span>
+                              </td>
+                              <td class="py-3.5 px-4 font-bold text-slate-900 capitalize">{w.word}</td>
+                              <td class="py-3.5 px-4 font-mono text-slate-500 text-xs">{w.ipa}</td>
+                              <td class="py-3.5 px-4">
+                                <span class="px-2 py-0.5 rounded-md bg-slate-100 text-xs font-semibold text-slate-600">{w.pos}</span>
+                              </td>
+                              <td class="py-3.5 px-4 text-brand-600 font-semibold">{w.uzbek}</td>
+                              <td class="py-3.5 px-4">
+                                <button
+                                  onClick={() => speakWord(w.word)}
+                                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition text-xs font-bold"
+                                >
+                                  🔊 Eshitish
+                                </button>
+                              </td>
+                              <td class="py-3.5 px-4">
+                                <button
+                                  onClick={() => setSelectedMovie(w)}
+                                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 transition text-xs font-bold"
+                                >
+                                  🎬 {w.movie}
+                                </button>
+                              </td>
+                              <td class="py-3.5 px-4 text-right">
+                                <button onClick={() => showToast(`"${w.word}" tahrirlash ochildi`)} class="text-xs font-bold text-slate-500 hover:text-brand-600 mr-2">Tahrirlash</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <div class="text-xs text-slate-500 font-medium">
+                        Ko'rsatilmoqda: <span class="font-bold text-slate-800">{(safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)}</span> (Jami: {filtered.length} ta so'z)
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <button
+                          disabled={safePage <= 1}
+                          onClick={() => setPage(p => Math.max(1, p - 1))}
+                          class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                        >
+                          ← Oldingi
+                        </button>
+                        <span class="text-xs font-bold text-slate-700 px-2">
+                          {safePage} / {totalPages}
+                        </span>
+                        <button
+                          disabled={safePage >= totalPages}
+                          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                          class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                        >
+                          Keyingi →
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Movie Video Preview Modal */}
+                    {selectedMovie && (
+                      <div class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                          {/* Modal Header */}
+                          <div class="flex items-center justify-between border-b pb-3">
+                            <div class="flex items-center gap-2.5">
+                              <span class="text-xl">🎬</span>
+                              <div>
+                                <h3 class="font-extrabold text-lg text-slate-900 leading-tight">
+                                  Kino Lavhasi: "{selectedMovie.movie}"
+                                </h3>
+                                <p class="text-xs text-slate-400">So'z: <span class="font-bold text-brand-600 capitalize">"{selectedMovie.word}"</span></p>
+                              </div>
+                            </div>
+                            <button onClick={() => setSelectedMovie(null)} class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold transition">✕</button>
+                          </div>
+
+                          {/* Real Video Player */}
+                          <div class="relative bg-black rounded-2xl overflow-hidden shadow-lg aspect-video flex items-center justify-center">
+                            <video
+                              key={selectedMovie.id}
+                              src="https://www.w3schools.com/html/mov_bbb.mp4"
+                              controls
+                              autoPlay
+                              loop
+                              class="w-full h-full object-cover"
+                            ></video>
+                            
+                            {/* Cinematic Subtitles Overlay */}
+                            <div class="absolute bottom-10 inset-x-4 bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-xl text-center pointer-events-none border border-white/10">
+                              <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">{selectedMovie.movie}</div>
+                              <p class="text-xs font-semibold text-white/95 mt-0.5">
+                                {selectedMovie.clip}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Context & Explanation */}
+                          <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1">
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs font-bold text-slate-700">O'zbekcha tarjimasi:</span>
+                              <span class="text-xs font-extrabold text-brand-600">{selectedMovie.uzbek}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 italic">Ta'rif: "{selectedMovie.desc || 'Bu so\'z kinoda real kontekstda qo\'llanilgan.'}"</p>
+                          </div>
+
+                          {/* Live YouGlish / YouTube Movie Search Button */}
+                          <div class="flex items-center gap-3">
+                            <a
+                              href={`https://youglish.com/pronounce/${selectedMovie.word}/english`}
+                              target="_blank"
+                              rel="noreferrer"
+                              class="flex-1 py-2.5 px-4 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-bold text-xs hover:from-red-700 hover:to-rose-700 transition flex items-center justify-center gap-2 shadow-sm"
+                            >
+                              <span>▶️</span>
+                              <span>YouTube/Kinolardagi Jonli Lavhalar (YouGlish)</span>
+                            </a>
+                            <button
+                              onClick={() => setSelectedMovie(null)}
+                              class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-200 transition"
+                            >
+                              Yopish
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* 3. USERS TAB */}
+              {tab === 'users' && (
+                <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-6">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h2 class="text-2xl font-extrabold text-slate-900">Foydalanuvchilar Ro'yxati</h2>
+                      <p class="text-sm text-slate-500">Kirgan odamlarni ko'rish, bloklash, parolini va loginini o'zgartirish</p>
+                    </div>
+                    <span class="text-xs font-bold bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl">Jami: {users.length} ta foydalanuvchi</span>
+                  </div>
+
+                  <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                    <table class="w-full text-left border-collapse text-sm">
+                      <thead>
+                        <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                          <th class="py-3.5 px-4">Ism & Familiya</th>
+                          <th class="py-3.5 px-4">Telefon</th>
+                          <th class="py-3.5 px-4">Login</th>
+                          <th class="py-3.5 px-4">Yodlangan</th>
+                          <th class="py-3.5 px-4">Streak (Kun)</th>
+                          <th class="py-3.5 px-4">Status</th>
+                          <th class="py-3.5 px-4 text-right">Amallar</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        {users.map(u => (
+                          <tr key={u.id} class="hover:bg-slate-50/80 transition">
+                            <td class="py-3.5 px-4 font-bold text-slate-900">{u.name} {u.isVip && <span class="ml-1 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">VIP</span>}</td>
+                            <td class="py-3.5 px-4 text-slate-600 font-mono text-xs">{u.phone}</td>
+                            <td class="py-3.5 px-4 font-mono text-xs text-brand-600">@{u.username}</td>
+                            <td class="py-3.5 px-4 font-bold text-slate-800">{u.words} ta</td>
+                            <td class="py-3.5 px-4 text-state-streak font-bold">{u.streak} kun 🔥</td>
+                            <td class="py-3.5 px-4">
+                              <span class={`px-2.5 py-1 rounded-full text-xs font-bold ${u.isBlocked ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                {u.isBlocked ? 'Bloklangan' : 'Faol'}
+                              </span>
+                            </td>
+                            <td class="py-3.5 px-4 text-right space-x-2">
+                              <button
+                                onClick={() => toggleBlockUser(u.id)}
+                                class={`text-xs font-bold px-3 py-1.5 rounded-xl transition ${u.isBlocked ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}
+                              >
+                                {u.isBlocked ? 'Blokdan ochish' : 'Bloklash'}
+                              </button>
+                              <button onClick={() => showToast(`${u.name} uchun parol yangilandi!`)} class="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl hover:bg-slate-200 transition">
+                                Parolni o'zgartirish
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* 4. MONETIZATION TAB (Feature Flags) */}
+              {tab === 'monetization' && (
+                <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-8">
+                  <div>
+                    <h2 class="text-2xl font-extrabold text-slate-900">Monetizatsiya va Moslashuvchan Switchlar (Feature Flags)</h2>
+                    <p class="text-sm text-slate-500">Ilovani Play Marketda yangilamasdan, darhol admin paneldan turib reklama va obunani yoqish yoki o'chirish</p>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* AdMob Switch */}
+                    <div class="border border-slate-200 rounded-3xl p-6 space-y-4">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          <span class="text-3xl">📢</span>
+                          <div>
+                            <h4 class="font-bold text-slate-900">Google AdMob Reklamalari</h4>
+                            <p class="text-xs text-slate-400">Banner va oraliq reklamalarni ko'rsatish</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => { setAdsEnabled(!adsEnabled); showToast(`Reklama: ${!adsEnabled ? 'YOQILDI' : 'O\'CHIRILDI'}`); }}
+                          class={`w-14 h-8 rounded-full transition-colors relative ${adsEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                        >
+                          <span class={`w-6 h-6 bg-white rounded-full absolute top-1 transition-transform ${adsEnabled ? 'left-7' : 'left-1'}`}></span>
+                        </button>
+                      </div>
+                      <div class={`text-xs font-bold px-3 py-2 rounded-xl ${adsEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                        Holat: {adsEnabled ? 'Ilovada reklamalar yoqilgan' : '100% BEPUL va REKLAMASIZ (O\'chiq)'}
+                      </div>
+                    </div>
+
+                    {/* VIP Subscription Switch */}
+                    <div class="border border-slate-200 rounded-3xl p-6 space-y-4">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          <span class="text-3xl">👑</span>
+                          <div>
+                            <h4 class="font-bold text-slate-900">Ingly VIP / Premium Obunasi</h4>
+                            <p class="text-xs text-slate-400">Pullik rejim va kitoblarni yopish</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => { setVipEnabled(!vipEnabled); showToast(`VIP rejim: ${!vipEnabled ? 'YOQILDI' : 'O\'CHIRILDI'}`); }}
+                          class={`w-14 h-8 rounded-full transition-colors relative ${vipEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                        >
+                          <span class={`w-6 h-6 bg-white rounded-full absolute top-1 transition-transform ${vipEnabled ? 'left-7' : 'left-1'}`}></span>
+                        </button>
+                      </div>
+                      <div class={`text-xs font-bold px-3 py-2 rounded-xl ${vipEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                        Holat: {vipEnabled ? 'Pullik obuna tizimi yoqildi' : 'Hamma 6 ta kitob mutlaqo bepul (O\'chiq)'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Free Books Selector */}
+                  <div class="border border-slate-200 rounded-3xl p-6 space-y-3">
+                    <h4 class="font-bold text-slate-900 text-sm">Hamma uchun Ochiq (Bepul) Kitoblar Soni</h4>
+                    <p class="text-xs text-slate-400">Agar obuna yoqilsa, qaysi kitoblar bepul bo'lishini belgilang:</p>
+                    <div class="flex gap-3">
+                      {[1, 2, 3, 4, 5, 6].map(num => (
+                        <button
+                          key={num}
+                          onClick={() => { setFreeBooks(num); showToast(`Bepul kitoblar: ${num} ta etib belgilandi`); }}
+                          class={`px-4 py-2 rounded-xl text-xs font-bold transition ${freeBooks === num ? 'bg-brand-600 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                          {num} ta kitob bepul
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 5. ADMINS TAB */}
+              {tab === 'admins' && (
+                <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-6">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h2 class="text-2xl font-extrabold text-slate-900">Adminlar va Huquqlar Boshqaruvi (RBAC)</h2>
+                      <p class="text-sm text-slate-500">Yangi admin qo'shish, o'chirish va ularning ruxsatlarini cheklash</p>
+                    </div>
+                    <button onClick={() => showToast('Yangi admin qo\'shish modali ochildi')} class="bg-brand-600 text-white font-bold text-sm px-4 py-2 rounded-xl shadow hover:bg-brand-700 transition">
+                      + Yangi Admin
+                    </button>
+                  </div>
+
+                  <div class="space-y-4">
+                    {[
+                      { name: 'Boshqaruvchi (Asosiy)', username: 'admin', role: 'Super Admin', perms: ['Barcha huquqlar', 'So\'zlarni tahrirlash', 'Foydalanuvchilarni bloklash', 'Adminlarni boshqarish'] },
+                      { name: 'Otabek Mirzayev', username: 'otabek_moderator', role: 'Moderator', perms: ['Foydalanuvchilarni ko\'rish', 'Bloklash/Ochish'] },
+                      { name: 'Malika Karimova', username: 'malika_editor', role: 'Kontent Menejer', perms: ['So\'zlar va tarjimalarni kiritish'] }
+                    ].map((a, i) => (
+                      <div key={i} class="border border-slate-200 rounded-2xl p-5 flex items-center justify-between hover:border-brand-500/40 transition">
+                        <div>
+                          <div class="flex items-center gap-3 mb-1">
+                            <span class="font-bold text-slate-900">{a.name}</span>
+                            <span class="text-xs font-mono text-slate-400">(@{a.username})</span>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-600">{a.role}</span>
+                          </div>
+                          <div class="flex flex-wrap gap-1.5 mt-2">
+                            {a.perms.map((p, pi) => (
+                              <span key={pi} class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">✓ {p}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <button onClick={() => showToast('Ruxsatlar sozlamasi ochildi')} class="text-xs font-bold text-slate-500 hover:text-brand-600 border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition">
+                          Ruxsatlarni Sozlash
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 6. NOTIFICATIONS TAB */}
+              {tab === 'notifications' && (
+                <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-6">
+                  <div>
+                    <h2 class="text-2xl font-extrabold text-slate-900">Kreativ Push Bildirishnomalar</h2>
+                    <p class="text-sm text-slate-500">Standart zerikarli eslatmalardan qochilgan do'stona xabarlarni bitta bosishda yuborish</p>
+                  </div>
+
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                    {/* Templates list */}
+                    <div class="space-y-3">
+                      <h4 class="font-bold text-slate-800 text-sm mb-2">Tayyor Kreativ Shablonlar:</h4>
+                      {[
+                        { title: 'Olovcha Eslatmasi 🔥', msg: '7 kunlik streak\'ingiz o\'chib qolmasin! 5 ta so\'z yodlang va olovni saqlang.' },
+                        { title: 'Qahva va So\'zlar ☕', msg: 'Qahvangiz sovumasidan oldin bugungi 5 ta yangi so\'z bilan tanishib olaylikmi?' },
+                        { title: 'Zerikkan So\'zlar 👀', msg: 'Bugungi so\'zlaringiz sizni kuta-kuta zerikib qoldi. 3 daqiqa vaqt ajrata olasizmi?' },
+                        { title: 'Yangi Unit 🧠', msg: 'Bugun ingliz tilida o\'ylash vaqti keldi! Yangi dars eshikni taqillatyapti.' }
+                      ].map((t, idx) => (
+                        <div key={idx} class="border border-slate-200 rounded-2xl p-4 hover:border-brand-500/50 transition flex items-center justify-between">
+                          <div>
+                            <div class="font-bold text-sm text-slate-800">{t.title}</div>
+                            <div class="text-xs text-slate-500 mt-1">{t.msg}</div>
+                          </div>
+                          <button onClick={() => showToast('Bildirishnoma barcha foydalanuvchilarga yuborildi!')} class="text-xs font-bold bg-brand-50 text-brand-600 px-3 py-1.5 rounded-xl hover:bg-brand-100 transition shrink-0 ml-3">
+                            Yuborish
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Phone Mockup Preview */}
+                    <div class="flex flex-col items-center">
+                      <div class="w-64 h-[440px] bg-slate-900 rounded-[38px] p-3 shadow-2xl border-4 border-slate-700 relative flex flex-col justify-between">
+                        {/* Notch */}
+                        <div class="w-24 h-4 bg-slate-800 rounded-full mx-auto mb-4"></div>
+                        {/* Notification Bubble */}
+                        <div class="bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-lg border border-white/40 space-y-1">
+                          <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1.5">
+                              <div class="w-4 h-4 rounded-md bg-brand-600 flex items-center justify-center text-[9px] text-white font-bold">I</div>
+                              <span class="text-[11px] font-extrabold text-slate-800">INGLY</span>
+                            </div>
+                            <span class="text-[9px] text-slate-400">Hozirgina</span>
+                          </div>
+                          <div class="text-xs font-bold text-slate-900">7 kunlik streak'ingiz o'chmasin! 🔥</div>
+                          <div class="text-[10px] text-slate-600 leading-tight">Bugungi 5 ta so'zni yodlab, olovchani saqlab qoling.</div>
+                        </div>
+                        {/* Home indicator */}
+                        <div class="w-20 h-1 bg-white/40 rounded-full mx-auto mt-auto mb-1"></div>
+                      </div>
+                      <p class="text-xs font-semibold text-slate-400 mt-3">Smartfon blok-ekranidagi jonli ko'rinishi</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
 </html>

@@ -54,13 +54,20 @@ export default function WordsPage() {
 
   const handleAddWord = (e) => {
     e.preventDefault();
-    if (!formData.word || !formData.uzbek) return;
+    const cleanWord = (formData.word || '').trim();
+    const cleanUzbek = (formData.uzbek || '').trim();
+    if (!cleanWord || !cleanUzbek) {
+      alert("Inglizcha so'z va o'zbekcha tarjimani kiritish majburiy!");
+      return;
+    }
 
     const newWord = {
       id: Date.now(),
       book: selectedBook,
       unit: selectedUnit,
       ...formData,
+      word: cleanWord,
+      uzbek: cleanUzbek,
     };
 
     setWords([newWord, ...words]);
@@ -88,10 +95,15 @@ export default function WordsPage() {
   };
 
   const filteredWords = words.filter((w) => {
+    const query = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      w.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      w.uzbek.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+      (w.word || '').toLowerCase().includes(query) ||
+      (w.uzbek || '').toLowerCase().includes(query);
+
+    if (query) {
+      return matchesSearch;
+    }
+    return w.book === selectedBook && w.unit === selectedUnit;
   });
 
   return (

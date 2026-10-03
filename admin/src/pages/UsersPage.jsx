@@ -61,9 +61,34 @@ export default function UsersPage() {
 
   const handleSaveEdit = () => {
     if (!selectedUser) return;
+    const cleanName = (editForm.full_name || '').trim();
+    const cleanUsername = (editForm.username || '').trim().toLowerCase();
+    const cleanPhone = (editForm.phone || '').trim();
+
+    if (!cleanName) {
+      alert("Foydalanuvchi ismi bo'sh bo'lishi mumkin emas!");
+      return;
+    }
+    if (!cleanUsername || cleanUsername.length < 3) {
+      alert("Login kamida 3 ta belgidan iborat bo'lishi kerak!");
+      return;
+    }
+    if (/\s/.test(cleanUsername)) {
+      alert("Login tarkibida bo'sh joy (probel) bo'lishi mumkin emas!");
+      return;
+    }
+
     setUsers(
       users.map((u) =>
-        u.id === selectedUser.id ? { ...u, ...editForm } : u
+        u.id === selectedUser.id
+          ? {
+              ...u,
+              ...editForm,
+              full_name: cleanName,
+              username: cleanUsername,
+              phone: cleanPhone,
+            }
+          : u
       )
     );
     setIsEditModalOpen(false);
@@ -76,8 +101,9 @@ export default function UsersPage() {
   };
 
   const handleSavePassword = () => {
-    if (!newPassword || newPassword.length < 6) {
-      alert("Parol kamida 6 ta belgidan iborat bo'lishi kerak!");
+    const cleanPassword = (newPassword || '').trim();
+    if (!cleanPassword || cleanPassword.length < 6) {
+      alert("Parol kamida 6 ta belgidan iborat bo'lishi va faqat bo'sh joylardan iborat bo'lmasligi kerak!");
       return;
     }
     alert(`Foydalanuvchi ${selectedUser.username} uchun yangi parol muvaffaqiyatli saqlandi.`);
@@ -85,10 +111,12 @@ export default function UsersPage() {
   };
 
   const filteredUsers = users.filter((u) => {
+    const query = searchQuery.trim().toLowerCase();
     const matchesSearch =
-      u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.phone.includes(searchQuery);
+      !query ||
+      (u.full_name || '').toLowerCase().includes(query) ||
+      (u.username || '').toLowerCase().includes(query) ||
+      (u.phone || '').toLowerCase().includes(query);
 
     if (statusFilter === 'active') return matchesSearch && !u.is_blocked;
     if (statusFilter === 'blocked') return matchesSearch && u.is_blocked;

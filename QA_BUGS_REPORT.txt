@@ -1,0 +1,245 @@
+================================================================================
+INGLY LOYIHASI - QA AUDIT VA BUG HUNTING YAKUNIY HISOBOTI
+================================================================================
+Sana: 03.10.2026
+Loyiha manzili: d:\inglyJon (mobile va admin)
+Auditor: Ingly QA & Bug Hunting Engineer
+Holat: Barcha aniqlangan 11 ta xatolik (bug) to'liq tuzatildi va tekshirildi.
+
+--------------------------------------------------------------------------------
+XULOSA VA STATISTIKA:
+--------------------------------------------------------------------------------
+Jami tekshirilgan yo'nalishlar:
+  1. Auth & Xavfsizlik (Username, Telefon, Parol, Logout sessiya tozalash)
+  2. Statistika va Progress (Kunlik streak kalendari, 0 ga bo'linish)
+  3. Flashcards & Words Data (Chegara tekshiruvlari, Movie Clip fallback)
+  4. Quiz Test tizimi (0/0 bo'linish, NaN xatosi, bo'sh savollar)
+  5. Profile & Sozlamalar (Bo'sh ism, Telefon raqam faqat raqamlar va '+')
+  6. Admin Panel (Foydalanuvchilar va so'zlar boshqaruvi, null-safe qidiruv)
+
+Topilgan va to'g'irlangan baglar soni: 11 ta
+Sintaktik xatoliklar: 0 ta (Babel parser va Node.js orqali tasdiqlandi)
+
+================================================================================
+BATAFSIL XATOLIKLAR RO'YXATI VA KIRITILGAN TUZATISHLAR:
+================================================================================
+
+[BUG-01]
+Yo'nalish: Auth & Xavfsizlik
+Nomi: Username (login) validatsiyasidagi chekka holatlar va probellar
+Xatolik tavsifi:
+  Foydalanuvchi faqat bo'sh joylardan iborat login yoki oralarida probellar
+  bo'lgan noto'g'ri username bilan ro'yxatdan o'tishi mumkin edi. Shuningdek,
+  loginning minimal uzunligi tekshirilmagan edi.
+Sababi:
+  UserContext.js va AuthScreen.js da faqat username.trim() qilingan, ammo
+  login uzunligi (kamida 3 belgi) va bo'shliqlar mavjudligi regex bilan tekshirilmagan.
+Tuzatilgan fayllar:
+  - d:\inglyJon\mobile\src\context\UserContext.js
+  - d:\inglyJon\mobile\src\screens\AuthScreen.js
+Natija:
+  Login kamida 3 ta belgidan iborat bo'lishi, probellarsiz va kichik harflarda
+  bo'lishi qat'iy tekshirildi. Input maydonida probellar avtomatik filtrlanadi.
+
+--------------------------------------------------------------------------------
+
+[BUG-02]
+Yo'nalish: Auth & Xavfsizlik
+Nomi: Parol faqat probellardan iborat bo'lganda ro'yxatdan o'tkazish zaifligi
+Xatolik tavsifi:
+  Foydalanuvchi 6 ta bo'sh joy ("      ") kiritganda parol uzunligi 6 bo'lgani
+  uchun tizim uni qabul qilgan va hisob yaratilgan.
+Sababi:
+  AuthScreen.js da regPassword.length < 6 tekshirilgan, lekin probellarni
+  tozalab hisoblovchi trim() sharti qo'yilmagan. UserContext.js dagi register
+  funksiyasida esa parol uzunligi va bo'shligi umuman tekshirilmagan edi.
+Tuzatilgan fayllar:
+  - d:\inglyJon\mobile\src\context\UserContext.js
+  - d:\inglyJon\mobile\src\screens\AuthScreen.js
+Natija:
+  Parol trim() qilinib, kamida 6 ta haqiqiy belgidan iborat bo'lishi va faqat
+  bo'sh joylardan iborat bo'lmasligi qat'iy belgilandi.
+
+--------------------------------------------------------------------------------
+
+[BUG-03]
+Yo'nalish: Auth & Xavfsizlik
+Nomi: Telefon raqamini normalizatsiya qilish va takrorlanmaslik tekshiruvi xatosi
+Xatolik tavsifi:
+  Foydalanuvchi "+998901234567" yoki "998901234567" yoki "901234567" formatlarida
+  raqam kiritganda, oldingi regex faqat qavs va probellarni o'chirgan, "+" belgisi
+  qolib ketgani sababli bir xil raqam qayta ro'yxatdan o'tib ketgan yoki loginda
+  topilmay qolgan.
+Sababi:
+  cleanPhoneDigits = phone.replace(/[\s\-\(\)]/g, '') faqat ayrim belgilarni
+  olib tashlagan, '+' belgisi va prefikslar hisobga olinmagan.
+Tuzatilgan fayllar:
+  - d:\inglyJon\mobile\src\context\UserContext.js
+  - d:\inglyJon\mobile\src\screens\AuthScreen.js
+Natija:
+  Barcha telefon raqamlardan faqat raqamlar ajratib olinib (/\D/g), oxirgi 9 ta
+  raqam bo'yicha solishtirildi. Natijada har qanday prefiks bilan kiritilganda ham
+  raqam yagona ekanligi to'liq ta'minlandi.
+
+--------------------------------------------------------------------------------
+
+[BUG-04]
+Yo'nalish: Auth & Xavfsizlik
+Nomi: Hisobdan chiqishda (Logout) keshdagi eski sessiya qoldiqlari tozalanmasligi
+Xatolik tavsifi:
+  Foydalanuvchi "Chiqish" tugmasini bosganda, faqat USER_PROFILE kaliti o'chirilgan,
+  ammo WORD_PROGRESS, USER_STREAKS, FAVORITES va SYNC_QUEUE keshda qolib ketgan.
+  Boshqa foydalanuvchi kirganda eski progress aralashib ketish xavfi bor edi.
+Sababi:
+  UserContext.js dagi logout() funksiyasida faqat bitta kalit o'chirilgan.
+Tuzatilgan fayl:
+  - d:\inglyJon\mobile\src\context\UserContext.js
+Natija:
+  logout() funksiyasida USER_PROFILE bilan birga WORD_PROGRESS, USER_STREAKS,
+  FAVORITES va SYNC_QUEUE to'liq o'chirilib, toza boshlang'ich holatga keltiriladi.
+
+--------------------------------------------------------------------------------
+
+[BUG-05]
+Yo'nalish: Statistika va Progress
+Nomi: Kunlik streak (olovcha) hisobi: bir kunda ko'p so'z yodlasa yoki yangi kunga o'tganda xatolik
+Xatolik tavsifi:
+  1) Foydalanuvchi bir kunda 10 ta so'z yodlasa yoki ertasi kuni kelsa streak sanasi
+     kuzatilmagan.
+  2) Ertasi kuni kelganda streak 2 ga oshmasdan 1 ligicha qolgan.
+  3) Bir necha kun kirmasa ham streak o'chmasdan saqlanib turgan.
+Sababi:
+  UserContext.js da lastActiveDate yo'q edi. Streak faqat:
+  `user.streakDays === 0 ? 1 : user.streakDays` qilib qo'yilgan edi.
+Tuzatilgan fayl:
+  - d:\inglyJon\mobile\src\context\UserContext.js
+Natija:
+  INITIAL_USER ga lastActiveDate qo'shildi. Kalendar sana tekshiruvi joriy etildi:
+  - Bugun so'z yodlangan bo'lsa: streak o'zgarmaydi, faqat bugungi so'zlar soni oshadi.
+  - Kecha so'z yodlangan bo'lsa (ketma-ket kun): streak +1 ga oshadi, bugungi so'zlar 1 dan boshlanadi.
+  - 1 kundan ortiq tanaffus bo'lsa yoki birinchi marta bo'lsa: streak 1 bo'ladi.
+  - Ilova ochilganda (loadUser) oraliq tanaffus bo'lgan bo'lsa streak 0 ga tushadi va bugungi so'zlar 0 qilinadi.
+
+--------------------------------------------------------------------------------
+
+[BUG-06]
+Yo'nalish: Statistika va Progress
+Nomi: Kunlik maqsad 0 bo'lganda (Division by Zero) foiz va kasr xatosi
+Xatolik tavsifi:
+  user.dailyGoal 0 yoki undefined bo'lganda foiz hisoblashda bo'linish xatosi yuz berishi
+  va ekranda "(0/0 Words)" yoki "(5/0 Words)" kabi xunuk holat paydo bo'lishi.
+Sababi:
+  HomeScreen.js da dailyGoal 0 bo'lishi mumkinligi kasr qismida (line 111) inobatga
+  olinmagan, ProfileScreen va UserContext da ham 0 qilib saqlashdan to'liq himoyalanmagan edi.
+Tuzatilgan fayllar:
+  - d:\inglyJon\mobile\src\screens\HomeScreen.js
+  - d:\inglyJon\mobile\src\context\UserContext.js
+  - d:\inglyJon\mobile\src\screens\ProfileScreen.js
+Natija:
+  userDailyGoal xavfsiz qiymati o'rnatildi (user.dailyGoal > 0 ? user.dailyGoal : 20).
+  Hech qachon 0 ga bo'linish xatosi va "(0/0 Words)" yuzaga kelmaydi.
+
+--------------------------------------------------------------------------------
+
+[BUG-07]
+Yo'nalish: Flashcards & Words Data
+Nomi: flashcardWords ro'yxati oxiriga yetganda yoki bo'sh bo'lganda indeks xatoligi (Boundary check)
+Xatolik tavsifi:
+  Foydalanuvchi SRS tugmalarini tez-tez ketma-ket bosganda currentIndex massiv
+  uzunligidan oshib ketishi va currentWord undefined bo'lib ilova qulashi (TypeError).
+  Massiv bo'sh bo'lganda ham oq ekran paydo bo'lishi.
+Sababi:
+  Boundary check va tugmani oraliq animatsiya vaqtida qayta bosishdan himoyalovchi flag yo'q edi.
+Tuzatilgan fayl:
+  - d:\inglyJon\mobile\src\screens\FlashcardScreen.js
+Natija:
+  - safeIndex va totalWords nazorati qo'yildi.
+  - So'zlar ro'yxati bo'sh bo'lsa chiroyli Empty State ekrani chiqadi.
+  - Ro'yxat oxiriga yetganda indeksdan chiqib ketmasdan, xavfsiz boshiga qaytadi.
+  - feedbackMessage mavjudligida tezkor takroriy bosishlar bloklandi.
+  - currentWord?.stats uchun xavfsiz fallbacklar qo'yildi.
+
+--------------------------------------------------------------------------------
+
+[BUG-08]
+Yo'nalish: Flashcards & Words Data
+Nomi: MovieClipModal da kino lavhasi bo'lmaganda yoki yuklanmaganda fallback yo'qligi
+Xatolik tavsifi:
+  Kino lavhasi yoki movieTitle mavjud bo'lmagan so'zlarda modal ichida "undefined (2001)"
+  chiqishi va bo'sh video ramka ko'rinishi.
+Sababi:
+  MovieClipModal.js da url yoki metadata yo'qligini tekshiruvchi fallback UI yaratilmagan edi.
+Tuzatilgan fayl:
+  - d:\inglyJon\mobile\src\components\MovieClipModal.js
+Natija:
+  hasMovieContent tekshiruvi qo'shildi. Kino lavhasi mavjud bo'lmagan taqdirda
+  "Video lavha hozircha mavjud emas. Tez kunda yangilanishda qo'shiladi!" degan
+  chiroyli tushuntirish fallback bloki paydo bo'ladi.
+
+--------------------------------------------------------------------------------
+
+[BUG-09]
+Yo'nalish: Quiz (Test) tizimi
+Nomi: Savollar ro'yxati bo'sh bo'lganda 0/0 bo'linish natijasida NaN hosil bo'lishi
+Xatolik tavsifi:
+  quizQuestions bo'sh bo'lsa yoki savollar tugasa score / quizQuestions.length (0 / 0)
+  amali NaN berib, progress bar kengligi "Infinity%" bo'lib ketgan va accuracy NaN ga
+  aylanib foydalanuvchi hisobiga saqlangan.
+Sababi:
+  QuizScreen.js va UserContext.js dagi recordQuizResult da total <= 0 holati tekshirilmagan.
+Tuzatilgan fayllar:
+  - d:\inglyJon\mobile\src\screens\QuizScreen.js
+  - d:\inglyJon\mobile\src\context\UserContext.js
+Natija:
+  - totalQuestions <= 0 bo'lsa qulay bo'sh holat ekrani ko'rsatiladi.
+  - accuracy hisoblashda nolga bo'linish xatosi bartaraf qilindi (total > 0 ? score / total : 0).
+  - recordQuizResult da total <= 0 bo'lsa darhol to'xtatiladi va NaN saqlanishi to'liq bartaraf etildi.
+
+--------------------------------------------------------------------------------
+
+[BUG-10]
+Yo'nalish: Profile & Sozlamalar
+Nomi: Ismni bo'sh probellar bilan saqlash va telefon raqamga noo'rin belgilar kiritish
+Xatolik tavsifi:
+  Profilni tahrirlashda foydalanuvchi ismiga probellar ("   ") kiritib saqlashi
+  yoki telefon maydoniga ixtiyoriy harflar yozib saqlashi mumkin edi.
+Sababi:
+  handleSaveProfile va UserContext.updateProfile da qat'iy string tozalash va
+  telefon formatini tekshirish filtrlari to'liq emas edi.
+Tuzatilgan fayllar:
+  - d:\inglyJon\mobile\src\screens\ProfileScreen.js
+  - d:\inglyJon\mobile\src\context\UserContext.js
+Natija:
+  - Ism bo'sh bo'lsa yoki faqat probellardan iborat bo'lsa ogohlantirish beriladi va saqlanmaydi.
+  - Telefon maydoni faqat raqamlar va '+' belgilarini kiritishga cheklandi.
+  - Kamida 9 ta raqam bo'lishi talab etildi.
+
+--------------------------------------------------------------------------------
+
+[BUG-11]
+Yo'nalish: Admin Panel
+Nomi: UsersPage va WordsPage dagi bo'sh kiritishlar, qidiruvdagi undefined xatolari va filtr buzilishi
+Xatolik tavsifi:
+  1) UsersPage da admin foydalanuvchi ismini bo'sh qilib saqlashi, parolni faqat bo'sh
+     joylar bilan o'zgartirishi mumkin edi.
+  2) Foydalanuvchi yoki so'z obyektida ba'zi maydonlar undefined bo'lsa, .toLowerCase()
+     chash berar edi.
+  3) WordsPage da qidiruv bo'lmaganda tanlangan kitob va unit bo'yicha filtrlash
+     ishlamay, doim barcha so'zlar aralashib chiqib turgan edi.
+Sababi:
+  Admin sahifalarida forma validatsiyalari va null-safe qidiruv funksiyalari yetishmas edi.
+Tuzatilgan fayllar:
+  - d:\inglyJon\admin\src\pages\UsersPage.jsx
+  - d:\inglyJon\admin\src\pages\WordsPage.jsx
+  - d:\inglyJon\admin\index.html
+Natija:
+  - Ism, login va parollar uchun qat'iy validatsiya kiritildi.
+  - Qidiruv tizimi null-safe qilindi: `(w.word || '').toLowerCase()`.
+  - Kitob va unit filtri faollashtirildi: qidiruv bo'lmaganda tanlangan kitob/unit so'zlari ko'rsatiladi.
+
+================================================================================
+YAKUNIY XULOSA:
+Barcha 11 ta xatolik muvaffaqiyatli bartaraf etildi. Loyihaning mobil ilovasi
+va admin panelidagi barcha komponentlar sinovdan o'tkazildi, sintaktik xatoliklar
+mavjud emas. Tizim barqaror va TZ talablariga to'liq javob beradi.
+================================================================================

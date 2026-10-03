@@ -83,13 +83,23 @@
         { id: 4, name: 'Madina Umarova', phone: '+998 91 333 22 11', username: 'madina_u', words: 640, streak: 21, isBlocked: false, isVip: false }
       ]);
 
-      const [sampleWords, setSampleWords] = useState([
-        { id: 1, word: 'afraid', pos: 'adj', uzbek: "qo'rqqan, cho'chigan", ipa: '/əˈfreɪd/', movie: 'Harry Potter', clip: 'Harry: "I am not afraid of Voldemort."' },
-        { id: 2, word: 'agree', pos: 'verb', uzbek: "rozi bo'lmoq", ipa: '/əˈɡriː/', movie: 'Friends', clip: 'Joey: "I totally agree with Monica!"' },
-        { id: 3, word: 'angry', pos: 'adj', uzbek: "jahli chiqqan, g'azablangan", ipa: '/ˈæŋɡri/', movie: 'Avengers: Endgame', clip: 'Hulk: "That is my secret, Cap. I am always angry."' },
-        { id: 4, word: 'adventure', pos: 'noun', uzbek: 'sarguzasht', ipa: '/ədˈventʃər/', movie: 'Up (Pixar)', clip: 'Ellie: "Adventure is out there!"' },
-        { id: 5, word: 'clever', pos: 'adj', uzbek: 'aqlli, ziyrak', ipa: '/ˈklevər/', movie: 'Sherlock Holmes', clip: 'Sherlock: "A clever mind leaves no stones unturned."' }
-      ]);
+      const [allWords, setAllWords] = useState([]);
+      const [selectedBook, setSelectedBook] = useState(1);
+      const [selectedUnit, setSelectedUnit] = useState('all');
+      const [page, setPage] = useState(1);
+      const pageSize = 20;
+
+      useEffect(() => {
+        fetch('./all_words.json')
+          .then(r => r.json())
+          .then(data => {
+            setAllWords(data);
+            showToast(`Muvaffaqiyatli: ${data.length} ta so'z yuklandi!`);
+          })
+          .catch(err => {
+            console.error('So\'zlar yuklanmadi:', err);
+          });
+      }, []);
 
       const speakWord = (text) => {
         if ('speechSynthesis' in window) {
@@ -270,51 +280,115 @@
               )}
 
               {/* 2. WORDS TAB */}
-              {tab === 'words' && (
-                <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-6">
-                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h2 class="text-2xl font-extrabold text-slate-900">4000 Essential English Words Boshqaruvi</h2>
-                      <p class="text-sm text-slate-500">So'zlar, IPA transkripsiya, talaffuz audiolari va kinolardan 3-5 soniyalik hissiy qismlar</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                      <input
-                        type="text"
-                        placeholder="So'z qidirish..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        class="px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 w-64"
-                      />
-                      <button onClick={() => showToast('Yangi so\'z qo\'shish modali ochildi')} class="bg-brand-600 text-white font-bold text-sm px-4 py-2 rounded-xl shadow hover:bg-brand-700 transition">
-                        + Yangi So'z
-                      </button>
-                    </div>
-                  </div>
+              {tab === 'words' && (() => {
+                const displayWords = Array.isArray(allWords) ? allWords : [];
+                const searchLower = (searchTerm || '').trim().toLowerCase();
+                const filtered = displayWords.filter(w => {
+                  const matchB = selectedBook === 'all' || w.book === selectedBook;
+                  const matchU = selectedUnit === 'all' || w.unit === parseInt(selectedUnit);
+                  const wordStr = (w.word || '').toLowerCase();
+                  const uzbekStr = (w.uzbek || '').toLowerCase();
+                  const matchS = !searchLower || wordStr.includes(searchLower) || uzbekStr.includes(searchLower);
+                  return matchB && matchU && matchS;
+                });
+                const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+                const safePage = Math.max(1, Math.min(page, totalPages));
+                const paginated = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-                  {/* Words Table */}
-                  <div class="overflow-x-auto rounded-2xl border border-slate-200">
-                    <table class="w-full text-left border-collapse text-sm">
-                      <thead>
-                        <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
-                          <th class="py-3.5 px-4">#</th>
-                          <th class="py-3.5 px-4">Inglizcha So'z</th>
-                          <th class="py-3.5 px-4">IPA Transkripsiya</th>
-                          <th class="py-3.5 px-4">So'z Turkumi</th>
-                          <th class="py-3.5 px-4">O'zbekcha Ma'nosi</th>
-                          <th class="py-3.5 px-4">Talaffuz (TTS/Audio)</th>
-                          <th class="py-3.5 px-4">Kinodan Lavha (Video)</th>
-                          <th class="py-3.5 px-4 text-right">Amallar</th>
-                        </tr>
-                      </thead>
-                      <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
-                        {sampleWords
-                          .filter(w => w.word.toLowerCase().includes(searchTerm.toLowerCase()) || w.uzbek.toLowerCase().includes(searchTerm.toLowerCase()))
-                          .map((w, idx) => (
+                return (
+                  <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-6">
+                    {/* Header & Search */}
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      <div>
+                        <div class="flex items-center gap-3">
+                          <h2 class="text-2xl font-extrabold text-slate-900">4000 Essential English Words Boshqaruvi</h2>
+                          <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-brand-50 text-brand-600 border border-brand-200">
+                            Baza: {allWords.length} ta so'z yuklangan
+                          </span>
+                        </div>
+                        <p class="text-sm text-slate-500 mt-1">Kitoblar va unitlar bo'yicha so'zlar, transkripsiya, talaffuz audiolari va kinolardan hissiy qismlar</p>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <input
+                          type="text"
+                          placeholder="So'z yoki tarjima qidirish..."
+                          value={searchTerm}
+                          onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+                          class="px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 w-64 shadow-sm"
+                        />
+                        <button onClick={() => showToast('Yangi so\'z qo\'shish modali ochildi')} class="bg-brand-600 text-white font-bold text-sm px-4 py-2 rounded-xl shadow hover:bg-brand-700 transition shrink-0">
+                          + Yangi So'z
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Book & Unit Filters */}
+                    <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100">
+                      {/* Books Selector */}
+                      <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+                        <button
+                          onClick={() => { setSelectedBook('all'); setPage(1); }}
+                          class={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${selectedBook === 'all' ? 'bg-slate-900 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                          Barcha Kitoblar ({allWords.length})
+                        </button>
+                        {[1, 2, 3, 4, 5, 6].map(b => (
+                          <button
+                            key={b}
+                            onClick={() => { setSelectedBook(b); setPage(1); }}
+                            class={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${selectedBook === b ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                          >
+                            Book {b} (600)
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Unit Selector */}
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-500">Unit:</span>
+                        <select
+                          value={selectedUnit}
+                          onChange={(e) => { setSelectedUnit(e.target.value); setPage(1); }}
+                          class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        >
+                          <option value="all">Barcha Unitlar (1-30)</option>
+                          {Array.from({ length: 30 }, (_, i) => i + 1).map(u => (
+                            <option key={u} value={u}>Unit {u} (20 ta so'z)</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Words Table */}
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                      <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                          <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                            <th class="py-3.5 px-4">#</th>
+                            <th class="py-3.5 px-4">Kitob / Unit</th>
+                            <th class="py-3.5 px-4">Inglizcha So'z</th>
+                            <th class="py-3.5 px-4">IPA Transkripsiya</th>
+                            <th class="py-3.5 px-4">So'z Turkumi</th>
+                            <th class="py-3.5 px-4">O'zbekcha Ma'nosi</th>
+                            <th class="py-3.5 px-4">Talaffuz (TTS/Audio)</th>
+                            <th class="py-3.5 px-4">Kinodan Lavha</th>
+                            <th class="py-3.5 px-4 text-right">Amallar</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                          {paginated.map((w, idx) => (
                             <tr key={w.id} class="hover:bg-slate-50/80 transition">
-                              <td class="py-3.5 px-4 text-slate-400">{idx + 1}</td>
-                              <td class="py-3.5 px-4 font-bold text-slate-900">{w.word}</td>
+                              <td class="py-3.5 px-4 text-slate-400 font-mono text-xs">{w.id}</td>
+                              <td class="py-3.5 px-4">
+                                <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-brand-600 text-[11px] font-bold">
+                                  B{w.book} • U{w.unit}
+                                </span>
+                              </td>
+                              <td class="py-3.5 px-4 font-bold text-slate-900 capitalize">{w.word}</td>
                               <td class="py-3.5 px-4 font-mono text-slate-500 text-xs">{w.ipa}</td>
-                              <td class="py-3.5 px-4"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-xs font-semibold text-slate-600">{w.pos}</span></td>
+                              <td class="py-3.5 px-4">
+                                <span class="px-2 py-0.5 rounded-md bg-slate-100 text-xs font-semibold text-slate-600">{w.pos}</span>
+                              </td>
                               <td class="py-3.5 px-4 text-brand-600 font-semibold">{w.uzbek}</td>
                               <td class="py-3.5 px-4">
                                 <button
@@ -333,39 +407,111 @@
                                 </button>
                               </td>
                               <td class="py-3.5 px-4 text-right">
-                                <button onClick={() => showToast('Tahrirlash modali ochildi')} class="text-xs font-bold text-slate-500 hover:text-brand-600 mr-3">Tahrirlash</button>
+                                <button onClick={() => showToast(`"${w.word}" tahrirlash ochildi`)} class="text-xs font-bold text-slate-500 hover:text-brand-600 mr-2">Tahrirlash</button>
                               </td>
                             </tr>
                           ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </tbody>
+                      </table>
+                    </div>
 
-                  {/* Movie Video Preview Modal */}
-                  {selectedMovie && (
-                    <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                      <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-                        <div class="flex items-center justify-between border-b pb-3">
-                          <h3 class="font-extrabold text-lg text-slate-900">🎬 Kinodan Lavha: "{selectedMovie.movie}"</h3>
-                          <button onClick={() => setSelectedMovie(null)} class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
-                        </div>
-                        <div class="bg-slate-900 aspect-video rounded-2xl flex flex-col items-center justify-center text-white p-6 text-center relative overflow-hidden">
-                          <span class="text-4xl mb-3">🍿</span>
-                          <p class="font-extrabold text-lg text-amber-400">"{selectedMovie.word.toUpperCase()}"</p>
-                          <p class="text-sm italic text-slate-300 mt-2">{selectedMovie.clip}</p>
-                          <span class="absolute bottom-3 right-3 text-[11px] bg-white/20 px-2 py-0.5 rounded text-white font-mono">0:04 / HD</span>
-                        </div>
-                        <p class="text-xs text-slate-500 leading-relaxed">
-                          Ushbu 3-5 soniyalik video lavha foydalanuvchiga so'zni hissiyot va real kinodagi nutq orqali umrbod eslab qolishga yordam beradi.
-                        </p>
-                        <button onClick={() => setSelectedMovie(null)} class="w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition">
-                          Yopish
+                    {/* Pagination Controls */}
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <div class="text-xs text-slate-500 font-medium">
+                        Ko'rsatilmoqda: <span class="font-bold text-slate-800">{(safePage - 1) * pageSize + 1} - {Math.min(safePage * pageSize, filtered.length)}</span> (Jami: {filtered.length} ta so'z)
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <button
+                          disabled={safePage <= 1}
+                          onClick={() => setPage(p => Math.max(1, p - 1))}
+                          class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                        >
+                          ← Oldingi
+                        </button>
+                        <span class="text-xs font-bold text-slate-700 px-2">
+                          {safePage} / {totalPages}
+                        </span>
+                        <button
+                          disabled={safePage >= totalPages}
+                          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                          class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
+                        >
+                          Keyingi →
                         </button>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {/* Movie Video Preview Modal */}
+                    {selectedMovie && (
+                      <div class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                          {/* Modal Header */}
+                          <div class="flex items-center justify-between border-b pb-3">
+                            <div class="flex items-center gap-2.5">
+                              <span class="text-xl">🎬</span>
+                              <div>
+                                <h3 class="font-extrabold text-lg text-slate-900 leading-tight">
+                                  Kino Lavhasi: "{selectedMovie.movie}"
+                                </h3>
+                                <p class="text-xs text-slate-400">So'z: <span class="font-bold text-brand-600 capitalize">"{selectedMovie.word}"</span></p>
+                              </div>
+                            </div>
+                            <button onClick={() => setSelectedMovie(null)} class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold transition">✕</button>
+                          </div>
+
+                          {/* Real Video Player */}
+                          <div class="relative bg-black rounded-2xl overflow-hidden shadow-lg aspect-video flex items-center justify-center">
+                            <video
+                              key={selectedMovie.id}
+                              src="https://www.w3schools.com/html/mov_bbb.mp4"
+                              controls
+                              autoPlay
+                              loop
+                              class="w-full h-full object-cover"
+                            ></video>
+                            
+                            {/* Cinematic Subtitles Overlay */}
+                            <div class="absolute bottom-10 inset-x-4 bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-xl text-center pointer-events-none border border-white/10">
+                              <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">{selectedMovie.movie}</div>
+                              <p class="text-xs font-semibold text-white/95 mt-0.5">
+                                {selectedMovie.clip}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Context & Explanation */}
+                          <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1">
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs font-bold text-slate-700">O'zbekcha tarjimasi:</span>
+                              <span class="text-xs font-extrabold text-brand-600">{selectedMovie.uzbek}</span>
+                            </div>
+                            <p class="text-xs text-slate-500 italic">Ta'rif: "{selectedMovie.desc || 'Bu so\'z kinoda real kontekstda qo\'llanilgan.'}"</p>
+                          </div>
+
+                          {/* Live YouGlish / YouTube Movie Search Button */}
+                          <div class="flex items-center gap-3">
+                            <a
+                              href={`https://youglish.com/pronounce/${selectedMovie.word}/english`}
+                              target="_blank"
+                              rel="noreferrer"
+                              class="flex-1 py-2.5 px-4 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-bold text-xs hover:from-red-700 hover:to-rose-700 transition flex items-center justify-center gap-2 shadow-sm"
+                            >
+                              <span>▶️</span>
+                              <span>YouTube/Kinolardagi Jonli Lavhalar (YouGlish)</span>
+                            </a>
+                            <button
+                              onClick={() => setSelectedMovie(null)}
+                              class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-200 transition"
+                            >
+                              Yopish
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* 3. USERS TAB */}
               {tab === 'users' && (
