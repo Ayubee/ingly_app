@@ -8,8 +8,8 @@
 import { getStorageItem, setStorageItem, removeStorageItem } from './storage';
 
 // Standart / Environment sozlamalari
-const DEFAULT_SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key-placeholder';
+const DEFAULT_SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://lbsqxownrjfmjoojdsfk.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
 
 let supabaseClient = null;
 let currentUrl = DEFAULT_SUPABASE_URL;
