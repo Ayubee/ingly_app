@@ -1238,31 +1238,73 @@
                         </tr>
                       </thead>
                       <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
-                        {users.map(u => (
-                          <tr key={u.id} class="hover:bg-slate-50/80 transition">
-                            <td class="py-3.5 px-4 font-bold text-slate-900">{u.name} {u.isVip && <span class="ml-1 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">VIP</span>}</td>
-                            <td class="py-3.5 px-4 text-slate-600 font-mono text-xs">{u.phone}</td>
-                            <td class="py-3.5 px-4 font-mono text-xs text-brand-600">@{u.username}</td>
-                            <td class="py-3.5 px-4 font-bold text-slate-800">{u.words} ta</td>
-                            <td class="py-3.5 px-4 text-state-streak font-bold">{u.streak} kun 🔥</td>
-                            <td class="py-3.5 px-4">
-                              <span class={`px-2.5 py-1 rounded-full text-xs font-bold ${u.isBlocked ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                {u.isBlocked ? 'Bloklangan' : 'Faol'}
-                              </span>
-                            </td>
-                            <td class="py-3.5 px-4 text-right space-x-2">
-                              <button
-                                onClick={() => toggleBlockUser(u.id)}
-                                class={`text-xs font-bold px-3 py-1.5 rounded-xl transition ${u.isBlocked ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}
-                              >
-                                {u.isBlocked ? 'Blokdan ochish' : 'Bloklash'}
-                              </button>
-                              <button onClick={() => showToast(`${u.name} uchun parol yangilandi!`)} class="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl hover:bg-slate-200 transition">
-                                Parolni o'zgartirish
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                        {users.map(u => {
+                          const userAdminObj = adminList.find(a => (a.username || '').toLowerCase() === (u.username || '').toLowerCase());
+                          const isUserAdmin = Boolean(userAdminObj);
+
+                          return (
+                            <tr key={u.id} class="hover:bg-slate-50/80 transition">
+                              <td class="py-3.5 px-4 font-bold text-slate-900">
+                                <span>{u.name}</span>
+                                {u.isVip && <span class="ml-1 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">VIP</span>}
+                                {isUserAdmin && (
+                                  <span class="ml-1.5 text-[11px] bg-purple-100 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-extrabold inline-flex items-center gap-0.5">
+                                    <span>👑</span>
+                                    <span>{userAdminObj.roleLabel || ROLE_LABELS[userAdminObj.role] || 'Admin'}</span>
+                                  </span>
+                                )}
+                              </td>
+                              <td class="py-3.5 px-4 text-slate-600 font-mono text-xs">{u.phone}</td>
+                              <td class="py-3.5 px-4 font-mono text-xs text-brand-600">@{u.username}</td>
+                              <td class="py-3.5 px-4 font-bold text-slate-800">{u.words} ta</td>
+                              <td class="py-3.5 px-4 text-state-streak font-bold">{u.streak} kun 🔥</td>
+                              <td class="py-3.5 px-4">
+                                <span class={`px-2.5 py-1 rounded-full text-xs font-bold ${u.isBlocked ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                  {u.isBlocked ? 'Bloklangan' : 'Faol'}
+                                </span>
+                              </td>
+                              <td class="py-3.5 px-4 text-right space-x-2">
+                                {isUserAdmin ? (
+                                  <button
+                                    onClick={() => openPermsModal(userAdminObj)}
+                                    title="Admin huquqlarini sozlash"
+                                    class="text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <span>⚙️</span>
+                                    <span>Huquqlar</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setAdminForm({
+                                        name: u.name || 'Foydalanuvchi',
+                                        username: u.username || '',
+                                        password: u.password || 'admin123',
+                                        role: 'editor',
+                                        perms: ['manage_words', 'manage_users']
+                                      });
+                                      setShowAdminModal(true);
+                                    }}
+                                    title="Ushbu foydalanuvchini admin qilish"
+                                    class="text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-xs px-3 py-1.5 rounded-xl transition inline-flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <span>👑</span>
+                                    <span>Admin Qilish</span>
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => toggleBlockUser(u.id)}
+                                  class={`text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer ${u.isBlocked ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}
+                                >
+                                  {u.isBlocked ? 'Blokdan ochish' : 'Bloklash'}
+                                </button>
+                                <button onClick={() => showToast(`${u.name} uchun parol yangilandi!`)} class="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl hover:bg-slate-200 transition cursor-pointer">
+                                  Parol
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1733,6 +1775,37 @@
                 </div>
 
                 <form onSubmit={handleSaveNewAdmin} class="space-y-4 text-xs">
+                  {users.length > 0 && (
+                    <div class="bg-purple-50/70 p-3 rounded-2xl border border-purple-100 mb-2">
+                      <label class="block font-bold text-purple-900 mb-1 flex items-center gap-1.5">
+                        <span>👑</span>
+                        <span>Mavjud Foydalanuvchilar orasidan tanlash (Tezkor to'ldirish):</span>
+                      </label>
+                      <select
+                        onChange={(e) => {
+                          const selectedU = users.find(u => String(u.id) === e.target.value);
+                          if (selectedU) {
+                            setAdminForm(prev => ({
+                              ...prev,
+                              name: selectedU.name || '',
+                              username: (selectedU.username || '').toLowerCase().replace(/\s/g, ''),
+                              password: selectedU.password || 'admin123'
+                            }));
+                          }
+                        }}
+                        class="w-full border border-purple-200 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white focus:outline-none focus:border-brand-500 font-medium cursor-pointer"
+                      >
+                        <option value="">-- Ro'yxatdan o'tgan foydalanuvchini tanlang --</option>
+                        {users.map(u => (
+                          <option key={u.id} value={u.id}>
+                            {u.name} (@{u.username}) • {u.phone}
+                          </option>
+                        ))}
+                      </select>
+                      <p class="text-[10px] text-purple-600 mt-1">Tanlaganingizda ism, login va ma'lumotlar avtomatik to'ldiriladi.</p>
+                    </div>
+                  )}
+
                   <div>
                     <label class="block font-bold text-slate-700 mb-1">Ism & Familiya *</label>
                     <input 
