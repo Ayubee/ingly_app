@@ -19,8 +19,8 @@ export default function MovieClipModal({
   if (!wordData) return null;
 
   const movieClipUrl = wordData.movieClipUrl || wordData.video_clip_url || wordData.videoUrl;
-  const movieTitle = wordData.movieTitle || wordData.movie_title;
-  const movieQuote = wordData.movieQuote || wordData.example || (wordData.word ? `Context: "${wordData.word}" in conversation` : null);
+  const movieTitle = wordData.movieTitle || wordData.movie_title || wordData.movie;
+  const movieQuote = wordData.movieQuote || wordData.clip || wordData.example || (wordData.word ? `Context: "${wordData.word}" in conversation` : null);
   const movieYear = wordData.movieYear || (movieTitle ? 'Klassika' : null);
 
   const hasMovieContent = Boolean(movieClipUrl || movieTitle || movieQuote);

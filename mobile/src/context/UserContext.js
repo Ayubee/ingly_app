@@ -480,6 +480,18 @@ export function UserProvider({ children }) {
     await saveUserData(resetUser);
   };
 
+  // 9. Faol kitob va darsni (unit) tanlash
+  const setActiveLesson = async (bookNumber, unitNumber) => {
+    const book = Math.max(1, Math.min(6, parseInt(bookNumber, 10) || 1));
+    const unit = Math.max(1, Math.min(30, parseInt(unitNumber, 10) || 1));
+    const updated = {
+      ...user,
+      activeBook: book,
+      activeUnit: unit,
+    };
+    await saveUserData(updated);
+  };
+
   return (
     <UserContext.Provider
       value={{
@@ -493,6 +505,7 @@ export function UserProvider({ children }) {
         recordWordLearned,
         recordQuizResult,
         resetProgress,
+        setActiveLesson,
       }}
     >
       {children}

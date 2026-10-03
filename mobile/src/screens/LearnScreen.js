@@ -19,8 +19,17 @@ import { colors, booksConfig } from '../theme.js';
 import { useUser } from '../context/UserContext.js';
 
 export default function LearnScreen({ onNavigate }) {
-  const { user } = useUser();
-  const [selectedBook, setSelectedBook] = useState(1);
+  const { user, setActiveLesson } = useUser();
+  const [selectedBook, setSelectedBook] = useState(user?.activeBook || 1);
+
+  const handleOpenUnit = (unitNum) => {
+    if (setActiveLesson) {
+      setActiveLesson(selectedBook, unitNum);
+    }
+    if (onNavigate) {
+      onNavigate('Flashcards');
+    }
+  };
 
   // Tanlangan kitob ochiqmi? (Book 1 har doim ochiq, boshqalari oldingi kitob progressi 100% bo'lganda)
   const isBookUnlocked =
@@ -125,8 +134,7 @@ export default function LearnScreen({ onNavigate }) {
                 <TouchableOpacity
                   key={unitNum}
                   activeOpacity={0.8}
-                  disabled={isLocked}
-                  onPress={() => onNavigate && onNavigate('Flashcards')}
+                  onPress={() => handleOpenUnit(unitNum)}
                   style={[
                     styles.unitCard,
                     isCurrent && styles.unitCardCurrent,
