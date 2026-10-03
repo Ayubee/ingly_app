@@ -16,6 +16,8 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
     tailwind.config = {
@@ -125,6 +127,39 @@
       const [selectedUnit, setSelectedUnit] = useState('all');
       const [page, setPage] = useState(1);
       const pageSize = 20;
+
+      const [supabaseUrl, setSupabaseUrl] = useState(() => localStorage.getItem('ingly_supabase_url') || '');
+      const [supabaseKey, setSupabaseKey] = useState(() => localStorage.getItem('ingly_supabase_key') || '');
+      const [supabaseConnected, setSupabaseConnected] = useState(false);
+      const [showSupabaseModal, setShowSupabaseModal] = useState(false);
+      const [supabaseClient, setSupabaseClient] = useState(null);
+
+      const initSupabaseConnection = (url, key) => {
+        if (!url || !key) return;
+        try {
+          if (window.supabase) {
+            const client = window.supabase.createClient(url, key);
+            setSupabaseClient(client);
+            client.from('books').select('id, book_number').limit(1).then(({ data, error }) => {
+              if (!error) {
+                setSupabaseConnected(true);
+                showToast('Supabase bazasi bilan xavfsiz ulanish faol!');
+              } else {
+                setSupabaseConnected(false);
+                console.warn('Supabase test ulanish xatosi:', error);
+              }
+            });
+          }
+        } catch (e) {
+          console.error('Supabase init xatosi:', e);
+        }
+      };
+
+      useEffect(() => {
+        if (supabaseUrl && supabaseKey) {
+          initSupabaseConnection(supabaseUrl, supabaseKey);
+        }
+      }, []);
 
       useEffect(() => {
         fetch('./all_words.json')
@@ -298,11 +333,26 @@
 
             {/* Supabase status badge */}
             <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
-              <div class="flex items-center gap-2 mb-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-xs font-bold text-slate-700">Supabase Baza: Faol</span>
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-2">
+                  <span class={`w-2.5 h-2.5 rounded-full ${supabaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+                  <span class="text-xs font-bold text-slate-700">
+                    {supabaseConnected ? 'Supabase: Jonli Ulanish' : 'Supabase: Lokal/Kesh'}
+                  </span>
+                </div>
               </div>
-              <p class="text-[11px] text-slate-500 leading-tight">PostgreSQL xavfsiz ulanish o'rnatilgan.</p>
+              <p class="text-[11px] text-slate-500 leading-tight mb-3">
+                {supabaseConnected 
+                  ? 'PostgreSQL bulut bazasi bilan sinxron.' 
+                  : 'Bulut bazasi ulanishini sozlash uchun bosing.'}
+              </p>
+              <button 
+                onClick={() => setShowSupabaseModal(true)}
+                class="w-full text-xs font-bold py-2 px-3 bg-white border border-slate-200 hover:border-brand-500 text-brand-600 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>{supabaseConnected ? 'Ulanishni ko\'rish' : 'Supabase\'ni ulash'}</span>
+              </button>
             </div>
           </aside>
 
@@ -883,6 +933,88 @@
 
             </div>
           </main>
+
+          {/* Supabase Sozlamalari Modali */}
+          {showSupabaseModal && (
+            <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M11.996 2C6.474 2 2 6.474 2 11.996c0 5.523 4.474 9.996 9.996 9.996 5.523 0 9.996-4.473 9.996-9.996C23.992 6.474 19.519 2 11.996 2zm1.61 14.887l-4.502 2.6c-.347.2-.782-.05-.782-.45V13.8l-2.072 1.2c-.347.2-.782-.05-.782-.45v-5.2c0-.4.435-.65.782-.45l4.502 2.6c.347.2.782-.05.782-.45V5.813c0-.4.435-.65.782-.45l4.502 2.6c.347.2.782-.05.782-.45v5.2c0 .4-.435.65-.782.45l-4.502-2.6c-.347-.2-.782.05-.782.45v5.237c0 .4.435.65.782.45l2.072-1.2c.347-.2.782.05.782.45v.537z"/></svg>
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-bold text-slate-800">Supabase Sozlamalari</h3>
+                      <p class="text-xs text-slate-400">Bulutli PostgreSQL bazasini boshqarish</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowSupabaseModal(false)} class="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer">✕</button>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Supabase Project URL</label>
+                    <input 
+                      type="text" 
+                      placeholder="https://xyzcompany.supabase.co" 
+                      value={supabaseUrl}
+                      onChange={(e) => setSupabaseUrl(e.target.value)}
+                      class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-brand-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Supabase Anon Key (Public Key)</label>
+                    <textarea 
+                      rows="3"
+                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      value={supabaseKey}
+                      onChange={(e) => setSupabaseKey(e.target.value)}
+                      class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-brand-500 font-mono"
+                    ></textarea>
+                  </div>
+
+                  <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-blue-800 leading-relaxed">
+                    <p class="font-bold mb-1">Qayerdan olish mumkin?</p>
+                    <p>Supabase loyihangizdan (supabase.com) <strong>Project Settings -> API</strong> bo'limiga kiring va <em>Project URL</em> hamda <em>anon (public)</em> kalitini nusxalab bu yerga joylang.</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                  <button 
+                    onClick={() => {
+                      localStorage.removeItem('ingly_supabase_url');
+                      localStorage.removeItem('ingly_supabase_key');
+                      setSupabaseUrl('');
+                      setSupabaseKey('');
+                      setSupabaseConnected(false);
+                      setShowSupabaseModal(false);
+                      showToast('Supabase ulanishi uzildi.');
+                    }}
+                    class="px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl cursor-pointer"
+                  >
+                    O'chirish
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const cleanUrl = supabaseUrl.trim();
+                      const cleanKey = supabaseKey.trim();
+                      if (cleanUrl && cleanKey) {
+                        localStorage.setItem('ingly_supabase_url', cleanUrl);
+                        localStorage.setItem('ingly_supabase_key', cleanKey);
+                        initSupabaseConnection(cleanUrl, cleanKey);
+                        showToast('Sozlamalar saqlandi, ulanish tekshirilmoqda...');
+                      }
+                      setShowSupabaseModal(false);
+                    }}
+                    class="px-5 py-2 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md transition cursor-pointer"
+                  >
+                    Saqlash va Ulanish
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       );
     }

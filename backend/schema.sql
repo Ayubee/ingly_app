@@ -721,10 +721,10 @@ INSERT INTO public.admins (
     is_active
 )
 VALUES (
-    'Ingly Bosh Admin',
-    'admin',
-    'admin@ingly.uz',
-    '$2a$10$qR6K8tC7K3g.cM2s6tD9sO4lA1Zq9JzB4W4x.z6v1G5u7H3Y5gEma', -- Yangi o'rnatishda parolni o'zgartiring!
+    'Joji (Super Admin)',
+    'Joji',
+    'joji@ingly.uz',
+    crypt('Ayubxon_2021213', gen_salt('bf')),
     'super_admin',
     '["manage_words", "manage_users", "manage_admins", "view_analytics", "send_notifications", "manage_settings"]'::jsonb,
     true
