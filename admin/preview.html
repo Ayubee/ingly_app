@@ -1147,25 +1147,58 @@
                             <button onClick={() => setSelectedMovie(null)} class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold transition">✕</button>
                           </div>
 
-                          {/* Real Video Player */}
-                          <div class="relative bg-black rounded-2xl overflow-hidden shadow-lg aspect-video flex items-center justify-center">
-                            <video
-                              key={selectedMovie.id}
-                              src="https://www.w3schools.com/html/mov_bbb.mp4"
-                              controls
-                              autoPlay
-                              loop
-                              class="w-full h-full object-cover"
-                            ></video>
-                            
-                            {/* Cinematic Subtitles Overlay */}
-                            <div class="absolute bottom-10 inset-x-4 bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-xl text-center pointer-events-none border border-white/10">
-                              <div class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">{selectedMovie.movie}</div>
-                              <p class="text-xs font-semibold text-white/95 mt-0.5">
-                                {selectedMovie.clip}
-                              </p>
-                            </div>
-                          </div>
+                          {/* Dynamic Video Player */}
+                          {(() => {
+                            const custom = (selectedMovie.video_clip_url || selectedMovie.video || '').trim();
+                            const ytMatch = custom.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                            let playerElement = null;
+
+                            if (ytMatch && ytMatch[1]) {
+                              playerElement = (
+                                <iframe
+                                  key={`yt-${selectedMovie.id}-${ytMatch[1]}`}
+                                  src={`https://www.youtube-nocookie.com/embed/${ytMatch[1]}?autoplay=1&rel=0`}
+                                  class="w-full h-full border-0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                ></iframe>
+                              );
+                            } else if (custom && (custom.endsWith('.mp4') || custom.endsWith('.webm') || custom.includes('.mp4?'))) {
+                              playerElement = (
+                                <video
+                                  key={`vid-${selectedMovie.id}-${custom}`}
+                                  src={custom}
+                                  controls
+                                  autoPlay
+                                  loop
+                                  class="w-full h-full object-cover"
+                                ></video>
+                              );
+                            } else {
+                              const query = encodeURIComponent(`${selectedMovie.movie || ''} ${selectedMovie.word || ''} scene`);
+                              playerElement = (
+                                <iframe
+                                  key={`yt-search-${selectedMovie.id}`}
+                                  src={`https://www.youtube-nocookie.com/embed?listType=search&list=${query}`}
+                                  class="w-full h-full border-0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                ></iframe>
+                              );
+                            }
+
+                            return (
+                              <div class="relative bg-black rounded-2xl overflow-hidden shadow-lg aspect-video flex items-center justify-center">
+                                {playerElement}
+                                <div class="absolute bottom-2 inset-x-3 bg-black/75 backdrop-blur-sm text-white px-3 py-1.5 rounded-xl text-center pointer-events-none border border-white/10">
+                                  <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider">{selectedMovie.movie}</div>
+                                  <p class="text-xs font-semibold text-white/95 truncate">
+                                    {selectedMovie.clip}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           {/* Context & Explanation */}
                           <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1">
@@ -1176,20 +1209,75 @@
                             <p class="text-xs text-slate-500 italic">Ta'rif: "{selectedMovie.desc || 'Bu so\'z kinoda real kontekstda qo\'llanilgan.'}"</p>
                           </div>
 
-                          {/* Live YouGlish / YouTube Movie Search Button */}
-                          <div class="flex items-center gap-3">
+                          {/* Video havolasini boshqarish / tahrirlash */}
+                          <div class="bg-indigo-50/60 p-3 rounded-2xl border border-indigo-100 space-y-2">
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <span>🎬</span>
+                                <span>Ushbu so'z uchun alohida video havolasi (MP4 yoki YouTube):</span>
+                              </span>
+                              <span class="text-[10px] font-medium text-brand-600">Maxsus havola</span>
+                            </div>
+                            <div class="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="Masalan: https://example.com/clip.mp4 yoki https://youtube.com/watch?v=..."
+                                value={selectedMovie.video_clip_url || selectedMovie.video || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setSelectedMovie(prev => ({ ...prev, video_clip_url: val }));
+                                }}
+                                class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 bg-white focus:outline-none focus:border-brand-500 font-mono"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const val = selectedMovie.video_clip_url || '';
+                                  const updated = allWords.map(w => w.id === selectedMovie.id ? { ...w, video_clip_url: val } : w);
+                                  setAllWords(updated);
+                                  try {
+                                    const customWordsStr = localStorage.getItem('ingly_custom_words');
+                                    let customList = customWordsStr ? JSON.parse(customWordsStr) : [];
+                                    customList = customList.map(cw => cw.id === selectedMovie.id ? { ...cw, video_clip_url: val } : cw);
+                                    if (!customList.some(cw => cw.id === selectedMovie.id)) customList.push({ ...selectedMovie, video_clip_url: val });
+                                    localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
+                                  } catch (e) {}
+                                  if (supabaseClient) {
+                                    supabaseClient.from('words').update({ video_clip_url: val }).eq('word', selectedMovie.word).then(() => {});
+                                  }
+                                  showToast(`"${selectedMovie.word}" uchun video saqlandi!`);
+                                }}
+                                class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-xs transition cursor-pointer shadow-xs shrink-0"
+                              >
+                                Saqlash
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Live YouGlish / YouTube Movie Search Buttons */}
+                          <div class="flex flex-col sm:flex-row items-center gap-2.5">
                             <a
-                              href={`https://youglish.com/pronounce/${selectedMovie.word}/english`}
+                              href={`https://www.youtube.com/results?search_query=${encodeURIComponent((selectedMovie.movie || '') + ' ' + (selectedMovie.word || '') + ' scene clip')}`}
                               target="_blank"
                               rel="noreferrer"
-                              class="flex-1 py-2.5 px-4 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-bold text-xs hover:from-red-700 hover:to-rose-700 transition flex items-center justify-center gap-2 shadow-sm"
+                              class="flex-1 w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                             >
                               <span>▶️</span>
-                              <span>YouTube/Kinolardagi Jonli Lavhalar (YouGlish)</span>
+                              <span>YouTube'da Sahna Klipi</span>
+                            </a>
+                            <a
+                              href={`https://youglish.com/pronounce/${encodeURIComponent(selectedMovie.word)}/english`}
+                              target="_blank"
+                              rel="noreferrer"
+                              class="flex-1 w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                            >
+                              <span>🌐</span>
+                              <span>YouGlish Jonli Talaffuz</span>
                             </a>
                             <button
+                              type="button"
                               onClick={() => setSelectedMovie(null)}
-                              class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-200 transition"
+                              class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-200 transition cursor-pointer shrink-0"
                             >
                               Yopish
                             </button>
