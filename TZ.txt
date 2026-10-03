@@ -1,0 +1,323 @@
+================================================================================
+                    TEXNIK TOPSHIRIQ (TZ)
+Loyiha rasmiy nomi: Ingly (Ingly - 4000 Essential English Words)
+Ilova shiori (Slogan): "Har kuni yangi so'z, har qadamda bilim!"
+Muallif / Buyurtmachi: inglyJon
+Sana: 2026-10-03
+Holati: Loyihalash va tasdiqlash bosqichida
+================================================================================
+
+1. LOYIHANING MAQSADI VA BRENDING
+--------------------------------------------------------------------------------
+1.1. Maqsad:
+Paul Nation muallifligidagi mashhur "4000 Essential English Words" kitoblar
+to'plami (Book 1 - Book 6) asosida o'zbek foydalanuvchilari uchun qulay,
+zamonaviy, yengil va xavfsiz so'z yodlash mobil ilovasi hamda uni boshqarish
+uchun alohida web admin panel yaratish.
+
+1.2. Brending va Logo:
+- Nomi: Ingly
+- Logo konsepsiyasi:
+  * Shakl: Zamonaviy yumaloq burchakli (squircle) mobil ilova ikonasi
+  * Ranglar: Royal Indigo (#5B4DFF) dan Sky Blue (#38BDF8) ga gradient
+  * Markaziy belgi: Ochiq kitob (ta'lim) va markazida porlab turgan
+    yulduz/nur (bilim va intellektual o'sish) ramzi
+  * Tipografiya: Toza oq rangda 'INGLY' yozuvi (minimalist neo-grotesk font)
+
+
+2. PLATFORMA VA TEXNOLOGIYALAR
+--------------------------------------------------------------------------------
+- Mobil ilova: React Native (Expo / Bare workflow) - Android & iOS
+- Web Admin Panel: React.js (Vite / Next.js) + TailwindCSS
+- Backend API: Node.js (Express / NestJS) yoki Python (FastAPI)
+- Ma'lumotlar bazasi (Asosiy Server): SQL (PostgreSQL yoki MySQL)
+- Mobil lokal kesh bazasi: SQLite / WatermelonDB / MMKV
+- Autentifikatsiya: JWT (JSON Web Token), Google OAuth 2.0, SMS/Phone Auth
+- Ovoz (Talaffuz): Ichki Text-to-Speech (TTS) + Serverdagi OPUS / AAC-HE audiolari
+- Fayl saqlash (Storage): Supabase Storage / S3 (Rasmlar WebP, Audiolar OPUS formatida)
+
+
+3. ILOVA HAJMI VA ISHLASH MEZONI (ARXITEKTURA)
+--------------------------------------------------------------------------------
+3.1. Gibrid yondashuv (Smart Cache) va Hajm:
+- Maqsadli o'rnatish hajmi: ~15 - 20 MB (yengil va tez yuklanuvchi).
+- Barcha matnlar (4000 so'z, ta'rif, misol, o'zbekcha tarjimalar) ilovada
+  lokal saqlanadi (internetsiz bir zumda ochiladi).
+- Rasmlar, audio va videolavhalar serverdan faqat kerakli paytda tortilib,
+  avtomatik keshlanadi.
+
+3.2. Offline-First va Avtomatik Sinxronizatsiya Mexanizmi (Sync Engine):
+Foydalanuvchi metro, yo'l yoki internetsiz joyda so'z yodlasa yoki test ishlasa:
+- Optimistic UI (Tezkor reaksiya): Foydalanuvchi "Yodlandi" desa yoki test yechsa,
+  ekran hech qanday kuttirishsiz darhol yangilanadi.
+- Lokal Navbat (Offline Action Queue):
+  * Har bir oflayn amal (so'z statusi, o'rganilgan vaqti, test ballari) lokal
+    WatermelonDB / MMKV bazasidagi `sync_queue` ro'yxatiga navbatga qo'yiladi:
+    `{ action: 'UPDATE_PROGRESS', word_id: 12, status: 'mastered', timestamp: '...' }`
+- Tarmoq monitoringi (NetInfo):
+  * React Native fon rejimida internet mavjudligini kuzatib boradi.
+- Avtomatik Batch Sinxronizatsiya (Supabase Sync):
+  * Qurilmada internet paydo bo'lishi bilan navbatdagi barcha o'zgarishlar bitta
+    to'plam (batch request) ko'rinishida Supabase API'ga jo'natiladi.
+- Nizolarni hal qilish (Conflict Resolution):
+  * Agar bir vaqtda boshqa qurilmadan ham o'zgarish kiritilgan bo'lsa,
+    `last-write-wins` (eng so'nggi vaqt tamg'asi) qoidasi asosida server yangilanadi.
+  * Muvaffaqiyatli sinxronlangach, lokal navbat tozalanadi va foydalanuvchining
+    kunlik streaki (olovchasi) to'g'ri hisoblab saqlanadi.
+
+3.3. Audio va Media Fayllarini Optimallashtirish (Trafik va Server tejamkorligi):
+- Standart rejim (Asosiy / Bepul trafik):
+  * Qurilmaning o'z ichki Text-to-Speech (TTS - Google TTS / Apple Speech) tizimidan
+    foydalaniladi.
+  * Natija: Serverga 0 ta so'rov, 0 MB trafik va 0 bayt joy sarfi! So'zlar va gaplar
+    internetsiz ham bir zumda toza talaffuz qilinadi.
+- Original Diktor Ovozini Siqish (OPUS / AAC-HE):
+  * An'anaviy og'ir MP3 (128 kbps) o'rniga zamonaviy OGG / OPUS (24-32 kbps)
+    formati qo'llaniladi.
+  * OPUS formati MP3 bilan bir xil ovoz sifatini saqlagan holda 5-6 barobar kichik
+    hajmga ega (bitta so'z audiosi bor-yo'g'i 6-8 KB!).
+  * Jami 4000 ta so'z audiosi 350 MB dan atigi ~25-30 MB ga qisqaradi.
+- Rasmlarni Optimallashtirish:
+  * Barcha illyustratsiyalar WebP (yoki AVIF) formatida 80% sifat bilan siqiladi.
+  * Har bir rasm ~15-20 KB bo'lib, mobil internetda darhol ochiladi va keshlanadi.
+
+
+4. ILOVANING ASOSIY BO'LIMLARI VA FUNKSIYALARI
+--------------------------------------------------------------------------------
+4.1. Bosh sahifa (Dashboard / Home):
+  - 6 ta kitob (Book 1 dan Book 6 gacha) darajalari kartochkalari.
+  - Har bir kitobda 30 tadan unit (dars), har bir unitda 20 tadan so'z.
+  - O'zlashtirish ko'rsatkichi (Progress bar, masalan: 45% tugatildi).
+  - Kunlik streak (Olovcha) va kunlik maqsad (masalan: 20 ta so'z).
+
+4.2. So'z o'rganish sahifasi (Flashcards):
+  - Inglizcha so'z va uning transkripsiyasi (IPA).
+  - So'z turkumi (Noun, Verb, Adjective...).
+  - Mavzuli illyustratsiya / rasm.
+  - Inglizcha qisqa va tushunarli ta'rifi.
+  - O'zbekcha aniq tarjimasi.
+  - Ovoz tugmasi (bitta bosishda to'g'ri talaffuzni eshitish).
+  - Misol gap (so'z kontekstda ko'rsatiladi).
+  - 3 ta oraliq takrorlash tugmasi:
+    * "Qiyin" (Qizil) -> So'zni tez-tez takrorlashga qo'shadi.
+    * "Takrorlash" (Moviy) -> Ertangi kun rejasiga qo'yadi.
+    * "Yodlandi" (Yashil) -> O'rganilganlar ro'yxatiga o'tkazadi.
+
+4.3. Testlar, O'yinlar va Gamifikatsiya (Quiz & Interactive Learning):
+  - 4 variantli klassik test (Inglizcha -> O'zbekcha yoki teskarisi).
+  - Tinglab topish (Listening): Talaffuz qilingan so'zni eshitib to'g'ri variantni tanlash.
+  - Harflardan so'z yasash (Spelling puzzle): Aralash harflardan to'g'ri so'zni terish.
+  - Juftini topish (Matching pairs): 5 ta inglizcha so'z va ularning tarjimasini tez ulab chiqish.
+  - "Xatolar ustida ishlash": Foydalanuvchi adashgan so'zlar alohida saqlanadi va qayta mashq qildiriladi.
+
+4.4. Kinolar va Seriallardan Qisqa Parchalar (Movie Clips / Video Context):
+  - Har bir so'zning real hayotda qanday ishlatilishini ko'rsatuvchi 3-5 soniyalik
+    qisqa video lavhalar (Mashhur filmlar, seriallar: masalan Friends, Harry Potter,
+    Marvel filmlaridan so'z aytilgan aniq lahza).
+  - Foydalanuvchiga hissiy xotira (visual & emotional memory) orqali so'zni umrbod
+    eslab qolishga yordam beradi.
+  - Video lavhalar serverda saqlanadi va kerak bo'lgandagina yengil yuklanadi.
+
+4.5. So'zlar lug'ati va Qidiruv:
+  - 4000 ta so'z bo'yicha qidiruv (inglizcha va o'zbekcha).
+  - "Tanlanganlar" (Favorites) ro'yxati.
+
+4.6. Kreativ Bildirishnomalar va Vaqt Mintaqalari (Smart Timezone-Aware Push Notifications):
+  - Vaqt mintaqasini hisobga olish (User Local Timezone):
+    * Foydalanuvchilar qayerda yashashidan qat'i nazar (Toshkent, Moskva, London, Nyu-York),
+      xabarlar qat'iy UTC emas, ularning mahalliy vaqtiga moslab yuboriladi (masalan: kechki 20:00 da).
+    * Qurilmaning vaqt mintaqasi (`Asia/Tashkent` va h.k.) avtomatik aniqlanadi va serverda saqlanadi.
+  - Standart, zerikarli eslatmalardan qochilgan do'stona, qiziqarli xabarlar:
+    * "🔥 7 kunlik streak'ingiz o'chib qolmasin! 5 ta so'z yodlang va olovni saqlang."
+    * "☕ Qahvangiz sovumasidan oldin bugungi 5 ta yangi so'z bilan tanishib olaylikmi?"
+    * "👀 Bugungi so'zlaringiz sizni kuta-kuta zerikib qoldi. 3 daqiqa vaqt ajrata olasizmi?"
+    * "🧠 Bugun ingliz tilida o'ylash vaqti keldi! Yangi unit eshikni taqillatyapti."
+    * "⚡ Do'stlaringiz allaqachon bugungi darsni tugatishdi. Siz qachon boshlaysiz?"
+
+4.7. Kunlik Maqsad (Daily Goal) Moslashuvchan Sozlamasi:
+  - Foydalanuvchi o'zining bo'sh vaqti va imkoniyatiga qarab kunlik rejasini tanlay oladi:
+    * "Yengil" -> Kuniga 5 ta yoki 10 ta so'z
+    * "Standart" -> Kuniga 20 ta so'z (odatiy rejim)
+    * "Intensiv" -> Kuniga 30 ta yoki 40 ta so'z
+  - Bosh sahifadagi progress halqasi va olovcha (streak) aynan foydalanuvchi tanlagan
+    kunlik maqsadga yetganda muvaffaqiyat bilan faollashadi.
+
+
+5. BACKEND VA SERVER ARXITEKTURASI (TAVSIYA VA TANLOV)
+--------------------------------------------------------------------------------
+- Asosiy Backend platforma: Supabase (Enterprise darajasidagi PostgreSQL)
+  * Nega Supabase?
+    1. Baza: Dunyodagi eng ishonchli ochiq kodli SQL (PostgreSQL).
+    2. Autentifikatsiya: Google OAuth, SMS/Telefon va Email/Parol tayyor va xavfsiz.
+    3. Storage (Bulutli xotira): Rasmlar, audio va kino parchalarini (WebP, MP3, MP4)
+       saqlash uchun yuqori tezlikdagi CDN tarmog'i.
+    4. Row Level Security (RLS): Har bir foydalanuvchi ma'lumoti bank darajasida himoyalangan.
+    5. Xarajat: Boshida 100% BEPUL (50 000 tagacha faol foydalanuvchi uchun yetarli).
+    6. React va React Native bilan ulanishi juda yengil va tezkor.
+- Yordamchi API: Node.js (Express / TypeScript) yoki Supabase Edge Functions.
+
+
+6. DIZAYN VA ASOSIY RANGLAR PALITRASI (HEX)
+--------------------------------------------------------------------------------
+- Asosiy brend rangi (Primary):    #5B4DFF (Royal Indigo)
+- Ikkilamchi rang (Accent):        #38BDF8 (Sky Blue)
+- Orqa fon (Background):          #F8FAFC (Soft Slate White)
+- Kartochka foni (Card Surface):  #FFFFFF (Pure White)
+- Hoshiya va soyalar (Borders):   #E2E8F0 (Light Gray)
+- Muvaffaqiyat (Yodlandi):         #22C55E (Emerald Green)
+- Takrorlash (Info):              #0EA5E9 (Ocean Blue)
+- Qiyin / Xato (Warning):         #EF4444 (Soft Coral Red)
+- Streak (Olovcha):               #F97316 (Orange Flame)
+- Asosiy matn (Text Primary):     #0F172A (Dark Navy)
+- Ikkilamchi matn (Secondary):    #64748B (Slate Gray)
+
+
+7. MA'LUMOTLAR TARKIBI (HAR BIR SO'Z FORMATI)
+--------------------------------------------------------------------------------
+Har bir so'z quyidagi ma'lumotlar tuzilmasiga ega bo'ladi:
+{
+  "id": 1,
+  "book": 1,
+  "unit": 1,
+  "word": "Afraid",
+  "phonetic": "/əˈfreɪd/",
+  "pos": "adjective",
+  "uzbek": "Qo'rqqan",
+  "definition": "When someone is afraid, they feel fear.",
+  "definition_uz": "Biror kimsa qo'rqqanda, u xavf yoki vahimani his qiladi.",
+  "example": "The woman was afraid of what she saw.",
+  "example_uz": "Ayol ko'rgan narsasidan qo'rqib ketdi.",
+  "image_url": "https://.../afraid.webp",
+  "audio_url": "https://.../afraid.mp3",
+  "video_clip_url": "https://.../afraid_clip.mp4"
+}
+
+
+8. FOYDALANUVCHILARNI RO'YXATDAN O'TKAZISH VA KIRISH (AUTH)
+--------------------------------------------------------------------------------
+8.1. Ro'yxatdan o'tish (Register):
+  - Ism va familiya
+  - Telefon raqami
+  - Login (username)
+  - Parol (kamida 6-8 ta belgi, xavfsiz shifrlangan - bcrypt)
+8.2. Google orqali kirish (Google Sign-In):
+  - Bitta bosish orqali tezkor ro'yxatdan o'tish va kirish (OAuth 2.0).
+8.3. Tizimga kirish (Login):
+  - Login (yoki telefon raqam) va parol orqali kirish.
+  - Parolni tiklash (SMS yoki Email orqali).
+8.4. Sessiya va Xavfsizlik:
+  - JWT Access Token va Refresh Token mexanizmi.
+  - Har bir foydalanuvchining shaxsiy o'rganish progressi, yodlagan so'zlari
+    va statistikasi SQL bazada saqlanadi (boshqa telefondan kirsa ham progress
+    yo'qolmaydi).
+
+8.5. Xavfsizlik va Rate Limiting (Anti-Spam & Anti-Brute-Force):
+  - Kirish (Login) va Ro'yxatdan o'tish (Register) cheklovlari:
+    * Bitta IP yoki telefon raqamidan 15 daqiqada ko'pi bilan 5 ta muvaffaqiyatsiz
+      urinishga ruxsat beriladi.
+    * SMS orqali tasdiqlashda flood / spam hujumlarining oldi olinadi (1 daqiqada 1 ta SMS).
+    * Parollarni brute-force (avtomatlashtirilgan terish) orqali buzishdan himoya.
+
+
+9. ALOHIDA ADMIN PANEL (WEB)
+--------------------------------------------------------------------------------
+Texnologiya: React.js + TailwindCSS + Dashboard UI
+Asosiy imkoniyatlari:
+
+9.1. Foydalanuvchilar to'liq boshqaruvi (Users Management):
+  - Tizimga kirgan va ro'yxatdan o'tgan barcha odamlarni ko'rish (ism, telefon,
+    login, ro'yxatdan o'tgan sana, oxirgi faollik vaqti, o'rganish progressi).
+  - Foydalanuvchini bloklash (ban qilish) va blokdan chiqarish.
+  - Foydalanuvchining loginini (username) o'zgartirish.
+  - Foydalanuvchining parolini admin tomonidan o'zgartirish / yangilash.
+  - Foydalanuvchining telefon raqami va shaxsiy ma'lumotlarini tahrirlash.
+
+9.2. Adminlar va Huquqlar boshqaruvi (RBAC - Role-Based Access Control):
+  - Yangi admin qo'shish va mavjud adminlarni o'chirish.
+  - Adminlarning ruxsatlari va imkoniyatlarini (Permissions) sozlash:
+    * Har bir adminga alohida huquqlar berish yoki olib tashlash:
+      - [x] So'zlar va darslarni tahrirlash huquqi
+      - [x] Foydalanuvchilarni ko'rish, tahrirlash va bloklash huquqi
+      - [x] Yangi admin qo'shish va boshqarish huquqi (Faqat Super Admin)
+      - [x] Statistika va hisobotlarni ko'rish huquqi
+      - [x] Push-xabarnoma yuborish huquqi
+    * Rollar: Super Admin (to'liq vakolat), Moderator, Kontent menejer (Editor).
+
+9.3. Xavfsizlik va Audit Loglar (Admin Harakatlari Tarixi):
+  - Super Adminlar uchun boshqa adminlarning barcha harakatlarini qat'iy nazorat qilish:
+    * Kim qaysi foydalanuvchini blokladi / blokdan chiqardi?
+    * Kim qaysi so'zni yoki tarjimani o'zgartirdi?
+    * Kim qaysi vaqtda tizimga kirdi va qanday amal bajardi?
+    * Har bir harakat vaqt tamg'asi (timestamp) va IP manzili bilan qayd etib boriladi.
+
+9.4. Dashboard va Statistika:
+  - Jami va faol foydalanuvchilar soni (kunlik, oylik).
+  - Eng ko'p o'rganilayotgan kitoblar, unitlar va qiyin so'zlar tahlili.
+
+9.5. So'zlar va Darslar boshqaruvi (CRUD):
+  - Kitoblar (Book 1-6) va Unitlar (1-30) bo'yicha so'zlar ro'yxati.
+  - Yangi so'z qo'shish, mavjud so'zlarni tahrirlash (tarjima, ta'rif, misol).
+  - So'z rasmlari va audio fayllarini serverga yuklash (Upload).
+  - Excel / JSON fayldan ommaviy so'zlarni yuklash (Import/Export).
+
+9.6. Monetizatsiya va Tizim sozlamalari (Feature Flags):
+  - Reklama boshqaruvi:
+    * Google AdMob reklamalarini bitta tugma (switch) bilan YOQISH / O'CHIRISH.
+    * Hozirda: Butunlay O'CHIQ (Barcha foydalanuvchilar uchun 100% bepul va reklamasiz).
+    * Kelgusida: Admin paneldan yoqilganda ilovada avtomatik banner va interstitial reklamalar ko'rinishni boshlaydi.
+  - Pullik obuna (Premium / VIP) boshqaruvi:
+    * Obunani YOQISH / O'CHIRISH tugmasi (Hozirda: O'CHIQ, barcha 6 ta kitob ochiq).
+    * Agar obuna yoqilsa: qaysi kitoblar bepul (masalan: Book 1-2 bepul, Book 3-6 pullik) ekanligini admin paneldan belgilash imkoniyati.
+    * Obuna narxlarini belgilash (oylik, yillik).
+    * Foydalanuvchiga qo'lda Premium obuna berish yoki bekor qilish.
+
+9.7. Bildirishnomalar (Push Notifications):
+  - Foydalanuvchilarga umumiy yoki shaxsiy eslatma xabarlari yuborish.
+
+
+10. MONETIZATSIYA STRATEGIYASI
+--------------------------------------------------------------------------------
+- Boshlang'ich bosqich: Ilova 100% BEPUL va REKLAMASIZ bo'ladi.
+  * Maqsad: Dastlab ko'p foydalanuvchilarni jalb qilish, ijobiy fikrlar (reviews)
+    yig'ish va auditoriyani kengaytirish.
+- Keyingi bosqich (Admin paneldan bir zumda yoqiladigan qilib tayyorlanadi):
+  * Google AdMob reklamalari (so'zlar orasida nozik bannerlar yoki testdan so'ng).
+  * Ingly Premium obunasi (Reklamalarni o'chirish, barcha 6 ta kitob audiolari
+    va cheksiz testlar).
+
+
+11. SQL MA'LUMOTLAR BAZASI STRUKTURASI
+--------------------------------------------------------------------------------
+Baza: PostgreSQL (Supabase)
+Asosiy jadvallar:
+- `users`: id, full_name, phone, username, password_hash, google_id, avatar_url,
+          timezone (VARCHAR(50) DEFAULT 'Asia/Tashkent'),
+          daily_goal (INT DEFAULT 20),
+          is_blocked (BOOLEAN DEFAULT false), is_premium (BOOLEAN DEFAULT false),
+          premium_until, last_login_at, created_at
+- `books`: id, book_number (1-6), title, description, total_units, is_free (BOOLEAN DEFAULT true)
+- `units`: id, book_id, unit_number (1-30), title
+- `words`: id, unit_id, word, phonetic, part_of_speech, uzbek_translation,
+           definition, definition_uz, example, example_uz,
+           image_url, audio_url, video_clip_url
+- `user_progress`: id, user_id, word_id, status ('hard', 'review', 'mastered'),
+                  review_count, next_review_date, last_reviewed_at
+- `user_streaks`: id, user_id, current_streak, max_streak, last_activity_date,
+                 words_learned_today, daily_goal
+- `admins`: id, full_name, username, password_hash, role ('super_admin', 'editor', 'moderator'),
+           permissions (JSON/array: ['manage_words', 'manage_users', 'manage_admins', ...]),
+           is_active, created_at
+- `admin_audit_logs`: id, admin_id, action ('BLOCK_USER', 'EDIT_WORD', 'RESET_PASSWORD', 'CHANGE_SETTINGS'),
+                     target_type, target_id, details (JSONB), ip_address, created_at
+- `app_settings`: id, setting_key (masalan: 'ads_enabled', 'premium_mode_enabled', 'free_books_count'),
+                 setting_value, updated_at
+
+
+12. ISH BOSQICHLARI (ROADMAP)
+--------------------------------------------------------------------------------
+[ ] 1-bosqich: Supabase ma'lumotlar bazasi va Auth/Storage arxitekturasini sozlash
+[ ] 2-bosqich: React.js da Admin Panel yaratish (So'zlar, kinolar, xabarlar va foydalanuvchilar)
+[ ] 3-bosqich: 4000 ta so'z, tarjimalar, rasm, audio va videolarni bazaga yuklash
+[ ] 4-bosqich: React Native mobil ilovasini ishlab chiqish (UI, Flashcards, Quiz, Kinolar, TTS)
+[ ] 5-bosqich: Testlash, optimallashtirish va relizga tayyorlash
+================================================================================
