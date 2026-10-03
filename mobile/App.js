@@ -5,10 +5,11 @@
  * Markaziy navigatsiya, UserProvider va Auth/Onboarding nazorati.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
 import { colors } from './src/theme.js';
 import { UserProvider, useUser } from './src/context/UserContext.js';
+import { initAppSettings } from './src/services/appSettingsService.js';
 import AuthScreen from './src/screens/AuthScreen.js';
 import HomeScreen from './src/screens/HomeScreen.js';
 import LearnScreen from './src/screens/LearnScreen.js';
@@ -20,6 +21,10 @@ import BottomNavigation from './src/components/BottomNavigation.js';
 function MainAppContent() {
   const { user, isLoading } = useUser();
   const [currentTab, setCurrentTab] = useState('Home');
+
+  useEffect(() => {
+    initAppSettings();
+  }, []);
 
   if (isLoading) {
     return (

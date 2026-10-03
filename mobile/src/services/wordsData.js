@@ -7,6 +7,7 @@
  */
 
 import { getAllProgress, getFavorites, getWordProgress } from './storage';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 // 6 ta kitobning umumiy konfiguratsiyasi
 export const BOOKS_METADATA = [
@@ -639,6 +640,7 @@ export async function getUnits(bookNumber) {
 
 /**
  * Berilgan kitob va darsdagi 20 ta so'zni foydalanuvchi progressi bilan olish
+ * (Supabase bulut bazasidagi eng so'nggi yangilangan so'zlarni ham avtomatik tortadi)
  */
 export async function getUnitWords(bookNumber, unitNumber) {
   const bNum = Number(bookNumber);
@@ -646,9 +648,47 @@ export async function getUnitWords(bookNumber, unitNumber) {
   const allProgress = await getAllProgress();
   const favorites = new Set((await getFavorites()).map(Number));
 
+  // 1. Supabase'dan jonli so'zlarni tekshirish
+  const remoteWordsMap = new Map();
+  if (isSupabaseConfigured()) {
+    try {
+      const { data, error } = await supabase
+        .from('words')
+        .select('*')
+        .limit(20);
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        data.forEach(w => {
+          const idx = w.order_index || 1;
+          remoteWordsMap.set(idx, {
+            id: w.id,
+            book: bNum,
+            unit: uNum,
+            word: w.word,
+            phonetic: w.phonetic,
+            pos: w.part_of_speech || 'noun',
+            uzbek: w.uzbek_translation,
+            definition: w.definition,
+            definition_uz: w.definition_uz,
+            example: w.example,
+            example_uz: w.example_uz,
+            image_url: w.image_url,
+            audio_url: w.audio_url,
+            video_clip_url: w.video_clip_url,
+            movie: 'Ingly Cinema',
+            clip: `Ingly Video: ${w.word}`
+          });
+        });
+      }
+    } catch (e) {
+      // Oflayn rejim
+    }
+  }
+
   const words = [];
   for (let i = 1; i <= 20; i++) {
-    const wordObj = getOrGenerateWord(bNum, uNum, i);
+    // Agar Supabase bazasida admin kiritgan so'z bo'lsa uni olamiz, aks holda oflayn bazadan
+    const wordObj = remoteWordsMap.get(i) || getOrGenerateWord(bNum, uNum, i);
     const prog = allProgress[String(wordObj.id)] || null;
 
     words.push({

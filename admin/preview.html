@@ -102,9 +102,18 @@
       };
 
       const [tab, setTab] = useState('dashboard');
-      const [adsEnabled, setAdsEnabled] = useState(false);
-      const [vipEnabled, setVipEnabled] = useState(false);
-      const [freeBooks, setFreeBooks] = useState(6);
+      const [adsEnabled, setAdsEnabled] = useState(() => {
+        const saved = localStorage.getItem('ingly_ads_enabled');
+        return saved !== null ? JSON.parse(saved) : false;
+      });
+      const [vipEnabled, setVipEnabled] = useState(() => {
+        const saved = localStorage.getItem('ingly_vip_enabled');
+        return saved !== null ? JSON.parse(saved) : false;
+      });
+      const [freeBooks, setFreeBooks] = useState(() => {
+        const saved = localStorage.getItem('ingly_free_books');
+        return saved !== null ? Number(saved) : 6;
+      });
       const [selectedMovie, setSelectedMovie] = useState(null);
       const [searchTerm, setSearchTerm] = useState('');
       const [activeBook, setActiveBook] = useState(1);
@@ -115,18 +124,41 @@
         setTimeout(() => setToast(''), 3000);
       };
 
-      const [users, setUsers] = useState([
-        { id: 1, name: 'Anvar Karimov', phone: '+998 90 123 45 67', username: 'anvar_k', words: 420, streak: 14, isBlocked: false, isVip: false },
-        { id: 2, name: 'Dilnoza Rahimova', phone: '+998 93 987 65 43', username: 'dilnoza_r', words: 890, streak: 28, isBlocked: false, isVip: true },
-        { id: 3, name: 'Jasur Bekmirzayev', phone: '+998 97 555 44 33', username: 'jasur_pro', words: 120, streak: 3, isBlocked: true, isVip: false },
-        { id: 4, name: 'Madina Umarova', phone: '+998 91 333 22 11', username: 'madina_u', words: 640, streak: 21, isBlocked: false, isVip: false }
-      ]);
+      const [users, setUsers] = useState(() => {
+        const saved = localStorage.getItem('ingly_users');
+        if (saved) {
+          try { return JSON.parse(saved); } catch (e) {}
+        }
+        return [
+          { id: 1, name: 'Anvar Karimov', phone: '+998 90 123 45 67', username: 'anvar_k', words: 420, streak: 14, isBlocked: false, isVip: false },
+          { id: 2, name: 'Dilnoza Rahimova', phone: '+998 93 987 65 43', username: 'dilnoza_r', words: 890, streak: 28, isBlocked: false, isVip: true },
+          { id: 3, name: 'Jasur Bekmirzayev', phone: '+998 97 555 44 33', username: 'jasur_pro', words: 120, streak: 3, isBlocked: true, isVip: false },
+          { id: 4, name: 'Madina Umarova', phone: '+998 91 333 22 11', username: 'madina_u', words: 640, streak: 21, isBlocked: false, isVip: false }
+        ];
+      });
 
       const [allWords, setAllWords] = useState([]);
       const [selectedBook, setSelectedBook] = useState(1);
       const [selectedUnit, setSelectedUnit] = useState('all');
       const [page, setPage] = useState(1);
       const pageSize = 20;
+
+      // Word Modal (Add / Edit) State
+      const [showWordModal, setShowWordModal] = useState(false);
+      const [editingWord, setEditingWord] = useState(null);
+      const [wordForm, setWordForm] = useState({
+        word: '',
+        phonetic: '',
+        pos: 'noun',
+        uzbek: '',
+        definition: '',
+        definition_uz: '',
+        example: '',
+        example_uz: '',
+        book: 1,
+        unit: 1,
+        video_clip_url: ''
+      });
 
       const LIVE_SUPABASE_URL = 'https://lbsqxownrjfmjoojdsfk.supabase.co';
       const LIVE_SUPABASE_KEY = 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
@@ -143,13 +175,48 @@
           if (window.supabase) {
             const client = window.supabase.createClient(url, key);
             setSupabaseClient(client);
-            client.from('books').select('id, book_number').limit(1).then(({ data, error }) => {
-              if (!error) {
+
+            // 1. App settings ni o'qish (ads, vip, free books)
+            client.from('app_settings').select('*').then(({ data, error }) => {
+              if (!error && Array.isArray(data)) {
                 setSupabaseConnected(true);
-                showToast('Supabase bazasi bilan xavfsiz ulanish faol!');
+                data.forEach(item => {
+                  if (item.setting_key === 'ads_enabled') {
+                    const val = item.setting_value === true || item.setting_value === 'true';
+                    setAdsEnabled(val);
+                    localStorage.setItem('ingly_ads_enabled', JSON.stringify(val));
+                  } else if (item.setting_key === 'premium_mode_enabled') {
+                    const val = item.setting_value === true || item.setting_value === 'true';
+                    setVipEnabled(val);
+                    localStorage.setItem('ingly_vip_enabled', JSON.stringify(val));
+                  } else if (item.setting_key === 'free_books_count') {
+                    const val = Number(item.setting_value) || 6;
+                    setFreeBooks(val);
+                    localStorage.setItem('ingly_free_books', String(val));
+                  }
+                });
+                showToast('Supabase sozlamalari yuklandi!');
               } else {
                 setSupabaseConnected(false);
-                console.warn('Supabase test ulanish xatosi:', error);
+                console.warn('Supabase app_settings fetch xatosi:', error);
+              }
+            });
+
+            // 2. Foydalanuvchilar ro'yxatini yuklash
+            client.from('users').select('*').then(({ data, error }) => {
+              if (!error && Array.isArray(data) && data.length > 0) {
+                const mapped = data.map(u => ({
+                  id: u.id,
+                  name: u.full_name || 'Noma\'lum',
+                  phone: u.phone || '-',
+                  username: u.username || 'user',
+                  words: u.words_learned || 0,
+                  streak: u.current_streak || 0,
+                  isBlocked: !!u.is_blocked,
+                  isVip: !!u.is_premium
+                }));
+                setUsers(mapped);
+                localStorage.setItem('ingly_users', JSON.stringify(mapped));
               }
             });
           }
@@ -168,8 +235,24 @@
         fetch('./all_words.json')
           .then(r => r.json())
           .then(data => {
-            setAllWords(data);
-            showToast(`Muvaffaqiyatli: ${data.length} ta so'z yuklandi!`);
+            // LocalStorage'dagi maxsus tahrirlangan so'zlarni birlashtirish
+            const customWordsStr = localStorage.getItem('ingly_custom_words');
+            let merged = data;
+            if (customWordsStr) {
+              try {
+                const customWords = JSON.parse(customWordsStr);
+                const customMap = new Map(customWords.map(w => [w.id, w]));
+                merged = data.map(w => customMap.get(w.id) || w);
+                // Agar yangi qo'shilgan so'zlar bo'lsa
+                customWords.forEach(cw => {
+                  if (!merged.some(w => w.id === cw.id)) {
+                    merged.unshift(cw);
+                  }
+                });
+              } catch (e) {}
+            }
+            setAllWords(merged);
+            showToast(`Muvaffaqiyatli: ${merged.length} ta so'z yuklandi!`);
           })
           .catch(err => {
             console.error('So\'zlar yuklanmadi:', err);
@@ -185,9 +268,209 @@
         }
       };
 
-      const toggleBlockUser = (id) => {
-        setUsers(users.map(u => u.id === id ? { ...u, isBlocked: !u.isBlocked } : u));
+      // Reklama switchi
+      const handleToggleAds = async () => {
+        const newVal = !adsEnabled;
+        setAdsEnabled(newVal);
+        localStorage.setItem('ingly_ads_enabled', JSON.stringify(newVal));
+        showToast(`Reklama: ${newVal ? 'YOQILDI' : 'O\'CHIRILDI'}`);
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('app_settings').upsert({
+              setting_key: 'ads_enabled',
+              setting_value: newVal,
+              description: 'Google AdMob reklamalarini ilovada ko\'rsatish.'
+            }, { onConflict: 'setting_key' });
+          } catch (e) {
+            console.warn('Supabase ads save error:', e);
+          }
+        }
+      };
+
+      // VIP obuna switchi
+      const handleToggleVip = async () => {
+        const newVal = !vipEnabled;
+        setVipEnabled(newVal);
+        localStorage.setItem('ingly_vip_enabled', JSON.stringify(newVal));
+        showToast(`VIP rejim: ${newVal ? 'YOQILDI' : 'O\'CHIRILDI'}`);
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('app_settings').upsert({
+              setting_key: 'premium_mode_enabled',
+              setting_value: newVal,
+              description: 'Pullik obuna (Premium) rejimini yoqish/o\'chirish.'
+            }, { onConflict: 'setting_key' });
+          } catch (e) {
+            console.warn('Supabase vip save error:', e);
+          }
+        }
+      };
+
+      // Bepul kitoblar soni
+      const handleSetFreeBooks = async (num) => {
+        setFreeBooks(num);
+        localStorage.setItem('ingly_free_books', String(num));
+        showToast(`Bepul kitoblar: ${num} ta etib belgilandi`);
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('app_settings').upsert({
+              setting_key: 'free_books_count',
+              setting_value: num,
+              description: 'Foydalanuvchilarga bepul beriladigan kitoblar soni.'
+            }, { onConflict: 'setting_key' });
+          } catch (e) {
+            console.warn('Supabase free books save error:', e);
+          }
+        }
+      };
+
+      // Foydalanuvchini bloklash / blokdan ochish
+      const toggleBlockUser = async (id) => {
+        const updated = users.map(u => u.id === id ? { ...u, isBlocked: !u.isBlocked } : u);
+        setUsers(updated);
+        localStorage.setItem('ingly_users', JSON.stringify(updated));
         showToast('Foydalanuvchi holati yangilandi!');
+
+        if (supabaseClient) {
+          try {
+            const target = updated.find(u => u.id === id);
+            await supabaseClient.from('users').update({ is_blocked: target.isBlocked }).eq('id', id);
+          } catch (e) {
+            console.warn('Supabase block user error:', e);
+          }
+        }
+      };
+
+      // So'z qo'shish modalini ochish
+      const openAddWordModal = () => {
+        setEditingWord(null);
+        setWordForm({
+          word: '',
+          phonetic: '',
+          pos: 'noun',
+          uzbek: '',
+          definition: '',
+          definition_uz: '',
+          example: '',
+          example_uz: '',
+          book: selectedBook === 'all' ? 1 : Number(selectedBook),
+          unit: selectedUnit === 'all' ? 1 : Number(selectedUnit),
+          video_clip_url: ''
+        });
+        setShowWordModal(true);
+      };
+
+      // So'zni tahrirlash modalini ochish
+      const openEditWordModal = (word) => {
+        setEditingWord(word);
+        setWordForm({
+          word: word.word || '',
+          phonetic: word.phonetic || word.ipa || '',
+          pos: word.pos || 'noun',
+          uzbek: word.uzbek || '',
+          definition: word.definition || '',
+          definition_uz: word.definition_uz || '',
+          example: word.example || '',
+          example_uz: word.example_uz || '',
+          book: word.book || 1,
+          unit: word.unit || 1,
+          video_clip_url: word.video_clip_url || ''
+        });
+        setShowWordModal(true);
+      };
+
+      // So'zni saqlash (Add / Edit)
+      const handleSaveWord = async (e) => {
+        if (e) e.preventDefault();
+        const cleanWord = wordForm.word.trim();
+        const cleanUzbek = wordForm.uzbek.trim();
+
+        if (!cleanWord || !cleanUzbek) {
+          showToast('So\'z va o\'zbekcha ma\'nosini kiritish shart!');
+          return;
+        }
+
+        let updatedList = [];
+        let savedWordObj = null;
+
+        if (editingWord) {
+          savedWordObj = {
+            ...editingWord,
+            ...wordForm,
+            word: cleanWord,
+            uzbek: cleanUzbek,
+            ipa: wordForm.phonetic || editingWord.ipa
+          };
+          updatedList = allWords.map(w => w.id === editingWord.id ? savedWordObj : w);
+          showToast(`"${cleanWord}" so'zi muvaffaqiyatli yangilandi!`);
+        } else {
+          savedWordObj = {
+            id: Date.now(),
+            ...wordForm,
+            word: cleanWord,
+            uzbek: cleanUzbek,
+            ipa: wordForm.phonetic,
+            movie: 'Ingly HD Cinema',
+            clip: `Ingly Cinema: ${cleanWord}`
+          };
+          updatedList = [savedWordObj, ...allWords];
+          showToast(`Yangi "${cleanWord}" so'zi qo'shildi!`);
+        }
+
+        setAllWords(updatedList);
+        setShowWordModal(false);
+
+        // LocalStorage'ga yozish (sahifa yangilanganda yo'qolmasligi uchun)
+        try {
+          const customWordsStr = localStorage.getItem('ingly_custom_words');
+          let customList = customWordsStr ? JSON.parse(customWordsStr) : [];
+          if (editingWord) {
+            customList = customList.map(cw => cw.id === editingWord.id ? savedWordObj : cw);
+            if (!customList.some(cw => cw.id === editingWord.id)) customList.push(savedWordObj);
+          } else {
+            customList.unshift(savedWordObj);
+          }
+          localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
+        } catch (e) {}
+
+        // Supabase bazasiga ham yozish
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('words').upsert({
+              word: cleanWord,
+              phonetic: wordForm.phonetic || null,
+              part_of_speech: wordForm.pos || 'noun',
+              uzbek_translation: cleanUzbek,
+              definition: wordForm.definition || 'Definition',
+              definition_uz: wordForm.definition_uz || cleanUzbek,
+              example: wordForm.example || 'Example sentence.',
+              example_uz: wordForm.example_uz || 'Misol gap.',
+              video_clip_url: wordForm.video_clip_url || null,
+              unit_id: 1 // default Unit 1
+            });
+            showToast(`Supabase bulut bazasiga ham saqlandi!`);
+          } catch (err) {
+            console.warn('Supabase word upsert error:', err);
+          }
+        }
+      };
+
+      // So'zni o'chirish
+      const handleDeleteWord = (id) => {
+        if (!confirm('Haqiqatan ham ushbu so\'zni o\'chirmoqchimisiz?')) return;
+        const updated = allWords.filter(w => w.id !== id);
+        setAllWords(updated);
+        try {
+          const customWordsStr = localStorage.getItem('ingly_custom_words');
+          if (customWordsStr) {
+            const customList = JSON.parse(customWordsStr).filter(cw => cw.id !== id);
+            localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
+          }
+        } catch (e) {}
+        showToast('So\'z o\'chirildi!');
       };
 
       if (!isAdminLoggedIn) {
@@ -511,8 +794,8 @@
                           onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                           class="px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 w-64 shadow-sm"
                         />
-                        <button onClick={() => showToast('Yangi so\'z qo\'shish modali ochildi')} class="bg-brand-600 text-white font-bold text-sm px-4 py-2 rounded-xl shadow hover:bg-brand-700 transition shrink-0">
-                          + Yangi So'z
+                        <button onClick={openAddWordModal} class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm px-4 py-2 rounded-xl shadow-md transition shrink-0 flex items-center gap-1.5 cursor-pointer">
+                          <span>+ Yangi So'z</span>
                         </button>
                       </div>
                     </div>
@@ -601,8 +884,19 @@
                                   🎬 {w.movie}
                                 </button>
                               </td>
-                              <td class="py-3.5 px-4 text-right">
-                                <button onClick={() => showToast(`"${w.word}" tahrirlash ochildi`)} class="text-xs font-bold text-slate-500 hover:text-brand-600 mr-2">Tahrirlash</button>
+                              <td class="py-3.5 px-4 text-right space-x-2">
+                                <button 
+                                  onClick={() => openEditWordModal(w)} 
+                                  class="text-xs font-bold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                >
+                                  Tahrirlash
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteWord(w.id)} 
+                                  class="text-xs font-bold text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                >
+                                  O'chirish
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -784,8 +1078,8 @@
                           </div>
                         </div>
                         <button
-                          onClick={() => { setAdsEnabled(!adsEnabled); showToast(`Reklama: ${!adsEnabled ? 'YOQILDI' : 'O\'CHIRILDI'}`); }}
-                          class={`w-14 h-8 rounded-full transition-colors relative ${adsEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                          onClick={handleToggleAds}
+                          class={`w-14 h-8 rounded-full transition-colors relative cursor-pointer ${adsEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
                         >
                           <span class={`w-6 h-6 bg-white rounded-full absolute top-1 transition-transform ${adsEnabled ? 'left-7' : 'left-1'}`}></span>
                         </button>
@@ -806,8 +1100,8 @@
                           </div>
                         </div>
                         <button
-                          onClick={() => { setVipEnabled(!vipEnabled); showToast(`VIP rejim: ${!vipEnabled ? 'YOQILDI' : 'O\'CHIRILDI'}`); }}
-                          class={`w-14 h-8 rounded-full transition-colors relative ${vipEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                          onClick={handleToggleVip}
+                          class={`w-14 h-8 rounded-full transition-colors relative cursor-pointer ${vipEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
                         >
                           <span class={`w-6 h-6 bg-white rounded-full absolute top-1 transition-transform ${vipEnabled ? 'left-7' : 'left-1'}`}></span>
                         </button>
@@ -826,8 +1120,8 @@
                       {[1, 2, 3, 4, 5, 6].map(num => (
                         <button
                           key={num}
-                          onClick={() => { setFreeBooks(num); showToast(`Bepul kitoblar: ${num} ta etib belgilandi`); }}
-                          class={`px-4 py-2 rounded-xl text-xs font-bold transition ${freeBooks === num ? 'bg-brand-600 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                          onClick={() => handleSetFreeBooks(num)}
+                          class={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${freeBooks === num ? 'bg-brand-600 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                         >
                           {num} ta kitob bepul
                         </button>
@@ -1015,6 +1309,179 @@
                     Saqlash va Ulanish
                   </button>
                 </div>
+              </div>
+            </div>
+          {/* Yangi so'z qo'shish va Tahrirlash Modali */}
+          {showWordModal && (
+            <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+              <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 space-y-5 my-8">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-bold text-slate-900">{editingWord ? `"${editingWord.word}" So'zini Tahrirlash` : "Yangi So'z Qo'shish"}</h3>
+                      <p class="text-xs text-slate-400">4000 Essential English Words bazasini yangilash</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowWordModal(false)} class="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer">✕</button>
+                </div>
+
+                <form onSubmit={handleSaveWord} class="space-y-4 text-xs">
+                  {/* Row 1 */}
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Inglizcha So'z *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="masalan: ambitious" 
+                        value={wordForm.word}
+                        onChange={(e) => setWordForm({ ...wordForm, word: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">IPA Transkripsiya</label>
+                      <input 
+                        type="text" 
+                        placeholder="/æmˈbɪʃ.əs/" 
+                        value={wordForm.phonetic}
+                        onChange={(e) => setWordForm({ ...wordForm, phonetic: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">So'z Turkumi</label>
+                      <select 
+                        value={wordForm.pos}
+                        onChange={(e) => setWordForm({ ...wordForm, pos: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                      >
+                        <option value="noun">Noun (Ot)</option>
+                        <option value="verb">Verb (Fe'l)</option>
+                        <option value="adjective">Adjective (Sifat)</option>
+                        <option value="adverb">Adverb (Ravish)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Row 2 */}
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">O'zbekcha Tarjimasi *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="intiluvchan, maqsad sari intiluvchi" 
+                        value={wordForm.uzbek}
+                        onChange={(e) => setWordForm({ ...wordForm, uzbek: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Kitob (Book 1-6)</label>
+                      <select 
+                        value={wordForm.book}
+                        onChange={(e) => setWordForm({ ...wordForm, book: Number(e.target.value) })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                      >
+                        {[1, 2, 3, 4, 5, 6].map(b => (
+                          <option key={b} value={b}>Book {b}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Unit (1-30)</label>
+                      <select 
+                        value={wordForm.unit}
+                        onChange={(e) => setWordForm({ ...wordForm, unit: Number(e.target.value) })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                      >
+                        {Array.from({ length: 30 }, (_, i) => i + 1).map(u => (
+                          <option key={u} value={u}>Unit {u}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Ta'riflar */}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Inglizcha Ta'rif</label>
+                      <textarea 
+                        rows="2"
+                        placeholder="If someone is ambitious, they want to be successful..."
+                        value={wordForm.definition}
+                        onChange={(e) => setWordForm({ ...wordForm, definition: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500"
+                      ></textarea>
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">O'zbekcha Ta'rif</label>
+                      <textarea 
+                        rows="2"
+                        placeholder="Agar kimdir intiluvchan bo'lsa, u katta muvaffaqiyatga erishishni xohlaydi..."
+                        value={wordForm.definition_uz}
+                        onChange={(e) => setWordForm({ ...wordForm, definition_uz: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  {/* Row 4: Misol gaplar */}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Inglizcha Misol Gap</label>
+                      <textarea 
+                        rows="2"
+                        placeholder="She is very ambitious and works hard every day."
+                        value={wordForm.example}
+                        onChange={(e) => setWordForm({ ...wordForm, example: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500"
+                      ></textarea>
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">O'zbekcha Misol Gap Tarjimasi</label>
+                      <textarea 
+                        rows="2"
+                        placeholder="U juda intiluvchan va har kuni astoydil ishlaydi."
+                        value={wordForm.example_uz}
+                        onChange={(e) => setWordForm({ ...wordForm, example_uz: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  {/* Row 5: Kino lavhasi */}
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Kinodan Video Klip Havolasi (MP4)</label>
+                    <input 
+                      type="url" 
+                      placeholder="https://.../clip.mp4" 
+                      value={wordForm.video_clip_url}
+                      onChange={(e) => setWordForm({ ...wordForm, video_clip_url: e.target.value })}
+                      class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-mono"
+                    />
+                  </div>
+
+                  <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button 
+                      type="button"
+                      onClick={() => setShowWordModal(false)}
+                      class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                    >
+                      Bekor qilish
+                    </button>
+                    <button 
+                      type="submit"
+                      class="px-6 py-2.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md transition cursor-pointer"
+                    >
+                      {editingWord ? 'O\'zgarishlarni Saqlash' : 'So\'zni Bazaga Qo\'shish'}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}
