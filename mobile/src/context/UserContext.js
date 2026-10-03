@@ -9,6 +9,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getStorageItem, setStorageItem, removeStorageItem, STORAGE_KEYS } from '../services/storage.js';
+import { syncUserWithSupabase, syncAllLocalUsersToSupabase, fetchUserRemoteStatus } from '../services/userService.js';
 
 const UserContext = createContext();
 
@@ -77,7 +78,23 @@ export function UserProvider({ children }) {
             streakDays: streak,
             wordsLearnedToday: wordsToday,
           });
+
+          // Supabase'dan bloklangan yoki VIP statusini tekshirish
+          fetchUserRemoteStatus(saved.username).then((remote) => {
+            if (remote) {
+              if (remote.is_blocked) {
+                logout();
+                return;
+              }
+              if (remote.is_premium !== undefined) {
+                setUser((prev) => ({ ...prev, isPremium: !!remote.is_premium }));
+              }
+            }
+          }).catch(() => {});
         }
+
+        // Barcha mavjud ro'yxatdan o'tgan foydalanuvchilarni Supabase'ga sinxron qilish
+        syncAllLocalUsersToSupabase().catch(() => {});
       } catch (e) {
         console.warn('Foydalanuvchini yuklashda xatolik:', e);
       } finally {
@@ -117,6 +134,9 @@ export function UserProvider({ children }) {
     } catch (err) {
       console.warn('Foydalanuvchilar bazasini saqlashda xato:', err);
     }
+
+    // Supabase bulut bazasiga ham real-time sinxron qilish
+    syncUserWithSupabase(userToSave).catch(() => {});
   };
 
   // 1. Ro'yxatdan o'tish (Register: Login, Parol va Telefon qat'iy tekshiruvi)
@@ -203,6 +223,9 @@ export function UserProvider({ children }) {
     await setStorageItem(STORAGE_KEYS.REGISTERED_USERS, allUsers);
     await setStorageItem(STORAGE_KEYS.USER_PROFILE, newUser);
     setUser(newUser);
+
+    // Supabase bulut bazasiga ham zudlik bilan yuborish (Admin ko'rishi uchun)
+    syncUserWithSupabase(newUser).catch(() => {});
 
     return { success: true };
   };
@@ -319,6 +342,7 @@ export function UserProvider({ children }) {
 
     await setStorageItem(STORAGE_KEYS.USER_PROFILE, existing);
     setUser(existing);
+    syncUserWithSupabase(existing).catch(() => {});
     return { success: true };
   };
 

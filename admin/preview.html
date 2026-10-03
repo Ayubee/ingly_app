@@ -169,6 +169,48 @@
       const [showSupabaseModal, setShowSupabaseModal] = useState(false);
       const [supabaseClient, setSupabaseClient] = useState(null);
 
+      // Foydalanuvchilar ro'yxatini Supabase'dan yuklash
+      const loadUsersFromSupabase = async (customClient = null) => {
+        const client = customClient || supabaseClient;
+        if (!client) return;
+        try {
+          const { data: statsData, error: statsErr } = await client.from('v_user_stats').select('*');
+          if (!statsErr && Array.isArray(statsData) && statsData.length > 0) {
+            const mapped = statsData.map(u => ({
+              id: u.user_id,
+              name: u.full_name || 'Noma\'lum',
+              phone: u.phone || '-',
+              username: u.username || 'user',
+              words: Number(u.mastered_words_count) || 0,
+              streak: Number(u.current_streak) || 0,
+              isBlocked: !!u.is_blocked,
+              isVip: !!u.is_premium
+            }));
+            setUsers(mapped);
+            localStorage.setItem('ingly_users', JSON.stringify(mapped));
+            return;
+          }
+
+          const { data, error } = await client.from('users').select('*').order('created_at', { ascending: false });
+          if (!error && Array.isArray(data) && data.length > 0) {
+            const mapped = data.map(u => ({
+              id: u.id,
+              name: u.full_name || 'Noma\'lum',
+              phone: u.phone || '-',
+              username: u.username || 'user',
+              words: u.total_words_learned || 0,
+              streak: u.current_streak || 0,
+              isBlocked: !!u.is_blocked,
+              isVip: !!u.is_premium
+            }));
+            setUsers(mapped);
+            localStorage.setItem('ingly_users', JSON.stringify(mapped));
+          }
+        } catch (e) {
+          console.warn('loadUsersFromSupabase xatosi:', e);
+        }
+      };
+
       const initSupabaseConnection = (url, key) => {
         if (!url || !key) return;
         try {
@@ -203,22 +245,16 @@
             });
 
             // 2. Foydalanuvchilar ro'yxatini yuklash
-            client.from('users').select('*').then(({ data, error }) => {
-              if (!error && Array.isArray(data) && data.length > 0) {
-                const mapped = data.map(u => ({
-                  id: u.id,
-                  name: u.full_name || 'Noma\'lum',
-                  phone: u.phone || '-',
-                  username: u.username || 'user',
-                  words: u.words_learned || 0,
-                  streak: u.current_streak || 0,
-                  isBlocked: !!u.is_blocked,
-                  isVip: !!u.is_premium
-                }));
-                setUsers(mapped);
-                localStorage.setItem('ingly_users', JSON.stringify(mapped));
-              }
-            });
+            loadUsersFromSupabase(client);
+
+            // 3. Supabase Realtime: Foydalanuvchi ro'yxatdan o'tganda avtomatik yangilash
+            try {
+              client.channel('realtime_users_listener')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
+                  loadUsersFromSupabase(client);
+                })
+                .subscribe();
+            } catch (e) {}
           }
         } catch (e) {
           console.error('Supabase init xatosi:', e);
@@ -1010,7 +1046,19 @@
                       <h2 class="text-2xl font-extrabold text-slate-900">Foydalanuvchilar Ro'yxati</h2>
                       <p class="text-sm text-slate-500">Kirgan odamlarni ko'rish, bloklash, parolini va loginini o'zgartirish</p>
                     </div>
-                    <span class="text-xs font-bold bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl">Jami: {users.length} ta foydalanuvchi</span>
+                    <div class="flex items-center gap-3">
+                      <button
+                        onClick={() => {
+                          loadUsersFromSupabase();
+                          showToast('Foydalanuvchilar ro\'yxati yangilanmoqda...');
+                        }}
+                        class="text-xs font-bold bg-brand-50 hover:bg-brand-100 text-brand-600 px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <span>🔄</span>
+                        <span>Yangilash</span>
+                      </button>
+                      <span class="text-xs font-bold bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl">Jami: {users.length} ta foydalanuvchi</span>
+                    </div>
                   </div>
 
                   <div class="overflow-x-auto rounded-2xl border border-slate-200">

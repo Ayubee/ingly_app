@@ -5,7 +5,7 @@
  * React Native muhitida sessiya va tokenlarni avtomatik saqlaydi.
  */
 
-import { getStorageItem, setStorageItem, removeStorageItem } from './storage';
+import { getStorageItem, setStorageItem, removeStorageItem } from './storage.js';
 
 // Standart / Environment sozlamalari
 const DEFAULT_SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://lbsqxownrjfmjoojdsfk.supabase.co';
