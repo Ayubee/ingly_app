@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Ingly",
+    "slug": "ingly",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#5B4DFF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ingly.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#5B4DFF"
+      },
+      "package": "com.ingly.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "expo-status-bar"
+    ]
+  }
+}
