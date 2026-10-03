@@ -44,3 +44,15 @@ CREATE POLICY "Allow all on users" ON public.users
 ALTER PUBLICATION supabase_realtime ADD TABLE public.app_settings;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.words;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.users;
+
+-- 5. ADMINS: Adminlarni boshqarish uchun RLS ruxsati
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public can view admins" ON public.admins;
+DROP POLICY IF EXISTS "Allow all on admins" ON public.admins;
+
+CREATE POLICY "Allow all on admins" ON public.admins
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.admins;

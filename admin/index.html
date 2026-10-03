@@ -160,6 +160,44 @@
         video_clip_url: ''
       });
 
+      // Admins & Permissions State
+      const ALL_PERMISSIONS = [
+        { id: 'manage_words', label: 'So\'zlarni tahrirlash va qo\'shish', desc: '4000 ta so\'z bazasini boshqarish' },
+        { id: 'manage_users', label: 'Foydalanuvchilarni boshqarish', desc: 'Foydalanuvchilarni ko\'rish, bloklash va ochish' },
+        { id: 'manage_settings', label: 'Monetizatsiya va Sozlamalar', desc: 'AdMob reklama, VIP obuna va kalitlarni sozlash' },
+        { id: 'manage_admins', label: 'Adminlarni boshqarish (RBAC)', desc: 'Yangi adminlar tayinlash va huquq berish' },
+        { id: 'all', label: 'Barcha Huquqlar (Cheklovlarsiz)', desc: 'Tizim bo\'yicha to\'liq Super Admin huquqi' }
+      ];
+
+      const ROLE_LABELS = {
+        super_admin: 'Super Admin',
+        editor: 'Kontent Menejer',
+        moderator: 'Moderator'
+      };
+
+      const [adminList, setAdminList] = useState(() => {
+        const saved = localStorage.getItem('ingly_admin_list');
+        if (saved) {
+          try { return JSON.parse(saved); } catch (e) {}
+        }
+        return [
+          { id: 1, name: 'Boshqaruvchi (Asosiy)', username: 'Joji', role: 'super_admin', roleLabel: 'Super Admin', perms: ['all', 'manage_words', 'manage_users', 'manage_admins', 'manage_settings'], isActive: true },
+          { id: 2, name: 'Otabek Mirzayev', username: 'otabek_moderator', role: 'moderator', roleLabel: 'Moderator', perms: ['manage_users'], isActive: true },
+          { id: 3, name: 'Malika Karimova', username: 'malika_editor', role: 'editor', roleLabel: 'Kontent Menejer', perms: ['manage_words'], isActive: true }
+        ];
+      });
+
+      const [showAdminModal, setShowAdminModal] = useState(false);
+      const [showPermsModal, setShowPermsModal] = useState(false);
+      const [selectedAdmin, setSelectedAdmin] = useState(null);
+      const [adminForm, setAdminForm] = useState({
+        name: '',
+        username: '',
+        password: '',
+        role: 'editor',
+        perms: ['manage_words']
+      });
+
       const LIVE_SUPABASE_URL = 'https://lbsqxownrjfmjoojdsfk.supabase.co';
       const LIVE_SUPABASE_KEY = 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
 
@@ -507,6 +545,131 @@
           }
         } catch (e) {}
         showToast('So\'z o\'chirildi!');
+      };
+
+      // Admin qo'shish modalini ochish
+      const openAddAdminModal = () => {
+        setAdminForm({
+          name: '',
+          username: '',
+          password: '',
+          role: 'editor',
+          perms: ['manage_words']
+        });
+        setShowAdminModal(true);
+      };
+
+      // Ruxsatlarni sozlash modalini ochish
+      const openPermsModal = (admin) => {
+        setSelectedAdmin({
+          ...admin,
+          perms: Array.isArray(admin.perms) ? [...admin.perms] : []
+        });
+        setShowPermsModal(true);
+      };
+
+      // Yangi adminni saqlash
+      const handleSaveNewAdmin = async (e) => {
+        if (e) e.preventDefault();
+        const cleanName = adminForm.name.trim();
+        const cleanUsername = adminForm.username.trim().toLowerCase();
+        const cleanPassword = adminForm.password.trim();
+
+        if (!cleanName || !cleanUsername || !cleanPassword) {
+          showToast('Iltimos, barcha maydonlarni to\'ldiring!');
+          return;
+        }
+
+        if (adminList.some(a => (a.username || '').toLowerCase() === cleanUsername)) {
+          showToast(`"${cleanUsername}" logini allaqachon mavjud!`);
+          return;
+        }
+
+        const newAdminObj = {
+          id: Date.now(),
+          name: cleanName,
+          username: cleanUsername,
+          role: adminForm.role,
+          roleLabel: ROLE_LABELS[adminForm.role] || 'Admin',
+          perms: adminForm.perms.length > 0 ? adminForm.perms : ['manage_words'],
+          isActive: true
+        };
+
+        const updated = [...adminList, newAdminObj];
+        setAdminList(updated);
+        localStorage.setItem('ingly_admin_list', JSON.stringify(updated));
+        setShowAdminModal(false);
+        showToast(`Yangi admin: "${cleanUsername}" muvaffaqiyatli qo'shildi!`);
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('admins').insert([{
+              full_name: cleanName,
+              username: cleanUsername,
+              password_hash: cleanPassword,
+              role: adminForm.role,
+              permissions: newAdminObj.perms,
+              is_active: true
+            }]);
+          } catch (err) {
+            console.warn('Supabase admins insert error:', err);
+          }
+        }
+      };
+
+      // Ruxsatlarni va rolni yangilash
+      const handleSavePermissions = async (e) => {
+        if (e) e.preventDefault();
+        if (!selectedAdmin) return;
+
+        const updated = adminList.map(a => {
+          if (a.id === selectedAdmin.id) {
+            return {
+              ...selectedAdmin,
+              roleLabel: ROLE_LABELS[selectedAdmin.role] || selectedAdmin.role
+            };
+          }
+          return a;
+        });
+
+        setAdminList(updated);
+        localStorage.setItem('ingly_admin_list', JSON.stringify(updated));
+        setShowPermsModal(false);
+        showToast(`"${selectedAdmin.name}" uchun ruxsatlar yangilandi!`);
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('admins').update({
+              role: selectedAdmin.role,
+              permissions: selectedAdmin.perms,
+              is_active: selectedAdmin.isActive
+            }).eq('username', selectedAdmin.username);
+          } catch (err) {
+            console.warn('Supabase admins update error:', err);
+          }
+        }
+      };
+
+      // Adminni o'chirish
+      const handleDeleteAdmin = async (adminId) => {
+        const target = adminList.find(a => a.id === adminId);
+        if (target?.username === 'Joji' || target?.role === 'super_admin') {
+          alert('Asosiy Super Adminni tizimdan o\'chirib bo\'lmaydi!');
+          return;
+        }
+        if (!confirm(`Haqiqatan ham "${target?.name}" adminini o'chirmoqchimisiz?`)) return;
+
+        const updated = adminList.filter(a => a.id !== adminId);
+        setAdminList(updated);
+        localStorage.setItem('ingly_admin_list', JSON.stringify(updated));
+        setShowPermsModal(false);
+        showToast('Admin tizimdan o\'chirildi!');
+
+        if (supabaseClient && target?.username) {
+          try {
+            await supabaseClient.from('admins').delete().eq('username', target.username);
+          } catch (err) {}
+        }
       };
 
       if (!isAdminLoggedIn) {
@@ -1187,33 +1350,49 @@
                       <h2 class="text-2xl font-extrabold text-slate-900">Adminlar va Huquqlar Boshqaruvi (RBAC)</h2>
                       <p class="text-sm text-slate-500">Yangi admin qo'shish, o'chirish va ularning ruxsatlarini cheklash</p>
                     </div>
-                    <button onClick={() => showToast('Yangi admin qo\'shish modali ochildi')} class="bg-brand-600 text-white font-bold text-sm px-4 py-2 rounded-xl shadow hover:bg-brand-700 transition">
-                      + Yangi Admin
+                    <button 
+                      onClick={openAddAdminModal} 
+                      class="bg-brand-600 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md hover:bg-brand-700 transition flex items-center gap-2 cursor-pointer"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                      <span>+ Yangi Admin</span>
                     </button>
                   </div>
 
                   <div class="space-y-4">
-                    {[
-                      { name: 'Boshqaruvchi (Asosiy)', username: 'admin', role: 'Super Admin', perms: ['Barcha huquqlar', 'So\'zlarni tahrirlash', 'Foydalanuvchilarni bloklash', 'Adminlarni boshqarish'] },
-                      { name: 'Otabek Mirzayev', username: 'otabek_moderator', role: 'Moderator', perms: ['Foydalanuvchilarni ko\'rish', 'Bloklash/Ochish'] },
-                      { name: 'Malika Karimova', username: 'malika_editor', role: 'Kontent Menejer', perms: ['So\'zlar va tarjimalarni kiritish'] }
-                    ].map((a, i) => (
-                      <div key={i} class="border border-slate-200 rounded-2xl p-5 flex items-center justify-between hover:border-brand-500/40 transition">
+                    {adminList.map((a) => (
+                      <div key={a.id} class="border border-slate-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-brand-500/40 transition">
                         <div>
                           <div class="flex items-center gap-3 mb-1">
-                            <span class="font-bold text-slate-900">{a.name}</span>
+                            <span class="font-bold text-slate-900 text-base">{a.name}</span>
                             <span class="text-xs font-mono text-slate-400">(@{a.username})</span>
-                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-600">{a.role}</span>
+                            <span class={`text-xs font-bold px-2.5 py-0.5 rounded-full ${a.role === 'super_admin' ? 'bg-amber-100 text-amber-800' : a.role === 'moderator' ? 'bg-sky-100 text-sky-800' : 'bg-emerald-100 text-emerald-800'}`}>
+                              {a.roleLabel || ROLE_LABELS[a.role] || a.role}
+                            </span>
+                            {!a.isActive && (
+                              <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">Nofaol</span>
+                            )}
                           </div>
-                          <div class="flex flex-wrap gap-1.5 mt-2">
-                            {a.perms.map((p, pi) => (
-                              <span key={pi} class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">✓ {p}</span>
-                            ))}
+                          <div class="flex flex-wrap gap-1.5 mt-2.5">
+                            {Array.isArray(a.perms) && a.perms.map((p, pi) => {
+                              const found = ALL_PERMISSIONS.find(ap => ap.id === p);
+                              return (
+                                <span key={pi} class="text-[11px] bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg font-medium border border-slate-200/50">
+                                  ✓ {found ? found.label : p}
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
-                        <button onClick={() => showToast('Ruxsatlar sozlamasi ochildi')} class="text-xs font-bold text-slate-500 hover:text-brand-600 border border-slate-200 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition">
-                          Ruxsatlarni Sozlash
-                        </button>
+                        <div class="flex items-center gap-2 shrink-0">
+                          <button 
+                            onClick={() => openPermsModal(a)} 
+                            class="text-xs font-bold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <span>⚙️</span>
+                            <span>Ruxsatlarni Sozlash</span>
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1530,6 +1709,249 @@
                     >
                       {editingWord ? 'O\'zgarishlarni Saqlash' : 'So\'zni Bazaga Qo\'shish'}
                     </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Yangi Admin Qo'shish Modali */}
+          {showAdminModal && (
+            <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+              <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 my-8">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-bold text-slate-900">Yangi Admin Qo'shish</h3>
+                      <p class="text-xs text-slate-400">Admin panel uchun yangi xodim yoki moderator tayinlash</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowAdminModal(false)} class="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer">✕</button>
+                </div>
+
+                <form onSubmit={handleSaveNewAdmin} class="space-y-4 text-xs">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Ism & Familiya *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="Masalan: Sardor Aliyev" 
+                      value={adminForm.name}
+                      onChange={(e) => setAdminForm({ ...adminForm, name: e.target.value })}
+                      class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-semibold"
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Login (Username) *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="sardor_admin" 
+                        value={adminForm.username}
+                        onChange={(e) => setAdminForm({ ...adminForm, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
+                        class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Parol *</label>
+                      <input 
+                        type="password" 
+                        required 
+                        placeholder="Kamida 6 ta belgi" 
+                        value={adminForm.password}
+                        onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Admin Roli</label>
+                    <select 
+                      value={adminForm.role}
+                      onChange={(e) => {
+                        const newRole = e.target.value;
+                        let defaultPerms = ['manage_words'];
+                        if (newRole === 'super_admin') defaultPerms = ['all', 'manage_words', 'manage_users', 'manage_admins', 'manage_settings'];
+                        else if (newRole === 'moderator') defaultPerms = ['manage_users'];
+                        setAdminForm({ ...adminForm, role: newRole, perms: defaultPerms });
+                      }}
+                      class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                    >
+                      <option value="editor">Kontent Menejer (Faqat so'zlar)</option>
+                      <option value="moderator">Moderator (Foydalanuvchilarni bloklash)</option>
+                      <option value="super_admin">Super Admin (Cheklanmagan huquq)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-2">Belgilangan Huquqlar (Ruxsatlar)</label>
+                    <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                      {ALL_PERMISSIONS.map(p => {
+                        const checked = adminForm.perms.includes(p.id);
+                        return (
+                          <label key={p.id} class="flex items-start gap-2.5 cursor-pointer">
+                            <input 
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                let newPerms = [...adminForm.perms];
+                                if (e.target.checked) {
+                                  if (!newPerms.includes(p.id)) newPerms.push(p.id);
+                                } else {
+                                  newPerms = newPerms.filter(id => id !== p.id);
+                                }
+                                setAdminForm({ ...adminForm, perms: newPerms });
+                              }}
+                              class="mt-0.5 rounded text-brand-600 focus:ring-brand-500 cursor-pointer"
+                            />
+                            <div>
+                              <div class="font-bold text-slate-800 text-xs">{p.label}</div>
+                              <div class="text-[11px] text-slate-400">{p.desc}</div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button 
+                      type="button"
+                      onClick={() => setShowAdminModal(false)}
+                      class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                    >
+                      Bekor qilish
+                    </button>
+                    <button 
+                      type="submit"
+                      class="px-6 py-2.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md transition cursor-pointer"
+                    >
+                      Adminni Saqlash
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Ruxsatlarni Sozlash Modali */}
+          {showPermsModal && selectedAdmin && (
+            <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+              <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 my-8">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-bold text-slate-900">"{selectedAdmin.name}" Huquqlari</h3>
+                      <p class="text-xs text-slate-400">Login: @{selectedAdmin.username}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowPermsModal(false)} class="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer">✕</button>
+                </div>
+
+                <form onSubmit={handleSavePermissions} class="space-y-4 text-xs">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Admin Roli</label>
+                    <select 
+                      value={selectedAdmin.role}
+                      onChange={(e) => {
+                        const newRole = e.target.value;
+                        let defaultPerms = selectedAdmin.perms || [];
+                        if (newRole === 'super_admin' && !defaultPerms.includes('all')) {
+                          defaultPerms = ['all', 'manage_words', 'manage_users', 'manage_admins', 'manage_settings'];
+                        }
+                        setSelectedAdmin({ ...selectedAdmin, role: newRole, perms: defaultPerms });
+                      }}
+                      class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                    >
+                      <option value="editor">Kontent Menejer (Faqat so'zlar)</option>
+                      <option value="moderator">Moderator (Foydalanuvchilarni bloklash)</option>
+                      <option value="super_admin">Super Admin (Cheklanmagan huquq)</option>
+                    </select>
+                  </div>
+
+                  <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                    <div>
+                      <div class="font-bold text-slate-800 text-xs">Admin Faolligi (Status)</div>
+                      <div class="text-[11px] text-slate-400">O'chirilsa bu admin tizimga kira olmaydi</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAdmin({ ...selectedAdmin, isActive: !selectedAdmin.isActive })}
+                      class={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${selectedAdmin.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}
+                    >
+                      {selectedAdmin.isActive ? '✓ Faol' : '✕ Nofaol'}
+                    </button>
+                  </div>
+
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-2">Ruxsatlar va Huquqlar (RBAC)</label>
+                    <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                      {ALL_PERMISSIONS.map(p => {
+                        const permsList = Array.isArray(selectedAdmin.perms) ? selectedAdmin.perms : [];
+                        const checked = permsList.includes(p.id);
+                        return (
+                          <label key={p.id} class="flex items-start gap-2.5 cursor-pointer">
+                            <input 
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                let newPerms = [...permsList];
+                                if (e.target.checked) {
+                                  if (!newPerms.includes(p.id)) newPerms.push(p.id);
+                                } else {
+                                  newPerms = newPerms.filter(id => id !== p.id);
+                                }
+                                setSelectedAdmin({ ...selectedAdmin, perms: newPerms });
+                              }}
+                              class="mt-0.5 rounded text-brand-600 focus:ring-brand-500 cursor-pointer"
+                            />
+                            <div>
+                              <div class="font-bold text-slate-800 text-xs">{p.label}</div>
+                              <div class="text-[11px] text-slate-400">{p.desc}</div>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                    {selectedAdmin.username !== 'Joji' && selectedAdmin.role !== 'super_admin' ? (
+                      <button 
+                        type="button"
+                        onClick={() => handleDeleteAdmin(selectedAdmin.id)}
+                        class="px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                      >
+                        Adminni O'chirish
+                      </button>
+                    ) : (
+                      <div class="text-[11px] text-slate-400 italic">Asosiy admin o'chirilmaydi</div>
+                    )}
+
+                    <div class="flex items-center gap-2">
+                      <button 
+                        type="button"
+                        onClick={() => setShowPermsModal(false)}
+                        class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                      >
+                        Bekor qilish
+                      </button>
+                      <button 
+                        type="submit"
+                        class="px-6 py-2.5 text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl shadow-md transition cursor-pointer"
+                      >
+                        Saqlash
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>
