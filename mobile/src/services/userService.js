@@ -21,14 +21,20 @@ export async function syncUserWithSupabase(userData) {
   const cleanPhone = userData.phone ? String(userData.phone).trim() : null;
   const fullName = String(userData.name || userData.fullName || cleanUsername).trim();
 
+  // MUHIM: is_blocked maydoni mobil ilova orqali yangilanmaydi (faqat Admin o'zgartiradi)
   const userPayload = {
     full_name: fullName,
     username: cleanUsername,
     phone: cleanPhone,
     daily_goal: Number(userData.dailyGoal) || 20,
-    is_blocked: !!userData.isBlocked,
     is_premium: !!userData.isPremium,
     last_login_at: new Date().toISOString(),
+  };
+
+  const initialInsertPayload = {
+    ...userPayload,
+    is_blocked: false,
+    password_hash: userData.password ? String(userData.password).trim() : null,
   };
 
   try {
@@ -37,12 +43,12 @@ export async function syncUserWithSupabase(userData) {
       // Avval mavjudligini tekshirish
       const { data: existingUser } = await supabase
         .from('users')
-        .select('id, is_blocked, is_premium')
+        .select('id, is_blocked, is_premium, password_hash')
         .or(`username.eq.${cleanUsername}${cleanPhone ? `,phone.eq.${cleanPhone}` : ''}`)
         .limit(1);
 
       if (existingUser && existingUser.length > 0) {
-        // Mavjud bo'lsa yangilash
+        // Mavjud bo'lsa yangilash (is_blocked tegilmaydi)
         const targetId = existingUser[0].id;
         const { data: updated, error: updateErr } = await supabase
           .from('users')
@@ -57,7 +63,7 @@ export async function syncUserWithSupabase(userData) {
         // Yangi foydalanuvchi qo'shish
         const { data: inserted, error: insertErr } = await supabase
           .from('users')
-          .insert([userPayload])
+          .insert([initialInsertPayload])
           .select();
 
         if (!insertErr && inserted && inserted[0]) {
@@ -75,7 +81,7 @@ export async function syncUserWithSupabase(userData) {
     };
 
     // Tekshirish
-    const checkQuery = `${SUPABASE_REST_URL}/users?username=eq.${cleanUsername}&select=id,is_blocked,is_premium`;
+    const checkQuery = `${SUPABASE_REST_URL}/users?username=eq.${cleanUsername}&select=id,is_blocked,is_premium,password_hash`;
     const checkRes = await fetch(checkQuery, { headers: restHeaders });
     const existingList = checkRes.ok ? await checkRes.json() : [];
 
@@ -94,7 +100,7 @@ export async function syncUserWithSupabase(userData) {
       const postRes = await fetch(`${SUPABASE_REST_URL}/users`, {
         method: 'POST',
         headers: restHeaders,
-        body: JSON.stringify(userPayload),
+        body: JSON.stringify(initialInsertPayload),
       });
       if (postRes.ok) {
         const postData = await postRes.json();
@@ -131,14 +137,21 @@ export async function syncAllLocalUsersToSupabase() {
 }
 
 /**
- * 3. Foydalanuvchining Supabase'dagi joriy statusini olish (Bloklanganmi yoki VIP?)
+ * 3. Foydalanuvchining Supabase'dagi joriy statusini olish (Bloklanganmi, VIP yoki Parol yangilanganmi?)
  */
-export async function fetchUserRemoteStatus(username) {
-  if (!username) return null;
-  const cleanUsername = String(username).trim().toLowerCase();
+export async function fetchUserRemoteStatus(loginOrPhone) {
+  if (!loginOrPhone) return null;
+  const raw = String(loginOrPhone).trim();
+  const cleanUsername = raw.toLowerCase();
+  const digits = raw.replace(/\D/g, '');
 
   try {
-    const res = await fetch(`${SUPABASE_REST_URL}/users?username=eq.${cleanUsername}&select=id,is_blocked,is_premium`, {
+    let query = `${SUPABASE_REST_URL}/users?username=eq.${cleanUsername}&select=id,username,phone,is_blocked,is_premium,password_hash`;
+    if (digits.length >= 9) {
+      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${cleanUsername},phone.like.*${digits.slice(-9)})&select=id,username,phone,is_blocked,is_premium,password_hash`;
+    }
+
+    const res = await fetch(query, {
       headers: {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,

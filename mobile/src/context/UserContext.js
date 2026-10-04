@@ -8,6 +8,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Alert } from 'react-native';
 import { getStorageItem, setStorageItem, removeStorageItem, STORAGE_KEYS } from '../services/storage.js';
 import { syncUserWithSupabase, syncAllLocalUsersToSupabase, fetchUserRemoteStatus } from '../services/userService.js';
 
@@ -80,17 +81,30 @@ export function UserProvider({ children }) {
           });
 
           // Supabase'dan bloklangan yoki VIP statusini tekshirish
-          fetchUserRemoteStatus(saved.username).then((remote) => {
+          try {
+            const remote = await fetchUserRemoteStatus(saved.username);
             if (remote) {
               if (remote.is_blocked) {
-                logout();
+                await logout();
+                Alert.alert(
+                  'Hisobingiz Bloklangan 🚫',
+                  'Administrator sizning profilingizni bloklagan. Ilovaga kirish taqiqlanadi.'
+                );
                 return;
               }
               if (remote.is_premium !== undefined) {
                 setUser((prev) => ({ ...prev, isPremium: !!remote.is_premium }));
               }
+              if (remote.password_hash && saved.password && remote.password_hash !== saved.password) {
+                await logout();
+                Alert.alert(
+                  'Parolingiz Yangilandi 🔒',
+                  'Administrator hisobingiz parolini o\'zgartirdi. Iltimos, yangi parol bilan qayta kiring.'
+                );
+                return;
+              }
             }
-          }).catch(() => {});
+          } catch (e) {}
         }
 
         // Barcha mavjud ro'yxatdan o'tgan foydalanuvchilarni Supabase'ga sinxron qilish
@@ -100,8 +114,38 @@ export function UserProvider({ children }) {
       } finally {
         setIsLoading(false);
       }
-    }
+    };
+
     loadUser();
+
+    // Har 10 soniyada admin tomonidan bloklanganlik yoki parol o'zgarishini real-time tekshirish
+    const intervalId = setInterval(async () => {
+      const active = await getStorageItem(STORAGE_KEYS.USER_PROFILE, null);
+      if (active && active.isLoggedIn && active.username) {
+        try {
+          const remote = await fetchUserRemoteStatus(active.username);
+          if (remote) {
+            if (remote.is_blocked) {
+              await logout();
+              Alert.alert(
+                'Hisobingiz Bloklandi 🚫',
+                'Administrator sizning profilingizni blokladi. Ilovadan foydalanish to\'xtatildi.'
+              );
+            } else if (remote.password_hash && active.password && remote.password_hash !== active.password) {
+              await logout();
+              Alert.alert(
+                'Parolingiz Yangilandi 🔒',
+                'Administrator hisobingiz parolini yangiladi. Iltimos, yangi parol bilan qayta kiring.'
+              );
+            } else if (remote.is_premium !== undefined && remote.is_premium !== active.isPremium) {
+              setUser(prev => ({ ...prev, isPremium: !!remote.is_premium }));
+            }
+          }
+        } catch (e) {}
+      }
+    }, 10000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   // Profil va ro'yxatdagi foydalanuvchini yangilab saqlash
@@ -264,6 +308,17 @@ export function UserProvider({ children }) {
       }
     }
 
+    // 1. Supabase bulut bazasidan foydalanuvchining bloklanganligi va parolini tekshirish
+    const remote = await fetchUserRemoteStatus(rawInput);
+    if (remote) {
+      if (remote.is_blocked) {
+        return {
+          success: false,
+          error: 'Sizning hisobingiz administrator tomonidan BLOKLANGAN! Ilovaga kirish taqiqlanadi.',
+        };
+      }
+    }
+
     // Foydalanuvchini qidirish (login yoki oxirgi 9 ta raqam bo'yicha)
     const matchedUserIndex = allUsers.findIndex((u) => {
       const uUser = (u.username || '').toLowerCase();
@@ -285,7 +340,12 @@ export function UserProvider({ children }) {
     }
 
     const matchedUser = allUsers[matchedUserIndex];
-    const expectedPassword = String(matchedUser.password || '').trim();
+    let expectedPassword = String(matchedUser.password || '').trim();
+
+    // Agar admin Supabase'da yangi parol o'rnatgan bo'lsa, ushbu yangi parol tekshiriladi
+    if (remote && remote.password_hash) {
+      expectedPassword = String(remote.password_hash).trim();
+    }
 
     if (!expectedPassword) {
       matchedUser.password = enteredPassword;
@@ -297,6 +357,13 @@ export function UserProvider({ children }) {
         error: 'Kiritilgan parol noto\'g\'ri! Qaytadan tekshirib kiriting.',
       };
     }
+
+    matchedUser.password = enteredPassword;
+    if (remote && remote.is_premium !== undefined) {
+      matchedUser.isPremium = !!remote.is_premium;
+    }
+    allUsers[matchedUserIndex] = matchedUser;
+    await setStorageItem(STORAGE_KEYS.REGISTERED_USERS, allUsers);
 
     const activeUser = { ...matchedUser, isLoggedIn: true };
     await setStorageItem(STORAGE_KEYS.USER_PROFILE, activeUser);
@@ -310,6 +377,16 @@ export function UserProvider({ children }) {
     const allUsers = (await getStorageItem(STORAGE_KEYS.REGISTERED_USERS, [])) || [];
     const googleEmail = googleUser?.email || 'google_user@gmail.com';
     const googleUsername = googleEmail.split('@')[0].toLowerCase();
+
+    // Bloklanganlikni tekshirish
+    const remote = await fetchUserRemoteStatus(googleUsername);
+    if (remote && remote.is_blocked) {
+      Alert.alert(
+        'Hisob Bloklangan 🚫',
+        'Sizning hisobingiz administrator tomonidan bloklangan! Ilovaga kirish taqiqlanadi.'
+      );
+      return;
+    }
 
     let existing = allUsers.find(
       (u) => u.username && u.username.toLowerCase() === googleUsername
