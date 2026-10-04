@@ -1776,10 +1776,10 @@
           <div class="cover-pill-title">Kino Konteksti</div>
           <div class="cover-pill-desc">Gollivud filmlaridan 3-5s lavhalar</div>
         </div>
-        <div class="cover-pill">
-          <div class="cover-pill-icon">⚡</div>
-          <div class="cover-pill-title">100% Offline-First</div>
-          <div class="cover-pill-desc">Internetsiz bir zumda tezkor kesh</div>
+        <div class="cover-pill" style="border-color: rgba(0, 115, 255, 0.4); background: #F0F7FF;">
+          <div class="cover-pill-icon">💳</div>
+          <div class="cover-pill-title" style="color: #0056C6;">Click & Payme To'lov</div>
+          <div class="cover-pill-desc">🔵 Click Up, 🟢 Payme & Uzcard/Humo</div>
         </div>
         <div class="cover-pill">
           <div class="cover-pill-icon">🛡️</div>
@@ -1791,7 +1791,7 @@
       <!-- Cover Bottom Meta -->
       <div class="cover-footer">
         <div>Muallif & Buyurtmachi: <strong>inglyJon</strong></div>
-        <div>Texnologiyalar: <strong>React Native • React.js • TailwindCSS • Supabase SQL • Click & Payme</strong></div>
+        <div>Texnologiyalar: <strong>React Native • Click Up • Payme • Uzcard/Humo • Supabase • TailwindCSS</strong></div>
         <div>Holat: <strong>v1.0 Rasmiy Taqdimot</strong></div>
       </div>
 
@@ -3334,18 +3334,34 @@
                   </div>
                 </div>
 
+                <!-- Click & Payme Quick One-Tap Action Buttons -->
+                <div style="display:flex; gap:1.2mm; margin-bottom:1.5mm;">
+                  <div style="flex:1; background:linear-gradient(135deg, #0073FF, #0052CC); color:#FFFFFF; border-radius:1.8mm; padding:1.8mm 1mm; text-align:center; box-shadow:0 2px 6px rgba(0,115,255,0.35); border:1px solid rgba(255,255,255,0.2);">
+                    <div style="font-size:6.8px; font-weight:900; letter-spacing:0.3px; display:flex; align-items:center; justify-content:center; gap:0.8mm;">
+                      <span>🔵</span> <span>CLICK UP</span>
+                    </div>
+                    <div style="font-size:4.2px; opacity:0.95; margin-top:0.3mm;">1 bosishda to'lash</div>
+                  </div>
+                  <div style="flex:1; background:linear-gradient(135deg, #00D5D5, #009999); color:#0F172A; border-radius:1.8mm; padding:1.8mm 1mm; text-align:center; box-shadow:0 2px 6px rgba(0,213,213,0.35); border:1px solid rgba(255,255,255,0.4);">
+                    <div style="font-size:6.8px; font-weight:900; letter-spacing:0.3px; display:flex; align-items:center; justify-content:center; gap:0.8mm;">
+                      <span>🟢</span> <span>PAYME</span>
+                    </div>
+                    <div style="font-size:4.2px; opacity:0.95; margin-top:0.3mm; font-weight:700;">Tezkor to'lov</div>
+                  </div>
+                </div>
+
                 <!-- Payment Method Selector Tabs -->
                 <div class="pay-methods-row">
                   <div class="pay-method-tab active">
-                    <span style="font-size:8.5px;">💳</span>
+                    <span style="font-size:7px;">💳</span>
                     <span class="pay-method-tab-title">Bank Karta</span>
                   </div>
                   <div class="pay-method-tab">
-                    <span style="font-size:7px; font-weight:900; color:#2563EB;">🔵 Click</span>
-                    <span class="pay-method-tab-title">Click Up</span>
+                    <span style="font-size:6.5px; font-weight:900; color:#0052CC;">🔵 Click</span>
+                    <span class="pay-method-tab-title">Click.uz</span>
                   </div>
                   <div class="pay-method-tab">
-                    <span style="font-size:7px; font-weight:900; color:#059669;">🟢 Payme</span>
+                    <span style="font-size:6.5px; font-weight:900; color:#009999;">🟢 Payme</span>
                     <span class="pay-method-tab-title">Payme</span>
                   </div>
                 </div>
@@ -3354,7 +3370,7 @@
                 <div class="pay-virtual-card">
                   <div class="pay-card-top">
                     <div class="pay-chip"></div>
-                    <span class="pay-card-badge">UZCARD</span>
+                    <span class="pay-card-badge">UZCARD • HUMO</span>
                   </div>
                   <div class="pay-card-num">8600 49•• •••• 1289</div>
                   <div class="pay-card-bottom">
@@ -3374,7 +3390,7 @@
                   <div class="pay-input-lbl">Karta raqami (Uzcard / Humo / Visa)</div>
                   <div class="pay-input-val-box">
                     <span>8600 4902 8174 1289</span>
-                    <span style="font-size:5.2px; background:#EFF6FF; color:#1E40AF; padding:1px 3.5px; border-radius:3px; font-weight:800;">Uzcard</span>
+                    <span style="font-size:5px; background:#EFF6FF; color:#1E40AF; padding:1px 3px; border-radius:3px; font-weight:800;">Uzcard</span>
                   </div>
                 </div>
 
@@ -3392,7 +3408,7 @@
                 <!-- Security Note -->
                 <div class="pay-security-badge">
                   <span>🔒</span>
-                  <span>Barcha karta to'lovlari 256-bit shifrlangan va xavfsiz.</span>
+                  <span>Click, Payme & Bank to'lovlari 256-bit shifrlangan.</span>
                 </div>
 
                 <!-- Action Pay Button -->
@@ -3435,55 +3451,56 @@
       <!-- Feature Details Right (4 Cards + Spec Box) -->
       <div class="features-list">
         
-        <!-- Card 1: Click, Payme & Bank Karta -->
-        <div class="feature-card highlight">
+        <!-- Card 1: Click & Payme Integratsiyasi -->
+        <div class="feature-card highlight" style="border-left: 3.5px solid #0073FF;">
           <div class="card-top">
-            <div class="card-icon icon-indigo">💳</div>
-            <h3 class="card-title">Click, Payme & Bank Karta Integratsiyasi</h3>
-            <span class="card-badge badge-purple">FINTECH HUB</span>
+            <div class="card-icon" style="background:#EFF6FF; color:#0052CC;">🔵</div>
+            <h3 class="card-title">Click Up & Payme Integratsiyasi</h3>
+            <span class="card-badge" style="background:#0073FF; color:#FFF;">MILLIY TO'LOV</span>
           </div>
           <p class="card-text">
-            O'zbekistonning yetakchi to'lov shlyuzlari: <strong>Click Up</strong> (tezkor telefon orqali to'lov), <strong>Payme</strong> va to'g'ridan-to'g'ri <strong>Uzcard (8600), Humo (9860), Visa / Mastercard</strong> kartalari orqali 30 soniyada to'lovni tasdiqlash imkoniyati.
+            O'zbekistonning eng ommabop shlyuzlari: <strong>Click Up</strong> va <strong>Payme</strong> to'liq integratsiya qilingan. Foydalanuvchi 1 bosish orqali Click yoki Payme ilovasiga o'tib, telefon raqami orqali 0% komissiya bilan bir zumda xaridni amalga oshiradi.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill" style="background:#DBEAFE; color:#1D4ED8; font-weight:800;">🔵 Click Up App</span>
+            <span class="tech-pill" style="background:#CCFBF1; color:#0F766E; font-weight:800;">🟢 Payme Checkout</span>
+            <span class="tech-pill">0% Komissiya</span>
+            <span class="tech-pill">Tezkor Faollashuv</span>
+          </div>
+        </div>
+
+        <!-- Card 2: To'g'ridan-to'g'ri Bank Kartalari -->
+        <div class="feature-card">
+          <div class="card-top">
+            <div class="card-icon icon-indigo">💳</div>
+            <h3 class="card-title">To'g'ridan-to'g'ri Karta Orqali To'lov</h3>
+            <span class="card-badge badge-purple">UZCARD & HUMO</span>
+          </div>
+          <p class="card-text">
+            Click va Payme'dan tashqari, foydalanuvchilar o'zlarining <strong>Uzcard (8600)</strong>, <strong>Humo (9860)</strong> yoki <strong>Visa/Mastercard</strong> karta raqamlarini bevosita kiritib, SMS-kod orqali xavfsiz to'lov qilishlari mumkin.
           </p>
           <div class="card-tags">
             <span class="tech-pill">Uzcard 8600</span>
             <span class="tech-pill">Humo 9860</span>
-            <span class="tech-pill">Click Up</span>
-            <span class="tech-pill">Payme Checkout</span>
+            <span class="tech-pill">256-bit SSL</span>
+            <span class="tech-pill">SMS OTP Himoya</span>
           </div>
         </div>
 
-        <!-- Card 2: 2 Xil Xarid Modeli -->
+        <!-- Card 3: 2 Xil Xarid Modeli & Zero-Visibility -->
         <div class="feature-card">
           <div class="card-top">
             <div class="card-icon icon-sky">💎</div>
-            <h3 class="card-title">2 Xil Xarid Modeli (VIP & Kitob Xaridi)</h3>
+            <h3 class="card-title">2 Xil Xarid Modeli & Yashirin Bepul Rejim</h3>
             <span class="card-badge badge-blue">MONETIZATSIYA</span>
           </div>
           <p class="card-text">
-            Foydalanuvchi butun ilovani ochuvchi <strong>VIP Oylik Obuna</strong> (29 000 so'm/oy — barcha 6 ta kitob, kinolar, reklamasiz) olishi yoki butun obuna olmay, faqat o'ziga kerakli kitobni alohida arzon narxda (19 000 so'm) umrbod ochishi mumkin.
+            <strong>VIP Oylik Obuna</strong> (29 000 so'm/oy) butun ilovani to'liq ochadi, yoki bitta kitobni alohida arzon narxda (19 000 so'm) umrbod sotib olish mumkin. Ilova bepul holatda bo'lsa (<code>premium_mode: false</code>), hech qanday to'lov yoki narx umuman ko'rinmaydi.
           </p>
           <div class="card-tags">
             <span class="tech-pill">VIP Oylik (29k)</span>
             <span class="tech-pill">Kitob Xaridi (19k)</span>
-            <span class="tech-pill">Umrbod Kirish</span>
-          </div>
-        </div>
-
-        <!-- Card 3: Zero-Visibility Bepul Rejim -->
-        <div class="feature-card">
-          <div class="card-top">
-            <div class="card-icon icon-emerald">🛡️</div>
-            <h3 class="card-title">Zero-Visibility Bepul Rejim (Strict Clean UI)</h3>
-            <span class="card-badge badge-green">100% BEPUL</span>
-          </div>
-          <p class="card-text">
-            Loyihaning dastlabki bosqichida (<code>premium_mode_enabled === false</code>) ilovada hech qanday to'lov tugmasi, narxlar yoki sotib olish bloklari umuman ko'rinmaydi. Foydalanuvchi hech qanday bezovtaliksiz 100% toza bepul ta'lim oladi.
-          </p>
-          <div class="card-tags">
-            <span class="tech-pill">premium_mode: false</span>
-            <span class="tech-pill">Zero Visibility</span>
-            <span class="tech-pill">Toza UI</span>
+            <span class="tech-pill">Zero Visibility Bepul</span>
           </div>
         </div>
 
@@ -3495,12 +3512,12 @@
             <span class="card-badge badge-amber">REAL-TIME SYNC</span>
           </div>
           <p class="card-text">
-            Oylik obuna narxi, bitta kitob narxi va qabul qiluvchi karta raqami Admin paneldagi <strong>Monetizatsiya</strong> sahifasida istalgan vaqtda tahrirlanadi. Ilovani qayta reliz qilmasdan turib mobil qurilmalarga darhol tarqatiladi.
+            Oylik obuna narxi, bitta kitob narxi va qabul qiluvchi karta raqami Admin paneldagi <strong>Monetizatsiya</strong> bo'limida istalgan payt o'zgartiriladi. Ilovani qayta reliz qilmasdan turib mobil foydalanuvchilarga darhol ta'sir qiladi.
           </p>
           <div class="card-tags">
             <span class="tech-pill">Remote Config</span>
             <span class="tech-pill">Supabase app_settings</span>
-            <span class="tech-pill">Zero Delay</span>
+            <span class="tech-pill">Real-time Narxlar</span>
           </div>
         </div>
 

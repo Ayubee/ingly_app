@@ -157,16 +157,16 @@ export async function syncAllLocalUsersToSupabase() {
 export async function fetchUserRemoteStatus(loginOrPhone) {
   if (!loginOrPhone) return null;
   const raw = String(loginOrPhone).trim();
-  const cleanUsername = raw.toLowerCase();
+  const cleanUsername = raw.toLowerCase().replace(/^@/, '');
   const digits = raw.replace(/\D/g, '');
 
   const encodedUsername = encodeURIComponent(cleanUsername);
   const encodedDigits = encodeURIComponent(digits.slice(-9));
 
   try {
-    let query = `${SUPABASE_REST_URL}/users?username=eq.${encodedUsername}&select=id,username,phone,is_blocked,is_premium,premium_until`;
+    let query = `${SUPABASE_REST_URL}/users?username=eq.${encodedUsername}&select=id,username,full_name,phone,is_blocked,is_premium,premium_until,password_hash`;
     if (digits.length >= 9) {
-      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${encodedUsername},phone.like.*${encodedDigits})&select=id,username,phone,is_blocked,is_premium,premium_until`;
+      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${encodedUsername},phone.like.*${encodedDigits})&select=id,username,full_name,phone,is_blocked,is_premium,premium_until,password_hash`;
     }
 
     const res = await fetch(query, {
@@ -188,7 +188,7 @@ export async function fetchUserRemoteStatus(loginOrPhone) {
 }
 
 /**
- * 4. Parolni serverda xavfsiz tekshirish (RPC orqali - parol hech qachon mijozga sizdirilmaydi)
+ * 4. Parolni serverda xavfsiz tekshirish (REST orqali to'g'ridan-to'g'ri)
  */
 export async function verifyUserCredentialsRemote(loginOrPhone, passwordHash) {
   if (!loginOrPhone || !passwordHash) {
@@ -196,35 +196,44 @@ export async function verifyUserCredentialsRemote(loginOrPhone, passwordHash) {
   }
 
   try {
-    if (isSupabaseConfigured() && supabase) {
-      const { data, error } = await supabase.rpc('verify_user_credentials', {
-        p_login_or_phone: String(loginOrPhone).trim(),
-        p_password_hash: String(passwordHash).trim()
-      });
-      if (!error && data) {
-        return data;
-      }
+    const raw = String(loginOrPhone).trim();
+    const cleanUsername = raw.toLowerCase().replace(/^@/, '');
+    const digits = raw.replace(/\D/g, '');
+
+    const encodedUsername = encodeURIComponent(cleanUsername);
+    const encodedDigits = encodeURIComponent(digits.slice(-9));
+
+    let query = `${SUPABASE_REST_URL}/users?username=eq.${encodedUsername}&select=id,username,full_name,phone,password_hash,is_blocked,is_premium`;
+    if (digits.length >= 9) {
+      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${encodedUsername},phone.like.*${encodedDigits})&select=id,username,full_name,phone,password_hash,is_blocked,is_premium`;
     }
 
-    // REST fallback for RPC
-    const restHeaders = {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
-    };
-    const rpcRes = await fetch(`${SUPABASE_REST_URL}/rpc/verify_user_credentials`, {
-      method: 'POST',
-      headers: restHeaders,
-      body: JSON.stringify({
-        p_login_or_phone: String(loginOrPhone).trim(),
-        p_password_hash: String(passwordHash).trim()
-      })
+    const res = await fetch(query, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
     });
-    if (rpcRes.ok) {
-      return await rpcRes.json();
+
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const u = data[0];
+        if (u.is_blocked) {
+          return { success: false, isBlocked: true, error: 'Sizning hisobingiz bloklangan!' };
+        }
+        // Hash yoki ochiq parol bilan solishtirish
+        const isMatch = u.password_hash === passwordHash || (u.password_hash && u.password_hash === hashPassword(passwordHash));
+        if (isMatch) {
+          return { success: true, user: u };
+        } else {
+          return { success: false, error: 'Kiritilgan parol noto\'g\'ri!' };
+        }
+      }
     }
   } catch (err) {
     console.warn('[UserService] verifyUserCredentialsRemote xatosi:', err);
   }
   return null;
 }
+

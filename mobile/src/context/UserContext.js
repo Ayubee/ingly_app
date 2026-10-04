@@ -368,16 +368,18 @@ export function UserProvider({ children }) {
     let userIdx = matchedUserIndex;
     let matchedUser = userIdx !== -1 ? allUsers[userIdx] : null;
 
-    // Parolni tekshirish (Lokal tekshiruv)
+    // Parolni tekshirish (Lokal va Bulutdagi yangilangan parol tekshiruvi)
     let isPasswordValid = false;
-    if (matchedUser) {
-      isPasswordValid = verifyPassword(
-        enteredPassword,
-        matchedUser.password_hash || matchedUser.password
-      );
+    const targetHash = remote?.password_hash || matchedUser?.password_hash || matchedUser?.password;
+    if (targetHash) {
+      isPasswordValid = verifyPassword(enteredPassword, targetHash);
+      if (isPasswordValid && matchedUser && remote?.password_hash) {
+        matchedUser.password_hash = remote.password_hash;
+        delete matchedUser.password;
+      }
     }
 
-    // Agar lokal topilmasa yoki mos kelmasa, Supabase RPC orqali xavfsiz tekshirish
+    // Agar lokal topilmasa yoki mos kelmasa, Supabase orqali tekshirish
     if (!isPasswordValid) {
       const enteredHash = hashPassword(enteredPassword);
       const remoteCheck = await verifyUserCredentialsRemote(rawInput, enteredHash);

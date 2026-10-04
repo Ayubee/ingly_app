@@ -730,8 +730,8 @@
           showToast('Iltimos, yangi parol kiriting!');
           return;
         }
-        if (cleanPass.length < 6) {
-          showToast('Parol kamida 6 ta belgidan iborat bo\'lishi kerak!');
+        if (cleanPass.length < 4) {
+          showToast('Parol kamida 4 ta belgidan iborat bo\'lishi kerak!');
           return;
         }
 
@@ -796,7 +796,7 @@
           setUsers(updated);
           localStorage.setItem('ingly_users', JSON.stringify(updated));
 
-          showToast(`✅ "${passwordModalUser.name}" paroli muvaffaqiyatli yangilandi va xavfsiz shifrlab saqlandi!`);
+          showToast(`✅ "${passwordModalUser.name}" yangi paroli muvaffaqiyatli saqlandi: ${cleanPass}`);
           setPasswordModalUser(null);
           setNewPasswordInput('');
         } catch (err) {
@@ -1852,7 +1852,9 @@
                                   {u.isBlocked ? 'Blokdan ochish' : 'Bloklash'}
                                 </button>
                                 <button
-                                  onClick={() => {
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setPasswordModalUser(u);
                                     setNewPasswordInput('');
                                     setShowNewPassword(false);
@@ -2672,8 +2674,13 @@
 
           {/* Foydalanuvchi Parolini O'zgartirish Modali */}
           {passwordModalUser && (
-            <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div 
+              class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setPasswordModalUser(null);
+              }}
+            >
+              <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-200 relative z-[101]">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                   <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
@@ -2713,6 +2720,12 @@
                         type={showNewPassword ? 'text' : 'password'}
                         value={newPasswordInput}
                         onChange={(e) => setNewPasswordInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveUserPassword(e);
+                          }
+                        }}
                         placeholder="Yangi parolni kiriting..."
                         class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-mono focus:outline-none focus:border-amber-500 pr-10"
                         autoFocus
@@ -2762,7 +2775,8 @@
                       Bekor qilish
                     </button>
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={handleSaveUserPassword}
                       disabled={isSavingPassword}
                       class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
                     >
