@@ -30,6 +30,7 @@ export async function syncUserWithSupabase(userData) {
     phone: cleanPhone,
     daily_goal: Number(userData.dailyGoal) || 20,
     is_premium: !!userData.isPremium,
+    premium_until: userData.premiumUntil || null,
     last_login_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -163,9 +164,9 @@ export async function fetchUserRemoteStatus(loginOrPhone) {
   const encodedDigits = encodeURIComponent(digits.slice(-9));
 
   try {
-    let query = `${SUPABASE_REST_URL}/users?username=eq.${encodedUsername}&select=id,username,phone,is_blocked,is_premium`;
+    let query = `${SUPABASE_REST_URL}/users?username=eq.${encodedUsername}&select=id,username,phone,is_blocked,is_premium,premium_until`;
     if (digits.length >= 9) {
-      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${encodedUsername},phone.like.*${encodedDigits})&select=id,username,phone,is_blocked,is_premium`;
+      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${encodedUsername},phone.like.*${encodedDigits})&select=id,username,phone,is_blocked,is_premium,premium_until`;
     }
 
     const res = await fetch(query, {

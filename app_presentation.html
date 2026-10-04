@@ -1429,6 +1429,223 @@
       gap: 3mm;
       margin-top: 3.5mm;
     }
+
+    /* =====================================================================
+       PAGE 8: PAYMENT & VIP MONETIZATION (PAYMENT MODAL)
+       ===================================================================== */
+    .pay-modal-box {
+      display: flex;
+      flex-direction: column;
+      gap: 1.6mm;
+      height: 100%;
+    }
+    .pay-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.2mm 0;
+    }
+    .pay-header-sub {
+      font-size: 6px;
+      font-weight: 800;
+      color: #7E22CE;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .pay-header-title {
+      font-size: 8.8px;
+      font-weight: 900;
+      color: #0F172A;
+      margin: 0.5px 0 0 0;
+    }
+    .pay-close-btn {
+      width: 4.8mm;
+      height: 4.8mm;
+      border-radius: 50%;
+      background: #F1F5F9;
+      color: #64748B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 6.5px;
+      font-weight: 800;
+    }
+    .pay-price-card {
+      background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%);
+      border: 1px solid #D8B4FE;
+      border-radius: 2mm;
+      padding: 1.4mm 2mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pay-price-label {
+      font-size: 6px;
+      font-weight: 700;
+      color: #6B21A8;
+    }
+    .pay-price-val {
+      font-size: 9.5px;
+      font-weight: 900;
+      color: #7E22CE;
+    }
+    .pay-price-period {
+      font-size: 5.8px;
+      font-weight: 700;
+      color: #A855F7;
+    }
+    .pay-methods-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2mm;
+    }
+    .pay-method-tab {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 1.6mm;
+      padding: 1mm 0.8mm;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4mm;
+    }
+    .pay-method-tab.active {
+      border: 1.5px solid #5B4DFF;
+      background: #EEF0FF;
+    }
+    .pay-method-tab-title {
+      font-size: 5.4px;
+      font-weight: 800;
+      color: #334155;
+    }
+    .pay-method-tab.active .pay-method-tab-title {
+      color: #5B4DFF;
+    }
+    
+    /* Virtual Card */
+    .pay-virtual-card {
+      background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+      border-radius: 2.4mm;
+      padding: 2.2mm 2.8mm;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .pay-virtual-card::after {
+      content: '';
+      position: absolute;
+      right: -8mm;
+      top: -8mm;
+      width: 22mm;
+      height: 22mm;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(91, 77, 255, 0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .pay-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.6mm;
+    }
+    .pay-chip {
+      width: 5.5mm;
+      height: 4mm;
+      background: linear-gradient(135deg, #FDE68A 0%, #D97706 100%);
+      border-radius: 0.7mm;
+      border: 0.3px solid #B45309;
+    }
+    .pay-card-badge {
+      background: #1D4ED8;
+      color: #FFFFFF;
+      font-size: 5.2px;
+      font-weight: 900;
+      padding: 0.6px 2mm;
+      border-radius: 0.8mm;
+      letter-spacing: 0.5px;
+    }
+    .pay-card-num {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 1.1px;
+      font-family: monospace;
+      color: #F8FAFC;
+      margin-bottom: 1.6mm;
+    }
+    .pay-card-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .pay-card-holder-lbl {
+      font-size: 4px;
+      color: #94A3B8;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .pay-card-holder-val {
+      font-size: 5.6px;
+      font-weight: 800;
+      color: #FFFFFF;
+    }
+
+    /* Form Fields */
+    .pay-input-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6mm;
+    }
+    .pay-input-lbl {
+      font-size: 5.2px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .pay-input-val-box {
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      border-radius: 1.5mm;
+      padding: 1mm 1.8mm;
+      font-size: 6.2px;
+      font-weight: 700;
+      color: #0F172A;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pay-input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 1.2mm;
+    }
+
+    .pay-security-badge {
+      background: #F1F5F9;
+      border: 1px dashed #CBD5E1;
+      border-radius: 1.5mm;
+      padding: 1mm 1.4mm;
+      display: flex;
+      align-items: center;
+      gap: 1mm;
+      font-size: 5px;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    .pay-action-btn {
+      background: linear-gradient(135deg, #5B4DFF 0%, #38BDF8 100%);
+      color: #FFFFFF;
+      font-size: 7px;
+      font-weight: 800;
+      text-align: center;
+      padding: 2mm;
+      border-radius: 1.8mm;
+      box-shadow: 0 3px 8px rgba(91, 77, 255, 0.28);
+      margin-top: 0.2mm;
+    }
+
   </style>
 </head>
 <body>
@@ -1574,7 +1791,7 @@
       <!-- Cover Bottom Meta -->
       <div class="cover-footer">
         <div>Muallif & Buyurtmachi: <strong>inglyJon</strong></div>
-        <div>Texnologiyalar: <strong>React Native • React.js • TailwindCSS • Supabase SQL</strong></div>
+        <div>Texnologiyalar: <strong>React Native • React.js • TailwindCSS • Supabase SQL • Click & Payme</strong></div>
         <div>Holat: <strong>v1.0 Rasmiy Taqdimot</strong></div>
       </div>
 
@@ -1594,7 +1811,7 @@
       </div>
       <div class="page-meta-badge">
         <span>MOBIL ILOVA</span>
-        <span class="page-num-pill">02 / 07</span>
+        <span class="page-num-pill">02 / 08</span>
       </div>
     </div>
 
@@ -1920,7 +2137,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Bosh Sahifa va Navigatsiya UI</span>
       </div>
-      <div>Sahifa 2 / 7</div>
+      <div>Sahifa 2 / 8</div>
     </div>
   </div>
 
@@ -1937,7 +2154,7 @@
       </div>
       <div class="page-meta-badge">
         <span>DARSLAR & UNITLAR</span>
-        <span class="page-num-pill">03 / 07</span>
+        <span class="page-num-pill">03 / 08</span>
       </div>
     </div>
 
@@ -2155,7 +2372,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Darslar va Unitlar Ierarxiyasi</span>
       </div>
-      <div>Sahifa 3 / 7</div>
+      <div>Sahifa 3 / 8</div>
     </div>
   </div>
 
@@ -2172,7 +2389,7 @@
       </div>
       <div class="page-meta-badge">
         <span>FLASHKARTALAR & KINO</span>
-        <span class="page-num-pill">04 / 07</span>
+        <span class="page-num-pill">04 / 08</span>
       </div>
     </div>
 
@@ -2380,7 +2597,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Flashkartalar va Gollivud Kinolari</span>
       </div>
-      <div>Sahifa 4 / 7</div>
+      <div>Sahifa 4 / 8</div>
     </div>
   </div>
 
@@ -2397,7 +2614,7 @@
       </div>
       <div class="page-meta-badge">
         <span>TEST & QUIZ</span>
-        <span class="page-num-pill">05 / 07</span>
+        <span class="page-num-pill">05 / 08</span>
       </div>
     </div>
 
@@ -2591,7 +2808,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Testlar, Quizlar va Imtihon Mexanikasi</span>
       </div>
-      <div>Sahifa 5 / 7</div>
+      <div>Sahifa 5 / 8</div>
     </div>
   </div>
 
@@ -2608,7 +2825,7 @@
       </div>
       <div class="page-meta-badge">
         <span>PROFIL & XAVFSIZLIK</span>
-        <span class="page-num-pill">06 / 07</span>
+        <span class="page-num-pill">06 / 08</span>
       </div>
     </div>
 
@@ -2827,7 +3044,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Foydalanuvchi Xavfsizligi va Profil</span>
       </div>
-      <div>Sahifa 6 / 7</div>
+      <div>Sahifa 6 / 8</div>
     </div>
   </div>
 
@@ -2844,7 +3061,7 @@
       </div>
       <div class="page-meta-badge">
         <span>WEB ADMIN PANEL</span>
-        <span class="page-num-pill">07 / 07</span>
+        <span class="page-num-pill">07 / 08</span>
       </div>
     </div>
 
@@ -3051,7 +3268,272 @@
         <div class="footer-dot"></div>
         <span>Ingly Web Ekotizimi • React.js + Supabase Admin Dashboard</span>
       </div>
-      <div>Sahifa 7 / 7</div>
+      <div>Sahifa 7 / 8</div>
+    </div>
+  </div>
+
+
+  <!-- ===================================================================
+       PAGE 8: TO'LOV TIZIMLARI & MONETIZATSIYA - LIGHT THEME
+       =================================================================== -->
+  <div class="page" id="page8">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="brand-mini">
+        <div class="brand-logo-icon">I</div>
+        <span class="brand-name">INGLY</span>
+        <span class="brand-tag">To'lov & VIP Monetizatsiya</span>
+      </div>
+      <div class="page-meta-badge">
+        <span>FINTECH EKOTIZIMI</span>
+        <span class="page-num-pill">08 / 08</span>
+      </div>
+    </div>
+
+    <!-- Title Section -->
+    <div class="title-section">
+      <div class="section-eyebrow">CLICK, PAYME VA TO'G'RIDAN-TO'G'RI BANK KARTALARI</div>
+      <h2 class="page-main-title">To'lov Tizimlari & VIP Monetizatsiya (PaymentModal.js)</h2>
+      <p class="page-main-desc">
+        Click Up, Payme, Uzcard va Humo integratsiyasi, 100% yashirin bepul rejim hamda Admin orqali dinamik narxlar boshqaruvi.
+      </p>
+    </div>
+
+    <!-- Content 2 Columns -->
+    <div class="content-grid">
+      
+      <!-- Phone Mockup Left -->
+      <div class="phone-mockup-wrapper">
+        <div class="iphone-case">
+          <div class="iphone-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="dynamic-island"><div class="island-camera"></div></div>
+              <span>5G 􀛨 100%</span>
+            </div>
+
+            <!-- Screen Body (Soft Slate White #F8FAFC) -->
+            <div class="screen-content">
+              <div class="pay-modal-box">
+                <!-- Modal Header -->
+                <div class="pay-header-row">
+                  <div>
+                    <div class="pay-header-sub">👑 Ingly VIP Obuna</div>
+                    <h3 class="pay-header-title">Ingly VIP Oylik Obuna (1 oy)</h3>
+                  </div>
+                  <div class="pay-close-btn">✕</div>
+                </div>
+
+                <!-- Price Card -->
+                <div class="pay-price-card">
+                  <div class="pay-price-label">To'lov summasi:</div>
+                  <div style="text-align:right;">
+                    <span class="pay-price-val">29 000 so'm</span>
+                    <span class="pay-price-period">/ oy</span>
+                  </div>
+                </div>
+
+                <!-- Payment Method Selector Tabs -->
+                <div class="pay-methods-row">
+                  <div class="pay-method-tab active">
+                    <span style="font-size:8.5px;">💳</span>
+                    <span class="pay-method-tab-title">Bank Karta</span>
+                  </div>
+                  <div class="pay-method-tab">
+                    <span style="font-size:7px; font-weight:900; color:#2563EB;">🔵 Click</span>
+                    <span class="pay-method-tab-title">Click Up</span>
+                  </div>
+                  <div class="pay-method-tab">
+                    <span style="font-size:7px; font-weight:900; color:#059669;">🟢 Payme</span>
+                    <span class="pay-method-tab-title">Payme</span>
+                  </div>
+                </div>
+
+                <!-- Virtual Card Preview (Fintech Style) -->
+                <div class="pay-virtual-card">
+                  <div class="pay-card-top">
+                    <div class="pay-chip"></div>
+                    <span class="pay-card-badge">UZCARD</span>
+                  </div>
+                  <div class="pay-card-num">8600 49•• •••• 1289</div>
+                  <div class="pay-card-bottom">
+                    <div>
+                      <div class="pay-card-holder-lbl">Karta Egasi</div>
+                      <div class="pay-card-holder-val">JASUR RAHIMOV</div>
+                    </div>
+                    <div style="text-align:right;">
+                      <div class="pay-card-holder-lbl">Muddati</div>
+                      <div class="pay-card-holder-val">08 / 28</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Input Fields -->
+                <div class="pay-input-wrap">
+                  <div class="pay-input-lbl">Karta raqami (Uzcard / Humo / Visa)</div>
+                  <div class="pay-input-val-box">
+                    <span>8600 4902 8174 1289</span>
+                    <span style="font-size:5.2px; background:#EFF6FF; color:#1E40AF; padding:1px 3.5px; border-radius:3px; font-weight:800;">Uzcard</span>
+                  </div>
+                </div>
+
+                <div class="pay-input-grid">
+                  <div class="pay-input-wrap">
+                    <div class="pay-input-lbl">Amal muddati</div>
+                    <div class="pay-input-val-box">08 / 28</div>
+                  </div>
+                  <div class="pay-input-wrap">
+                    <div class="pay-input-lbl">Karta egasi</div>
+                    <div class="pay-input-val-box">JASUR RAHIMOV</div>
+                  </div>
+                </div>
+
+                <!-- Security Note -->
+                <div class="pay-security-badge">
+                  <span>🔒</span>
+                  <span>Barcha karta to'lovlari 256-bit shifrlangan va xavfsiz.</span>
+                </div>
+
+                <!-- Action Pay Button -->
+                <div class="pay-action-btn">
+                  To'lash: 29 000 so'm ➔
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+              <div class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">📖</span>
+                <span>Learn</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🎴</span>
+                <span>Flashcards</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🏆</span>
+                <span>Quiz</span>
+              </div>
+              <div class="nav-item active">
+                <span class="nav-icon">👤</span>
+                <span>Profile</span>
+              </div>
+            </div>
+
+            <!-- Home Indicator -->
+            <div class="home-indicator"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Details Right (4 Cards + Spec Box) -->
+      <div class="features-list">
+        
+        <!-- Card 1: Click, Payme & Bank Karta -->
+        <div class="feature-card highlight">
+          <div class="card-top">
+            <div class="card-icon icon-indigo">💳</div>
+            <h3 class="card-title">Click, Payme & Bank Karta Integratsiyasi</h3>
+            <span class="card-badge badge-purple">FINTECH HUB</span>
+          </div>
+          <p class="card-text">
+            O'zbekistonning yetakchi to'lov shlyuzlari: <strong>Click Up</strong> (tezkor telefon orqali to'lov), <strong>Payme</strong> va to'g'ridan-to'g'ri <strong>Uzcard (8600), Humo (9860), Visa / Mastercard</strong> kartalari orqali 30 soniyada to'lovni tasdiqlash imkoniyati.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill">Uzcard 8600</span>
+            <span class="tech-pill">Humo 9860</span>
+            <span class="tech-pill">Click Up</span>
+            <span class="tech-pill">Payme Checkout</span>
+          </div>
+        </div>
+
+        <!-- Card 2: 2 Xil Xarid Modeli -->
+        <div class="feature-card">
+          <div class="card-top">
+            <div class="card-icon icon-sky">💎</div>
+            <h3 class="card-title">2 Xil Xarid Modeli (VIP & Kitob Xaridi)</h3>
+            <span class="card-badge badge-blue">MONETIZATSIYA</span>
+          </div>
+          <p class="card-text">
+            Foydalanuvchi butun ilovani ochuvchi <strong>VIP Oylik Obuna</strong> (29 000 so'm/oy — barcha 6 ta kitob, kinolar, reklamasiz) olishi yoki butun obuna olmay, faqat o'ziga kerakli kitobni alohida arzon narxda (19 000 so'm) umrbod ochishi mumkin.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill">VIP Oylik (29k)</span>
+            <span class="tech-pill">Kitob Xaridi (19k)</span>
+            <span class="tech-pill">Umrbod Kirish</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Zero-Visibility Bepul Rejim -->
+        <div class="feature-card">
+          <div class="card-top">
+            <div class="card-icon icon-emerald">🛡️</div>
+            <h3 class="card-title">Zero-Visibility Bepul Rejim (Strict Clean UI)</h3>
+            <span class="card-badge badge-green">100% BEPUL</span>
+          </div>
+          <p class="card-text">
+            Loyihaning dastlabki bosqichida (<code>premium_mode_enabled === false</code>) ilovada hech qanday to'lov tugmasi, narxlar yoki sotib olish bloklari umuman ko'rinmaydi. Foydalanuvchi hech qanday bezovtaliksiz 100% toza bepul ta'lim oladi.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill">premium_mode: false</span>
+            <span class="tech-pill">Zero Visibility</span>
+            <span class="tech-pill">Toza UI</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Admin Paneldan Dinamik Narx Boshqaruvi -->
+        <div class="feature-card">
+          <div class="card-top">
+            <div class="card-icon icon-amber">⚙️</div>
+            <h3 class="card-title">Admin Paneldan Dinamik Narx Boshqaruvi</h3>
+            <span class="card-badge badge-amber">REAL-TIME SYNC</span>
+          </div>
+          <p class="card-text">
+            Oylik obuna narxi, bitta kitob narxi va qabul qiluvchi karta raqami Admin paneldagi <strong>Monetizatsiya</strong> sahifasida istalgan vaqtda tahrirlanadi. Ilovani qayta reliz qilmasdan turib mobil qurilmalarga darhol tarqatiladi.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill">Remote Config</span>
+            <span class="tech-pill">Supabase app_settings</span>
+            <span class="tech-pill">Zero Delay</span>
+          </div>
+        </div>
+
+        <!-- Spec Strip Bottom -->
+        <div class="spec-box" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="spec-item">
+            <div class="spec-num" style="color:#16A34A;">0%</div>
+            <div class="spec-lbl">Yashirin Komissiya</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-num" style="color:#5B4DFF;">3 Ta</div>
+            <div class="spec-lbl">To'lov Shlyuzi</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-num" style="color:#0284C7;">&lt; 2s</div>
+            <div class="spec-lbl">Darhol Faollashuv</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-num" style="color:#7E22CE;">256-bit</div>
+            <div class="spec-lbl">Bank Xavfsizligi</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="page-footer">
+      <div class="footer-left">
+        <div class="footer-dot"></div>
+        <span>Ingly FinTech Ekotizimi • Click, Payme, Uzcard & Humo To'lov Integratsiyasi</span>
+      </div>
+      <div>Sahifa 8 / 8</div>
     </div>
   </div>
 

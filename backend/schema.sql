@@ -700,6 +700,21 @@ VALUES
     'maintenance_mode',
     'false'::jsonb,
     'Tizim profilaktika rejimida ekanligi (true bo''lsa ilovada xabar ko''rinadi).'
+),
+(
+    'premium_monthly_price',
+    '29000'::jsonb,
+    'Ingly VIP oylik obuna narxi (so''m).'
+),
+(
+    'single_book_price',
+    '19000'::jsonb,
+    'Bitta kitobni doimiy xarid qilish narxi (so''m).'
+),
+(
+    'card_receiver_number',
+    '"8600 5304 1234 5678"'::jsonb,
+    'To''lovlar qabul qilinadigan bank karta raqami (Uzcard / Humo).'
 )
 ON CONFLICT (setting_key) DO UPDATE
 SET setting_value = EXCLUDED.setting_value,

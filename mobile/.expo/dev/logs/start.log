@@ -130,3 +130,188 @@
 {"_e":"metro:bundling:done","_t":1791026785811,"id":"f","total":1,"ms":105.4419}
 {"_e":"metro:bundling:started","_t":1791026790729,"id":"g","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
 {"_e":"metro:bundling:done","_t":1791026790827,"id":"g","total":1,"ms":98.0811}
+{"_e":"root:init","_t":1791030258880,"format":"v0-jsonl","version":"57.0.27"}
+{"_e":"env:mode","_t":1791030258880,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1791030258882,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W","EXPO_PUBLIC_SUPABASE_URL":"https://lbsqxownrjfmjoojdsfk.supabase.co"}}
+{"_e":"devserver:start","_t":1791030259086,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1791030259269,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1791030259397,"plugins":[]}
+{"_e":"metro:instantiate","_t":1791030262110,"atlas":false,"workers":10,"host":"::","port":8081}
+{"_e":"metro:bundling:started","_t":1791030293325,"id":"2","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791030297133,"id":"2","total":753,"ms":3807.0757}
+{"_e":"metro:bundling:started","_t":1791030304611,"id":"3","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791030306759,"id":"3","total":752,"ms":2147.9182}
+{"_e":"metro:bundling:started","_t":1791030704296,"id":"8","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791030706046,"id":"8","total":722,"ms":1750.6674}
+{"_e":"metro:client_log","_t":1791030706519,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791030733223,"id":"a","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791030733242,"id":"a","total":1,"ms":18.8343}
+{"_e":"metro:client_log","_t":1791030733549,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791030755674,"id":"c","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791030755690,"id":"c","total":1,"ms":16.1857}
+{"_e":"metro:client_log","_t":1791030756002,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791030813793,"id":"f","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791030813812,"id":"f","total":1,"ms":19.1648}
+{"_e":"metro:client_log","_t":1791030814106,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791030828979,"id":"h","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791030828997,"id":"h","total":1,"ms":17.9542}
+{"_e":"metro:client_log","_t":1791030829302,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:server_log","_t":1791031036453,"level":"error","data":["[timeout] connection terminated with Device for app='%s' on device='%s' after not responding for %s seconds.","host.exp.Exponent","iPhone","60"]}
+{"_e":"metro:bundling:started","_t":1791031166635,"id":"i","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791031166924,"id":"i","total":1,"ms":288.575}
+{"_e":"metro:bundling:started","_t":1791031586991,"id":"k","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791031587009,"id":"k","total":1,"ms":18.0288}
+{"_e":"metro:client_log","_t":1791031587260,"level":"warn","data":["[@supabase/supabase-js] kutubxonasi mavjud emas yoki yuklanmadi. Mock/Fallback rejimida ishlanmoqda.","Cannot find module '@supabase/supabase-js'"]}
+{"_e":"metro:client_log","_t":1791031587315,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791031681579,"id":"l","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791031681654,"id":"l","total":1,"ms":74.4054}
+{"_e":"metro:bundling:started","_t":1791035617932,"id":"n","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791035617999,"id":"n","total":1,"ms":67.2286}
+{"_e":"metro:client_log","_t":1791035618253,"level":"warn","data":["[@supabase/supabase-js] kutubxonasi mavjud emas yoki yuklanmadi. Mock/Fallback rejimida ishlanmoqda.","Cannot find module '@supabase/supabase-js'"]}
+{"_e":"metro:client_log","_t":1791035618400,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791035643687,"id":"p","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791035643706,"id":"p","total":1,"ms":19.214}
+{"_e":"metro:client_log","_t":1791035643956,"level":"warn","data":["[@supabase/supabase-js] kutubxonasi mavjud emas yoki yuklanmadi. Mock/Fallback rejimida ishlanmoqda.","Cannot find module '@supabase/supabase-js'"]}
+{"_e":"metro:client_log","_t":1791035644011,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791035661828,"id":"r","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791035661846,"id":"r","total":1,"ms":18.8385}
+{"_e":"metro:client_log","_t":1791035662102,"level":"warn","data":["[@supabase/supabase-js] kutubxonasi mavjud emas yoki yuklanmadi. Mock/Fallback rejimida ishlanmoqda.","Cannot find module '@supabase/supabase-js'"]}
+{"_e":"metro:client_log","_t":1791035662158,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791035680500,"id":"v","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791035680519,"id":"v","total":1,"ms":19.7851}
+{"_e":"metro:client_log","_t":1791035680775,"level":"warn","data":["[@supabase/supabase-js] kutubxonasi mavjud emas yoki yuklanmadi. Mock/Fallback rejimida ishlanmoqda.","Cannot find module '@supabase/supabase-js'"]}
+{"_e":"metro:client_log","_t":1791035680826,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791035768520,"id":"x","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791035768541,"id":"x","total":1,"ms":20.5972}
+{"_e":"metro:client_log","_t":1791035768788,"level":"warn","data":["[@supabase/supabase-js] kutubxonasi mavjud emas yoki yuklanmadi. Mock/Fallback rejimida ishlanmoqda.","Cannot find module '@supabase/supabase-js'"]}
+{"_e":"metro:client_log","_t":1791035768847,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791035894883,"id":"z","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791035894902,"id":"z","total":1,"ms":19.0031}
+{"_e":"metro:client_log","_t":1791035895147,"level":"warn","data":["[@supabase/supabase-js] kutubxonasi mavjud emas yoki yuklanmadi. Mock/Fallback rejimida ishlanmoqda.","Cannot find module '@supabase/supabase-js'"]}
+{"_e":"metro:client_log","_t":1791035895203,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791035986725,"id":"11","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791035986745,"id":"11","total":1,"ms":19.8786}
+{"_e":"metro:client_log","_t":1791035987103,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791036004331,"id":"12","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791036005256,"id":"12","total":1,"ms":925.1148}
+{"_e":"metro:bundling:started","_t":1791036166681,"id":"13","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791036166775,"id":"13","total":1,"ms":93.4649}
+{"_e":"metro:bundling:started","_t":1791036248372,"id":"14","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791036248673,"id":"14","total":1,"ms":301.4516}
+{"_e":"root:init","_t":1791036794184,"format":"v0-jsonl","version":"57.0.27"}
+{"_e":"env:mode","_t":1791036794185,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1791036794187,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W","EXPO_PUBLIC_SUPABASE_URL":"https://lbsqxownrjfmjoojdsfk.supabase.co"}}
+{"_e":"devserver:start","_t":1791036802643,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1791036806777,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1791036808311,"plugins":[]}
+{"_e":"metro:instantiate","_t":1791036812711,"atlas":false,"workers":10,"host":"::","port":8082}
+{"_e":"metro:bundling:started","_t":1791036822959,"id":"2","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:progress","_t":1791036822959,"id":"2","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1791036822961,"id":"2","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1791036823061,"id":"2","progress":0.267816318188012,"total":257,"current":133}
+{"_e":"metro:bundling:progress","_t":1791036823162,"id":"2","progress":0.6603446910894565,"total":539,"current":438}
+{"_e":"metro:bundling:progress","_t":1791036823262,"id":"2","progress":0.8432428388364116,"total":722,"current":663}
+{"_e":"metro:bundling:progress","_t":1791036823367,"id":"2","progress":0.9973975287543402,"total":768,"current":767}
+{"_e":"metro:bundling:progress","_t":1791036826169,"id":"2","progress":0.999,"total":768,"current":768}
+{"_e":"metro:bundling:done","_t":1791036826274,"id":"2","total":768,"ms":3315.0261}
+{"_e":"metro:client_log","_t":1791036826729,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791036843266,"id":"4","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:progress","_t":1791036843267,"id":"4","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1791036843288,"id":"4","total":1,"ms":21.7886}
+{"_e":"metro:client_log","_t":1791036843639,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791037207665,"id":"16","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791037207987,"id":"16","total":1,"ms":321.8603}
+{"_e":"metro:bundling:started","_t":1791037273499,"id":"b","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:progress","_t":1791037273499,"id":"b","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1791037273522,"id":"b","total":1,"ms":23.3533}
+{"_e":"metro:client_log","_t":1791037273954,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:client_log","_t":1791037664152,"level":"warn","data":["[AppSettings] Supabase load error:","cannot add `postgres_changes` callbacks for realtime:public:app_settings after `subscribe()`."]}
+{"_e":"metro:bundling:started","_t":1791037687466,"id":"d","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:progress","_t":1791037687466,"id":"d","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1791037687487,"id":"d","total":1,"ms":20.7136}
+{"_e":"metro:client_log","_t":1791037687839,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791037789078,"id":"18","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791037789233,"id":"18","total":1,"ms":155.2528}
+{"_e":"metro:bundling:started","_t":1791038097235,"id":"19","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791038097332,"id":"19","total":1,"ms":96.9703}
+{"_e":"metro:bundling:started","_t":1791038210890,"id":"f","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:progress","_t":1791038210890,"id":"f","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1791038210891,"id":"f","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1791038210960,"id":"f","total":1,"ms":70.3698}
+{"_e":"metro:client_log","_t":1791038211432,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"root:init","_t":1791038226459,"format":"v0-jsonl","version":"57.0.27"}
+{"_e":"env:mode","_t":1791038226459,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1791038226461,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W","EXPO_PUBLIC_SUPABASE_URL":"https://lbsqxownrjfmjoojdsfk.supabase.co"}}
+{"_e":"devserver:start","_t":1791038228890,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1791038229067,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1791038229175,"plugins":[]}
+{"_e":"metro:instantiate","_t":1791038231710,"atlas":false,"workers":10,"host":"::","port":8082}
+{"_e":"metro:bundling:started","_t":1791038236394,"id":"2","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:progress","_t":1791038236394,"id":"2","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1791038236396,"id":"2","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1791038236496,"id":"2","progress":0.27027279783781755,"total":327,"current":170}
+{"_e":"metro:bundling:progress","_t":1791038236596,"id":"2","progress":0.7499786406937503,"total":612,"current":530}
+{"_e":"metro:bundling:progress","_t":1791038236696,"id":"2","progress":0.999,"total":769,"current":769}
+{"_e":"metro:bundling:done","_t":1791038236731,"id":"2","total":769,"ms":336.5421}
+{"_e":"metro:client_log","_t":1791038237179,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"root:init","_t":1791041072205,"format":"v0-jsonl","version":"57.0.27"}
+{"_e":"env:mode","_t":1791041072205,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1791041072207,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W","EXPO_PUBLIC_SUPABASE_URL":"https://lbsqxownrjfmjoojdsfk.supabase.co"}}
+{"_e":"devserver:start","_t":1791041072417,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1791041072602,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1791041072730,"plugins":[]}
+{"_e":"metro:instantiate","_t":1791041075477,"atlas":false,"workers":10,"host":"::","port":8081}
+{"_e":"metro:bundling:started","_t":1791041085257,"id":"1","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791041089831,"id":"1","total":800,"ms":4573.3194}
+{"_e":"metro:bundling:started","_t":1791041141817,"id":"4","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791041143704,"id":"4","total":769,"ms":1886.898}
+{"_e":"metro:client_log","_t":1791041144353,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"root:init","_t":1791050816838,"format":"v0-jsonl","version":"57.0.27"}
+{"_e":"env:mode","_t":1791050816839,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1791050816841,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W","EXPO_PUBLIC_SUPABASE_URL":"https://lbsqxownrjfmjoojdsfk.supabase.co"}}
+{"_e":"devserver:start","_t":1791050817069,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1791050817259,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1791050817396,"plugins":[]}
+{"_e":"metro:instantiate","_t":1791050820085,"atlas":false,"workers":10,"host":"::","port":8081}
+{"_e":"metro:bundling:started","_t":1791050827923,"id":"1","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791050831740,"id":"1","total":800,"ms":3816.6183}
+{"_e":"metro:bundling:started","_t":1791050957023,"id":"2","platform":"android","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791050957403,"id":"2","total":1,"ms":379.2399}
+{"_e":"root:init","_t":1791125039740,"format":"v0-jsonl","version":"57.0.27"}
+{"_e":"env:mode","_t":1791125039752,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1791125039763,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W","EXPO_PUBLIC_SUPABASE_URL":"https://lbsqxownrjfmjoojdsfk.supabase.co"}}
+{"_e":"devserver:start","_t":1791125044570,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1791125049261,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1791125051174,"plugins":[]}
+{"_e":"metro:instantiate","_t":1791125055845,"atlas":false,"workers":10,"host":"::","port":8081}
+{"_e":"metro:bundling:started","_t":1791125065039,"id":"2","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791125072107,"id":"2","total":769,"ms":7068.5132}
+{"_e":"metro:client_log","_t":1791125072733,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791125158650,"id":"4","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791125158682,"id":"4","total":1,"ms":31.9399}
+{"_e":"metro:client_log","_t":1791125159146,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:server_log","_t":1791125340637,"level":"error","data":["[timeout] connection terminated with Device for app='%s' on device='%s' after not responding for %s seconds.","host.exp.Exponent","iPhone","60"]}
+{"_e":"metro:bundling:started","_t":1791126062009,"id":"6","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791126062038,"id":"6","total":1,"ms":28.999}
+{"_e":"metro:client_log","_t":1791126062914,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791127232430,"id":"8","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791127232528,"id":"8","total":1,"ms":97.7282}
+{"_e":"metro:client_log","_t":1791127233032,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:client_log","_t":1791127754374,"level":"warn","data":["[AppSettings] Supabase load error:","cannot add `postgres_changes` callbacks for realtime:public:app_settings after `subscribe()`."]}
+{"_e":"metro:client_log","_t":1791127796754,"level":"warn","data":["[AppSettings] Supabase load error:","cannot add `postgres_changes` callbacks for realtime:public:app_settings after `subscribe()`."]}
+{"_e":"metro:client_log","_t":1791127811771,"level":"warn","data":["[AppSettings] Supabase load error:","cannot add `postgres_changes` callbacks for realtime:public:app_settings after `subscribe()`."]}
+{"_e":"metro:bundling:failed","_t":1791127823595,"id":null,"message":"SyntaxError: D:\\inglyJon\\mobile\\src\\context\\UserContext.js: 'return' outside of function. (720:2)\n\n  718 |   const isPasswordExpired = isPasswordOlderThan6Months(user);\n  719 |\n> 720 |   return (\n      |   ^\n  721 |     <UserContext.Provider\n  722 |       value={{\n  723 |         user,","importStack":null,"filename":"src\\context\\UserContext.js","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:bundling:failed","_t":1791127823787,"id":null,"message":"SyntaxError: D:\\inglyJon\\mobile\\src\\context\\UserContext.js: 'return' outside of function. (720:2)\n\n  718 |   const isPasswordExpired = isPasswordOlderThan6Months(user);\n  719 |\n> 720 |   return (\n      |   ^\n  721 |     <UserContext.Provider\n  722 |       value={{\n  723 |         user,","importStack":null,"filename":"src\\context\\UserContext.js","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:client_log","_t":1791127839268,"level":"warn","data":["[AppSettings] Supabase load error:","cannot add `postgres_changes` callbacks for realtime:public:app_settings after `subscribe()`."]}
+{"_e":"metro:client_log","_t":1791127856885,"level":"warn","data":["[AppSettings] Supabase load error:","cannot add `postgres_changes` callbacks for realtime:public:app_settings after `subscribe()`."]}
+{"_e":"metro:bundling:started","_t":1791127921811,"id":"c","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791127921834,"id":"c","total":1,"ms":23.0837}
+{"_e":"metro:client_log","_t":1791127922436,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791130191247,"id":"g","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791130191516,"id":"g","total":1,"ms":269.0073}
+{"_e":"metro:client_log","_t":1791130193186,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:server_log","_t":1791130317908,"level":"error","data":["[timeout] connection terminated with Device for app='%s' on device='%s' after not responding for %s seconds.","host.exp.Exponent","iPhone","60"]}
+{"_e":"metro:bundling:started","_t":1791130434791,"id":"i","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791130434820,"id":"i","total":1,"ms":28.9041}
+{"_e":"metro:client_log","_t":1791130435450,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:server_log","_t":1791130522701,"level":"error","data":["[timeout] connection terminated with Device for app='%s' on device='%s' after not responding for %s seconds.","host.exp.Exponent","iPhone","60"]}

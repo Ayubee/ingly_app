@@ -17,6 +17,11 @@ let currentSettings = {
   premium_mode_enabled: false,
   free_books_count: 6,
   daily_goal_default: 20,
+  premium_monthly_price: 29000, // VIP oylik obuna narxi (so'm)
+  single_book_price: 19000,     // Bitta kitob narxi (so'm)
+  card_receiver_number: '8600 5304 1234 5678', // To'lov kartasi
+  click_service_id: 'ingly_click_main',
+  payme_merchant_id: 'ingly_payme_main',
 };
 
 const listeners = new Set();
@@ -80,6 +85,12 @@ export async function initAppSettings() {
           currentSettings.free_books_count = Number(item.setting_value) || 6;
         } else if (item.setting_key === 'daily_goal_default') {
           currentSettings.daily_goal_default = Number(item.setting_value) || 20;
+        } else if (item.setting_key === 'premium_monthly_price') {
+          currentSettings.premium_monthly_price = Number(item.setting_value) || 29000;
+        } else if (item.setting_key === 'single_book_price') {
+          currentSettings.single_book_price = Number(item.setting_value) || 19000;
+        } else if (item.setting_key === 'card_receiver_number') {
+          currentSettings.card_receiver_number = String(item.setting_value || '8600 5304 1234 5678');
         }
       });
 
@@ -103,6 +114,12 @@ export async function initAppSettings() {
             currentSettings.premium_mode_enabled = item.setting_value === true || item.setting_value === 'true';
           } else if (item.setting_key === 'free_books_count') {
             currentSettings.free_books_count = Number(item.setting_value) || 6;
+          } else if (item.setting_key === 'premium_monthly_price') {
+            currentSettings.premium_monthly_price = Number(item.setting_value) || 29000;
+          } else if (item.setting_key === 'single_book_price') {
+            currentSettings.single_book_price = Number(item.setting_value) || 19000;
+          } else if (item.setting_key === 'card_receiver_number') {
+            currentSettings.card_receiver_number = String(item.setting_value || '8600 5304 1234 5678');
           }
 
           setStorageItem(STORAGE_KEY_SETTINGS, currentSettings);

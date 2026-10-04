@@ -54,6 +54,9 @@ export const INITIAL_USER = {
   accuracy: 0,
   activeBook: 1,
   activeUnit: 1,
+  isPremium: false,
+  premiumUntil: null, // VIP obuna tugash sanasi (ISO)
+  unlockedBooks: [1], // Sotib olingan yoki ochiq kitoblar ro'yxati [1, 2, ...]
   reminderTime: '20:00',
   notificationsEnabled: true,
   soundEnabled: true,
@@ -98,6 +101,9 @@ export function UserProvider({ children }) {
           setUser({
             ...INITIAL_USER,
             ...saved,
+            isPremium: !!saved.isPremium,
+            premiumUntil: saved.premiumUntil || null,
+            unlockedBooks: Array.isArray(saved.unlockedBooks) && saved.unlockedBooks.length > 0 ? saved.unlockedBooks : [1],
             dailyGoal: Number(saved.dailyGoal) || 20,
             streakDays: streak,
             wordsLearnedToday: wordsToday,
@@ -116,7 +122,11 @@ export function UserProvider({ children }) {
                 return;
               }
               if (remote.is_premium !== undefined) {
-                setUser((prev) => ({ ...prev, isPremium: !!remote.is_premium }));
+                setUser((prev) => ({
+                  ...prev,
+                  isPremium: !!remote.is_premium,
+                  premiumUntil: remote.premium_until || prev.premiumUntil,
+                }));
               }
             }
           } catch (e) {}
@@ -146,8 +156,12 @@ export function UserProvider({ children }) {
                 'Hisobingiz Bloklandi 🚫',
                 'Administrator sizning profilingizni blokladi. Ilovadan foydalanish to\'xtatildi.'
               );
-            } else if (remote.is_premium !== undefined && remote.is_premium !== active.isPremium) {
-              setUser(prev => ({ ...prev, isPremium: !!remote.is_premium }));
+            } else if (remote.is_premium !== undefined && (remote.is_premium !== active.isPremium || remote.premium_until !== active.premiumUntil)) {
+              setUser(prev => ({
+                ...prev,
+                isPremium: !!remote.is_premium,
+                premiumUntil: remote.premium_until || prev.premiumUntil,
+              }));
             }
           }
         } catch (e) {}
@@ -706,6 +720,74 @@ export function UserProvider({ children }) {
     await setStorageItem(STORAGE_KEYS.USER_PROFILE, updated);
   };
 
+  // 12. VIP Oylik Obunani faollashtirish (Click, Payme yoki Bank Karta to'lovidan so'ng)
+  const subscribeVipMonthly = async (paymentDetails = {}) => {
+    const now = new Date();
+    // 30 kunlik muddat beriladi
+    const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const updated = {
+      ...user,
+      isPremium: true,
+      premiumUntil: expiresAt,
+      // VIP bo'lganda barcha 6 ta kitob avtomatik ochiq
+      unlockedBooks: [1, 2, 3, 4, 5, 6],
+    };
+
+    await saveUserData(updated);
+
+    try {
+      await syncUserWithSupabase({
+        ...updated,
+        is_premium: true,
+        premium_until: expiresAt,
+      });
+    } catch (e) {
+      console.warn('VIP obunani Supabase ga saqlashda xato:', e);
+    }
+
+    return { success: true, expiresAt };
+  };
+
+  // 13. Bitta kitobni doimiy sotib olish (Click, Payme yoki Bank Karta)
+  const purchaseBook = async (bookId, paymentDetails = {}) => {
+    const numId = Number(bookId);
+    const current = Array.isArray(user.unlockedBooks) ? [...user.unlockedBooks] : [1];
+    if (!current.includes(numId)) {
+      current.push(numId);
+    }
+
+    const updated = {
+      ...user,
+      unlockedBooks: current,
+    };
+
+    await saveUserData(updated);
+
+    try {
+      await syncUserWithSupabase(updated);
+    } catch (e) {}
+
+    return { success: true, bookId: numId };
+  };
+
+  // VIP obuna ayni paytda faolmi? (Tugash muddati o'tib ketmaganmi)
+  const isVipActive = Boolean(
+    user &&
+    user.isPremium &&
+    (!user.premiumUntil || new Date(user.premiumUntil).getTime() > Date.now())
+  );
+
+  // Kitob ochilganmi yoki bepulmi?
+  const isBookPurchasedOrFree = (bookId, freeBooksCount = 6, premiumModeEnabled = false) => {
+    if (!premiumModeEnabled) return true; // Bepul rejimda hamma kitob ochiq
+    if (isVipActive) return true;          // VIP obunachi uchun hamma kitob ochiq
+    const num = Number(bookId);
+    if (num <= freeBooksCount) return true; // Bepul etib belgilangan kitoblar
+    if (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(num)) return true; // Sotib olingan
+    return false;
+  };
+
   const isPasswordExpired = isPasswordOlderThan6Months(user);
 
   return (
@@ -724,6 +806,10 @@ export function UserProvider({ children }) {
         setActiveLesson,
         changePassword,
         dismissPasswordReminder,
+        subscribeVipMonthly,
+        purchaseBook,
+        isVipActive,
+        isBookPurchasedOrFree,
         isPasswordExpired,
         isPasswordOlderThan6Months,
       }}

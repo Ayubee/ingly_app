@@ -5,7 +5,7 @@
  * Book 1 Unit 1 faol (boshlang'ich), qolganlari bosqichma-bosqich ochiladi.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,43 @@ import {
   StyleSheet,
   SafeAreaView,
   Platform,
+  Alert,
 } from 'react-native';
 import { colors, booksConfig } from '../theme.js';
 import { useUser } from '../context/UserContext.js';
+import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
+import PaymentModal from '../components/PaymentModal.js';
 
 export default function LearnScreen({ onNavigate }) {
-  const { user, setActiveLesson } = useUser();
+  const { user, setActiveLesson, subscribeVipMonthly, purchaseBook, isVipActive } = useUser();
   const [selectedBook, setSelectedBook] = useState(user?.activeBook || 1);
+  const [appSettings, setAppSettings] = useState(getAppSettings());
+
+  const [paymentModal, setPaymentModal] = useState({
+    visible: false,
+    itemType: 'book',
+    itemTitle: '',
+    price: 19000,
+    bookId: null,
+  });
+
+  useEffect(() => {
+    const unsub = onSettingsChange((st) => {
+      if (st) setAppSettings({ ...st });
+    });
+    return () => unsub();
+  }, []);
+
+  const handlePaymentSuccess = async (details) => {
+    setPaymentModal((prev) => ({ ...prev, visible: false }));
+    if (details.itemType === 'vip') {
+      await subscribeVipMonthly(details);
+      Alert.alert('Tabriklaymiz! 👑', 'VIP obunangiz faollashtirildi! Barcha kitoblar ochiq.');
+    } else if (details.itemType === 'book') {
+      await purchaseBook(details.bookId, details);
+      Alert.alert('Xarid muvaffaqiyatli! 📚', `${details.itemTitle} ochildi!`);
+    }
+  };
 
   const handleOpenUnit = (unitNum) => {
     if (setActiveLesson) {
@@ -31,9 +61,11 @@ export default function LearnScreen({ onNavigate }) {
     }
   };
 
-  // Tanlangan kitob ochiqmi? (Book 1 har doim ochiq, boshqalari oldingi kitob progressi 100% bo'lganda)
-  const isBookUnlocked =
-    selectedBook === 1 || (user.bookProgress[selectedBook - 1] || 0) >= 100;
+  // Tanlangan kitob ochiqmi?
+  const isBookPurchased = isVipActive || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(selectedBook));
+  const isBookLockedByPayment = appSettings.premium_mode_enabled && selectedBook > appSettings.free_books_count && !isBookPurchased;
+  const isBookProgressionLocked = !isBookLockedByPayment && selectedBook !== 1 && (user.bookProgress[selectedBook - 1] || 0) < 100;
+  const isBookUnlocked = !isBookLockedByPayment && !isBookProgressionLocked;
 
   // Foydalanuvchining ushbu kitobdagi o'rganilgan so'zlari
   // Har bir kitobda 30 ta unit, har bir unitda 20 ta so'z (jami 600 ta so'z)
@@ -111,15 +143,39 @@ export default function LearnScreen({ onNavigate }) {
         {!isBookUnlocked ? (
           <View style={styles.lockedBookNotice}>
             <Text style={styles.lockedNoticeIcon}>🔒</Text>
-            <Text style={styles.lockedNoticeTitle}>Book {selectedBook} Qulflangan</Text>
-            <Text style={styles.lockedNoticeText}>
-              Ushbu kitobni ochish uchun avval Book {selectedBook - 1} ning barcha 30 ta unitini tugatishingiz kerak.
+            <Text style={styles.lockedNoticeTitle}>
+              Book {selectedBook} {isBookLockedByPayment ? 'Pullik Rejimda' : 'Qulflangan'}
             </Text>
+            <Text style={styles.lockedNoticeText}>
+              {isBookLockedByPayment
+                ? `Ushbu kitob pullik obunaga kiritilgan (${Number(appSettings.single_book_price || 19000).toLocaleString('uz-UZ')} so'm). Siz uni karta, Click yoki Payme orqali alohida xarid qilishingiz yoki VIP obuna bo'lishingiz mumkin.`
+                : `Ushbu kitobni ochish uchun avval Book ${selectedBook - 1} ning barcha 30 ta unitini tugatishingiz kerak.`}
+            </Text>
+
+            {isBookLockedByPayment && (
+              <TouchableOpacity
+                style={[styles.backToBook1Btn, { backgroundColor: colors.primary.DEFAULT, marginBottom: 10 }]}
+                onPress={() => {
+                  setPaymentModal({
+                    visible: true,
+                    itemType: 'book',
+                    itemTitle: `Book ${selectedBook} (To'liq ochish)`,
+                    price: appSettings.single_book_price || 19000,
+                    bookId: selectedBook,
+                  });
+                }}
+              >
+                <Text style={styles.backToBook1Text}>Kitobni xarid qilish 💳</Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
-              style={styles.backToBook1Btn}
+              style={[styles.backToBook1Btn, isBookLockedByPayment && { backgroundColor: '#F1F5F9' }]}
               onPress={() => setSelectedBook(1)}
             >
-              <Text style={styles.backToBook1Text}>Book 1 ga o'tish ➔</Text>
+              <Text style={[styles.backToBook1Text, isBookLockedByPayment && { color: '#475569' }]}>
+                Book 1 ga o'tish ➔
+              </Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -189,6 +245,18 @@ export default function LearnScreen({ onNavigate }) {
           </View>
         )}
       </ScrollView>
+
+      {/* Universal To'lov Modali (Click, Payme, Bank Karta) */}
+      <PaymentModal
+        visible={paymentModal.visible}
+        onClose={() => setPaymentModal((prev) => ({ ...prev, visible: false }))}
+        itemType={paymentModal.itemType}
+        itemTitle={paymentModal.itemTitle}
+        price={paymentModal.price}
+        bookId={paymentModal.bookId}
+        onSuccess={handlePaymentSuccess}
+        userPhone={user.phone}
+      />
     </SafeAreaView>
   );
 }

@@ -23,6 +23,8 @@ import {
 } from 'react-native';
 import { colors } from '../theme.js';
 import { useUser } from '../context/UserContext.js';
+import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
+import PaymentModal from '../components/PaymentModal.js';
 
 const AVAILABLE_AVATARS = ['👨‍🎓', '👩‍🎓', '🦁', '🦊', '🚀', '⚡️', '👑', '🎯', '🦉', '🌟'];
 const REMINDER_TIMES = ['08:00', '13:00', '19:00', '21:00'];
@@ -36,7 +38,50 @@ export default function ProfileScreen({ onNavigate }) {
     changePassword,
     dismissPasswordReminder,
     isPasswordExpired,
+    subscribeVipMonthly,
+    purchaseBook,
+    isVipActive,
+    isBookPurchasedOrFree,
   } = useUser();
+
+  // App Settings (Monetizatsiya va Feature Flags)
+  const [appSettings, setAppSettings] = useState(getAppSettings());
+
+  // To'lov modali holati (Click, Payme, Bank Karta)
+  const [paymentModal, setPaymentModal] = useState({
+    visible: false,
+    itemType: 'vip', // 'vip' | 'book'
+    itemTitle: 'Ingly VIP Oylik Obuna',
+    price: 29000,
+    bookId: null,
+  });
+
+  useEffect(() => {
+    const unsub = onSettingsChange((st) => {
+      if (st) setAppSettings({ ...st });
+    });
+    return () => {
+      if (typeof unsub === 'function') unsub();
+    };
+  }, []);
+
+  // To'lov muvaffaqiyatli yakunlanganda chaqiriladigan funksiya
+  const handlePaymentSuccess = async (details) => {
+    setPaymentModal((prev) => ({ ...prev, visible: false }));
+    if (details.itemType === 'vip') {
+      await subscribeVipMonthly(details);
+      Alert.alert(
+        'Tabriklaymiz! 👑',
+        'Ingly VIP oylik obunasi muvaffaqiyatli faollashtirildi! Barcha 6 ta kitob va kinolar ochiq.'
+      );
+    } else if (details.itemType === 'book') {
+      await purchaseBook(details.bookId, details);
+      Alert.alert(
+        'Xarid muvaffaqiyatli! 📚',
+        `${details.itemTitle} muvaffaqiyatli xarid qilindi va hisobingizda ochildi.`
+      );
+    }
+  };
 
   // Edit Modal State
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -401,7 +446,142 @@ export default function ProfileScreen({ onNavigate }) {
           </View>
         </View>
 
-        {/* 4. Amallar & Tozalash */}
+        {/* 4. PULLIK REJIM SECTION: Faqat va faqat premium_mode_enabled === true bo'lganda ko'rinadi */}
+        {appSettings.premium_mode_enabled && (
+          <View style={styles.sectionCard}>
+            <View style={styles.premiumHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sectionTitle}>💎 VIP Obuna & Xaridlar</Text>
+                <Text style={styles.sectionSubtitle}>
+                  Barcha kitoblar, audio va video treylerlarga to'liq kirish
+                </Text>
+              </View>
+              <View style={styles.premiumModeBadge}>
+                <Text style={styles.premiumModeBadgeText}>PULLIK REJIM</Text>
+              </View>
+            </View>
+
+            {/* VIP Oylik Obuna Card */}
+            <View style={styles.vipMainCard}>
+              <View style={styles.vipCardTop}>
+                <View style={styles.vipIconCircle}>
+                  <Text style={styles.vipIconEmoji}>👑</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.vipTitleRow}>
+                    <Text style={styles.vipCardTitle}>Ingly VIP Obunasi</Text>
+                    <View style={styles.monthlyTag}>
+                      <Text style={styles.monthlyTagText}>OYLIK TO'LOV</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.vipCardPrice}>
+                    {Number(appSettings.premium_monthly_price || 29000).toLocaleString('uz-UZ')} so'm
+                    <Text style={styles.vipPricePeriod}> / oy</Text>
+                  </Text>
+                </View>
+              </View>
+
+              {/* Features */}
+              <View style={styles.vipFeaturesList}>
+                <Text style={styles.vipFeatureItem}>✨ Barcha 6 ta kitob (4000 ta so'z) to'liq ochiq</Text>
+                <Text style={styles.vipFeatureItem}>🎬 Kinolardan eksklyuziv video treylerlar</Text>
+                <Text style={styles.vipFeatureItem}>🚫 100% Reklamasiz va cheklovlarsiz o'rganish</Text>
+              </View>
+
+              {isVipActive ? (
+                <View style={styles.vipActiveBox}>
+                  <Text style={styles.vipActiveText}>✅ VIP Statusingiz Faol</Text>
+                  <Text style={styles.vipActiveSubtext}>
+                    Amal qilish muddati: {user.premiumUntil ? new Date(user.premiumUntil).toLocaleDateString('uz-UZ') : '30 kun'} gacha
+                  </Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.vipBuyBtn}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    setPaymentModal({
+                      visible: true,
+                      itemType: 'vip',
+                      itemTitle: 'Ingly VIP Oylik Obuna (1 oy)',
+                      price: appSettings.premium_monthly_price || 29000,
+                      bookId: null,
+                    });
+                  }}
+                >
+                  <Text style={styles.vipBuyBtnText}>VIP Obuna Bo'lish 👑</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Kitoblarni alohida sotib olish */}
+            <View style={styles.bookBuySection}>
+              <Text style={styles.bookBuySectionTitle}>📚 Kitoblarni alohida xarid qilish</Text>
+              <Text style={styles.bookBuySectionSubtitle}>
+                VIP obuna olmasdan, xohlagan kitobingizni bir martalik to'lov bilan sotib oling:
+              </Text>
+
+              <View style={styles.bookBuyGrid}>
+                {[
+                  { id: 1, title: 'Book 1 - Elementary', icon: '📕' },
+                  { id: 2, title: 'Book 2 - Pre-Int', icon: '🎓' },
+                  { id: 3, title: 'Book 3 - Intermediate', icon: '📘' },
+                  { id: 4, title: 'Book 4 - Upper-Int', icon: '📙' },
+                  { id: 5, title: 'Book 5 - Advanced', icon: '📓' },
+                  { id: 6, title: 'Book 6 - Mastery', icon: '🏆' },
+                ].map((b) => {
+                  const isFree = b.id <= (appSettings.free_books_count || 6);
+                  const isPurchased = isVipActive || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(b.id));
+
+                  return (
+                    <View key={b.id} style={styles.bookBuyCard}>
+                      <View style={styles.bookBuyHeader}>
+                        <Text style={styles.bookBuyEmoji}>{b.icon}</Text>
+                        <View style={{ flex: 1, marginLeft: 8 }}>
+                          <Text style={styles.bookBuyName} numberOfLines={1}>{b.title}</Text>
+                          <Text style={styles.bookBuyUnits}>30 ta Unit</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.bookBuyActionRow}>
+                        {isFree ? (
+                          <View style={styles.bookFreeBadge}>
+                            <Text style={styles.bookFreeBadgeText}>✅ Bepul ochiq</Text>
+                          </View>
+                        ) : isPurchased ? (
+                          <View style={styles.bookOwnedBadge}>
+                            <Text style={styles.bookOwnedBadgeText}>✅ Xarid qilingan</Text>
+                          </View>
+                        ) : (
+                          <TouchableOpacity
+                            style={styles.bookBuyBtn}
+                            activeOpacity={0.8}
+                            onPress={() => {
+                              setPaymentModal({
+                                visible: true,
+                                itemType: 'book',
+                                itemTitle: `${b.title} (To'liq ochish)`,
+                                price: appSettings.single_book_price || 19000,
+                                bookId: b.id,
+                              });
+                            }}
+                          >
+                            <Text style={styles.bookBuyBtnPrice}>
+                              {Number(appSettings.single_book_price || 19000).toLocaleString('uz-UZ')} so'm
+                            </Text>
+                            <Text style={styles.bookBuyBtnLabel}>Sotib olish 💳</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* 5. Amallar & Tozalash */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Boshqaruv & Xavfsizlik</Text>
 
@@ -755,6 +935,18 @@ export default function ProfileScreen({ onNavigate }) {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Universal To'lov Modali (Click, Payme, Bank Karta) */}
+      <PaymentModal
+        visible={paymentModal.visible}
+        onClose={() => setPaymentModal((prev) => ({ ...prev, visible: false }))}
+        itemType={paymentModal.itemType}
+        itemTitle={paymentModal.itemTitle}
+        price={paymentModal.price}
+        bookId={paymentModal.bookId}
+        onSuccess={handlePaymentSuccess}
+        userPhone={user.phone}
+      />
     </SafeAreaView>
   );
 }
@@ -1256,5 +1448,224 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     marginTop: 12,
     fontWeight: '500',
+  },
+
+  // VIP & Book Purchase Styles
+  premiumHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  premiumModeBadge: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  premiumModeBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#B45309',
+    letterSpacing: 0.5,
+  },
+  vipMainCard: {
+    backgroundColor: '#FAF5FF',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#E9D5FF',
+    padding: 16,
+    marginTop: 10,
+    marginBottom: 16,
+  },
+  vipCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  vipIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  vipIconEmoji: {
+    fontSize: 24,
+  },
+  vipTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  vipCardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#581C87',
+  },
+  monthlyTag: {
+    backgroundColor: '#C084FC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  monthlyTagText: {
+    fontSize: 8,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  vipCardPrice: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#7E22CE',
+    marginTop: 2,
+  },
+  vipPricePeriod: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#A855F7',
+  },
+  vipFeaturesList: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    gap: 6,
+  },
+  vipFeatureItem: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  vipBuyBtn: {
+    backgroundColor: '#7E22CE',
+    borderRadius: 14,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#7E22CE',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  vipBuyBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  vipActiveBox: {
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+  },
+  vipActiveText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#15803D',
+    marginBottom: 2,
+  },
+  vipActiveSubtext: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#166534',
+  },
+  bookBuySection: {
+    marginTop: 4,
+  },
+  bookBuySectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  bookBuySectionSubtitle: {
+    fontSize: 11,
+    color: '#64748B',
+    marginBottom: 12,
+  },
+  bookBuyGrid: {
+    gap: 8,
+  },
+  bookBuyCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  bookBuyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  bookBuyEmoji: {
+    fontSize: 20,
+  },
+  bookBuyName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  bookBuyUnits: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  bookBuyActionRow: {
+    marginLeft: 8,
+  },
+  bookFreeBadge: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  bookFreeBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1D4ED8',
+  },
+  bookOwnedBadge: {
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  bookOwnedBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#15803D',
+  },
+  bookBuyBtn: {
+    backgroundColor: colors.primary.DEFAULT,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  bookBuyBtnPrice: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  bookBuyBtnLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#EEF2FF',
   },
 });

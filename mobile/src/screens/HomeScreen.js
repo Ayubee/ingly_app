@@ -14,9 +14,11 @@ import {
   Dimensions,
   SafeAreaView,
   Platform,
+  Alert,
 } from 'react-native';
 import { colors } from '../theme.js';
 import CircularProgress from '../components/CircularProgress.js';
+import PaymentModal from '../components/PaymentModal.js';
 import { useUser } from '../context/UserContext.js';
 import { onSettingsChange } from '../services/appSettingsService.js';
 
@@ -33,12 +35,33 @@ const BOOKS_METADATA = [
 ];
 
 export default function HomeScreen({ onNavigate }) {
-  const { user, isPasswordExpired } = useUser();
+  const { user, isPasswordExpired, subscribeVipMonthly, purchaseBook, isVipActive } = useUser();
   const [appSettings, setAppSettings] = useState({
     ads_enabled: false,
     premium_mode_enabled: false,
     free_books_count: 6,
+    premium_monthly_price: 29000,
+    single_book_price: 19000,
   });
+
+  const [paymentModal, setPaymentModal] = useState({
+    visible: false,
+    itemType: 'book',
+    itemTitle: '',
+    price: 19000,
+    bookId: null,
+  });
+
+  const handlePaymentSuccess = async (details) => {
+    setPaymentModal((prev) => ({ ...prev, visible: false }));
+    if (details.itemType === 'vip') {
+      await subscribeVipMonthly(details);
+      Alert.alert('Tabriklaymiz! 👑', 'VIP obunangiz faollashtirildi! Barcha kitoblar ochiq.');
+    } else if (details.itemType === 'book') {
+      await purchaseBook(details.bookId, details);
+      Alert.alert('Xarid muvaffaqiyatli! 📚', `${details.itemTitle} ochildi!`);
+    }
+  };
 
   useEffect(() => {
     const unsub = onSettingsChange((st) => {
@@ -176,26 +199,42 @@ export default function HomeScreen({ onNavigate }) {
           {BOOKS_METADATA.map((b) => {
             const progress = user.bookProgress[b.id] || 0;
             const isCompleted = progress === 100;
-            const isVipLocked = appSettings.premium_mode_enabled && b.id > appSettings.free_books_count;
+            const isBookPurchased = isVipActive || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(b.id));
+            const isVipLocked = appSettings.premium_mode_enabled && b.id > appSettings.free_books_count && !isBookPurchased;
             // Book 1 har doim ochiq. Boshqa kitoblar oldingi kitob tugatilganda ochiladi.
             const isUnlocked = !isVipLocked && (b.id === 1 || (user.bookProgress[b.id - 1] || 0) >= 100);
             const isCurrentActive = isUnlocked && !isCompleted;
 
-            // Agar Admin tomonidan VIP obunaga qulflangan bo'lsa
+            // Agar Admin tomonidan pullik rejimda yopilgan bo'lsa
             if (isVipLocked) {
               return (
-                <View key={b.id} style={[styles.bookCard, styles.bookCardLocked]}>
+                <TouchableOpacity
+                  key={b.id}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    setPaymentModal({
+                      visible: true,
+                      itemType: 'book',
+                      itemTitle: `${b.title} (To'liq ochish)`,
+                      price: appSettings.single_book_price || 19000,
+                      bookId: b.id,
+                    });
+                  }}
+                  style={[styles.bookCard, styles.bookCardLocked]}
+                >
                   <View style={styles.cardHeader}>
                     <Text style={[styles.bookTitle, styles.lockedTitle]} numberOfLines={2}>{b.title}</Text>
                     <View style={[styles.iconCircle, { backgroundColor: '#FEF3C7' }]}>
-                      <Text style={styles.bookIconEmoji}>👑</Text>
+                      <Text style={styles.bookIconEmoji}>🔒</Text>
                     </View>
                   </View>
                   <View style={styles.lockedBottom}>
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#D97706', marginBottom: 2 }}>🔒 VIP OBUNA</Text>
-                    <Text style={styles.lockedDesc}>Admin tomonidan yopilgan</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#D97706', marginBottom: 2 }}>
+                      {Number(appSettings.single_book_price || 19000).toLocaleString('uz-UZ')} so'm
+                    </Text>
+                    <Text style={styles.lockedDesc}>Sotib olish uchun bosing 💳</Text>
                   </View>
-                </View>
+                </TouchableOpacity>
               );
             }
 
@@ -300,6 +339,18 @@ export default function HomeScreen({ onNavigate }) {
           })}
         </View>
       </ScrollView>
+
+      {/* Universal To'lov Modali (Click, Payme, Bank Karta) */}
+      <PaymentModal
+        visible={paymentModal.visible}
+        onClose={() => setPaymentModal((prev) => ({ ...prev, visible: false }))}
+        itemType={paymentModal.itemType}
+        itemTitle={paymentModal.itemTitle}
+        price={paymentModal.price}
+        bookId={paymentModal.bookId}
+        onSuccess={handlePaymentSuccess}
+        userPhone={user.phone}
+      />
     </SafeAreaView>
   );
 }
