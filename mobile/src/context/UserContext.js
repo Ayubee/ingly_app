@@ -10,7 +10,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { getStorageItem, setStorageItem, removeStorageItem, STORAGE_KEYS } from '../services/storage.js';
-import { syncUserWithSupabase, syncAllLocalUsersToSupabase, fetchUserRemoteStatus } from '../services/userService.js';
+import { syncUserWithSupabase, syncAllLocalUsersToSupabase, fetchUserRemoteStatus, verifyUserCredentialsRemote } from '../services/userService.js';
+import { hashPassword, verifyPassword } from '../utils/crypto.js';
 
 const UserContext = createContext();
 
@@ -22,12 +23,12 @@ export const SIX_MONTHS_MS = 180 * 24 * 60 * 60 * 1000; // 180 kun (~6 oy)
 export const isPasswordOlderThan6Months = (user) => {
   if (!user || !user.isLoggedIn) return false;
   // Google orqali kirgan va paroli yo'q bo'lsa, eslatma kerak emas
-  if (user.authMethod === 'google' && !user.password) return false;
+  if (user.authMethod === 'google' && !user.password_hash && !user.password) return false;
 
   const changedAt = user.passwordChangedAt || user.createdAt;
   if (!changedAt) {
     // Agar foydalanuvchida parol bo'lsa-yu, sana saqlanmagan bo'lsa (eski foydalanuvchi) -> yangilash tavsiya etiladi
-    return Boolean(user.password);
+    return Boolean(user.password_hash || user.password);
   }
   const ageMs = Date.now() - new Date(changedAt).getTime();
   return ageMs > SIX_MONTHS_MS;
@@ -38,7 +39,7 @@ export const INITIAL_USER = {
   name: '',
   phone: '',
   username: '',
-  password: '',
+  password_hash: '',
   passwordChangedAt: null, // Qachon oxirgi marta parol qo'yilgan yoki o'zgartirilgan
   lastPasswordReminderDate: null, // Oxirgi marta 6 oylik eslatma ko'rsatilgan kun (YYYY-MM-DD)
   createdAt: null, // Ro'yxatdan o'tgan sana
@@ -117,14 +118,6 @@ export function UserProvider({ children }) {
               if (remote.is_premium !== undefined) {
                 setUser((prev) => ({ ...prev, isPremium: !!remote.is_premium }));
               }
-              if (remote.password_hash && saved.password && remote.password_hash !== saved.password) {
-                await logout();
-                Alert.alert(
-                  'Parolingiz Yangilandi 🔒',
-                  'Administrator hisobingiz parolini o\'zgartirdi. Iltimos, yangi parol bilan qayta kiring.'
-                );
-                return;
-              }
             }
           } catch (e) {}
         }
@@ -140,7 +133,7 @@ export function UserProvider({ children }) {
 
     loadUser();
 
-    // Har 10 soniyada admin tomonidan bloklanganlik yoki parol o'zgarishini real-time tekshirish
+    // Har 10 soniyada admin tomonidan bloklanganlik yoki VIP statusini tekshirish
     const intervalId = setInterval(async () => {
       const active = await getStorageItem(STORAGE_KEYS.USER_PROFILE, null);
       if (active && active.isLoggedIn && active.username) {
@@ -153,12 +146,6 @@ export function UserProvider({ children }) {
                 'Hisobingiz Bloklandi 🚫',
                 'Administrator sizning profilingizni blokladi. Ilovadan foydalanish to\'xtatildi.'
               );
-            } else if (remote.password_hash && active.password && remote.password_hash !== active.password) {
-              await logout();
-              Alert.alert(
-                'Parolingiz Yangilandi 🔒',
-                'Administrator hisobingiz parolini yangiladi. Iltimos, yangi parol bilan qayta kiring.'
-              );
             } else if (remote.is_premium !== undefined && remote.is_premium !== active.isPremium) {
               setUser(prev => ({ ...prev, isPremium: !!remote.is_premium }));
             }
@@ -170,14 +157,20 @@ export function UserProvider({ children }) {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Profil va ro'yxatdagi foydalanuvchini yangilab saqlash
+  // Profil va ro'yxatdagi foydalanuvchini yangilab saqlash (Parol ochiq matnda saqlanmaydi)
   const saveUserData = async (newUserData) => {
+    let computedHash = newUserData.password_hash || user.password_hash;
+    if (newUserData.password) {
+      computedHash = hashPassword(newUserData.password);
+    }
     const userToSave = {
       ...user,
       ...newUserData,
-      password: newUserData.password || user.password || '',
+      password_hash: computedHash,
       dailyGoal: Number(newUserData.dailyGoal) || user.dailyGoal || 20,
     };
+    delete userToSave.password; // Ochiq matndagi parol tozalab tashlanadi
+
     setUser(userToSave);
     await setStorageItem(STORAGE_KEYS.USER_PROFILE, userToSave);
 
@@ -191,8 +184,9 @@ export function UserProvider({ children }) {
         allUsers[userIndex] = {
           ...allUsers[userIndex],
           ...userToSave,
-          password: userToSave.password || allUsers[userIndex].password || '',
+          password_hash: computedHash,
         };
+        delete allUsers[userIndex].password;
       } else if (userToSave.username) {
         allUsers.push(userToSave);
       }
@@ -265,15 +259,16 @@ export function UserProvider({ children }) {
     }
 
     const nowIso = new Date().toISOString();
+    const passwordHash = hashPassword(cleanPassword);
 
-    // Yangi foydalanuvchi obyekti (Barcha natijalar 0 dan)
+    // Yangi foydalanuvchi obyekti (Parol faqat heshlangan holatda saqlanadi)
     const newUser = {
       ...INITIAL_USER,
       isLoggedIn: true,
       name: String(fullName || '').trim() || cleanUsername,
       phone: String(phone || '').trim(),
       username: cleanUsername,
-      password: cleanPassword,
+      password_hash: passwordHash,
       passwordChangedAt: nowIso,
       createdAt: nowIso,
       avatar: avatar,
@@ -300,7 +295,7 @@ export function UserProvider({ children }) {
     return { success: true };
   };
 
-  // 2. Tizimga kirish (Login: Login/Telefon va Parolni tekshirish)
+  // 2. Tizimga kirish (Login: Kriptografik tekshiruv)
   const login = async ({ loginOrPhone, password }) => {
     const rawInput = String(loginOrPhone || '').trim();
     const cleanLower = rawInput.toLowerCase();
@@ -334,15 +329,13 @@ export function UserProvider({ children }) {
       }
     }
 
-    // 1. Supabase bulut bazasidan foydalanuvchining bloklanganligi va parolini tekshirish
+    // 1. Supabase bulut bazasidan foydalanuvchining bloklanganligini tekshirish
     const remote = await fetchUserRemoteStatus(rawInput);
-    if (remote) {
-      if (remote.is_blocked) {
-        return {
-          success: false,
-          error: 'Sizning hisobingiz administrator tomonidan BLOKLANGAN! Ilovaga kirish taqiqlanadi.',
-        };
-      }
+    if (remote && remote.is_blocked) {
+      return {
+        success: false,
+        error: 'Sizning hisobingiz administrator tomonidan BLOKLANGAN! Ilovaga kirish taqiqlanadi.',
+      };
     }
 
     // Foydalanuvchini qidirish (login yoki oxirgi 9 ta raqam bo'yicha)
@@ -361,18 +354,41 @@ export function UserProvider({ children }) {
     let userIdx = matchedUserIndex;
     let matchedUser = userIdx !== -1 ? allUsers[userIdx] : null;
 
-    if (!matchedUser && remote) {
-      matchedUser = {
-        ...INITIAL_USER,
-        name: remote.full_name || remote.username || rawInput,
-        username: remote.username || cleanLower,
-        phone: remote.phone || '',
-        password: remote.password_hash || enteredPassword,
-        isPremium: !!remote.is_premium,
-        isBlocked: !!remote.is_blocked,
-      };
-      allUsers.push(matchedUser);
-      userIdx = allUsers.length - 1;
+    // Parolni tekshirish (Lokal tekshiruv)
+    let isPasswordValid = false;
+    if (matchedUser) {
+      isPasswordValid = verifyPassword(
+        enteredPassword,
+        matchedUser.password_hash || matchedUser.password
+      );
+    }
+
+    // Agar lokal topilmasa yoki mos kelmasa, Supabase RPC orqali xavfsiz tekshirish
+    if (!isPasswordValid) {
+      const enteredHash = hashPassword(enteredPassword);
+      const remoteCheck = await verifyUserCredentialsRemote(rawInput, enteredHash);
+      if (remoteCheck && remoteCheck.success && remoteCheck.user) {
+        isPasswordValid = true;
+        const rUser = remoteCheck.user;
+        if (!matchedUser) {
+          matchedUser = {
+            ...INITIAL_USER,
+            id: rUser.id,
+            name: rUser.full_name || rUser.username || rawInput,
+            username: rUser.username || cleanLower,
+            phone: rUser.phone || '',
+            password_hash: enteredHash,
+            isPremium: !!rUser.is_premium,
+            isBlocked: !!rUser.is_blocked,
+          };
+          allUsers.push(matchedUser);
+          userIdx = allUsers.length - 1;
+        } else {
+          matchedUser.password_hash = enteredHash;
+          delete matchedUser.password;
+          allUsers[userIdx] = matchedUser;
+        }
+      }
     }
 
     if (!matchedUser) {
@@ -382,29 +398,21 @@ export function UserProvider({ children }) {
       };
     }
 
-    let expectedPassword = String(matchedUser.password || '').trim();
-
-    // Agar admin Supabase'da yangi parol o'rnatgan bo'lsa, ushbu yangi parol tekshiriladi
-    if (remote && remote.password_hash) {
-      expectedPassword = String(remote.password_hash).trim();
-    }
-
-    if (!expectedPassword) {
-      matchedUser.password = enteredPassword;
-      allUsers[matchedUserIndex] = matchedUser;
-      await setStorageItem(STORAGE_KEYS.REGISTERED_USERS, allUsers);
-    } else if (expectedPassword !== enteredPassword) {
+    if (!isPasswordValid) {
       return {
         success: false,
         error: 'Kiritilgan parol noto\'g\'ri! Qaytadan tekshirib kiriting.',
       };
     }
 
-    matchedUser.password = enteredPassword;
+    // Parolni yangi xavfsiz heshga yangilash va ochiq matnni tozalash
+    matchedUser.password_hash = hashPassword(enteredPassword);
+    delete matchedUser.password;
+
     if (remote && remote.is_premium !== undefined) {
       matchedUser.isPremium = !!remote.is_premium;
     }
-    allUsers[matchedUserIndex] = matchedUser;
+    allUsers[userIdx] = matchedUser;
     await setStorageItem(STORAGE_KEYS.REGISTERED_USERS, allUsers);
 
     const activeUser = { ...matchedUser, isLoggedIn: true };
@@ -617,26 +625,16 @@ export function UserProvider({ children }) {
     const cleanNew = String(newPassword || '').trim();
     const cleanConfirm = String(confirmPassword || '').trim();
 
-    let currentPassword = String(user.password || '').trim();
+    const currentHash = user.password_hash || (user.password ? hashPassword(user.password) : '');
 
-    // Eng so'nggi parolni Supabase'dan ham tekshirib olish
-    if (user.username) {
-      try {
-        const remote = await fetchUserRemoteStatus(user.username);
-        if (remote && remote.password_hash) {
-          currentPassword = String(remote.password_hash).trim();
-        }
-      } catch (e) {}
-    }
-
-    if (currentPassword) {
+    if (currentHash) {
       if (!cleanOld) {
         return {
           success: false,
           error: 'Iltimos, avval joriy (eski) parolingizni kiriting!',
         };
       }
-      if (cleanOld !== currentPassword) {
+      if (!verifyPassword(cleanOld, currentHash)) {
         return {
           success: false,
           error: 'Kiritilgan eski parol noto\'g\'ri! Qaytadan tekshirib kiriting.',
@@ -665,7 +663,7 @@ export function UserProvider({ children }) {
       };
     }
 
-    if (currentPassword && cleanOld === cleanNew) {
+    if (currentHash && verifyPassword(cleanNew, currentHash)) {
       return {
         success: false,
         error: 'Yangi parol eski parolingiz bilan bir xil bo\'lishi mumkin emas. Yangi parol tanlang!',
@@ -674,21 +672,23 @@ export function UserProvider({ children }) {
 
     const nowIso = new Date().toISOString();
     const todayStr = nowIso.split('T')[0];
+    const newHash = hashPassword(cleanNew);
 
     const updatedUser = {
       ...user,
-      password: cleanNew,
+      password_hash: newHash,
       passwordChangedAt: nowIso,
       lastPasswordReminderDate: todayStr,
     };
+    delete updatedUser.password;
 
     await saveUserData(updatedUser);
 
-    // Supabase bulut bazasiga ham zudlik bilan yangi parolni sinxron qilish
+    // Supabase bulut bazasiga ham zudlik bilan yangi parolni heshlangan holatda sinxron qilish
     try {
       await syncUserWithSupabase({
         ...updatedUser,
-        password: cleanNew,
+        password_hash: newHash,
       });
     } catch (e) {}
 

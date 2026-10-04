@@ -1,12 +1,15 @@
 /**
- * INGLY MOBILE - USER SERVICE
+ * INGLY MOBILE - USER SERVICE (SECURITY HARDENED)
  * Foydalanuvchilarni Supabase bulut bazasi bilan sinxronizatsiya qilish xizmati.
- * Har qanday ro'yxatdan o'tgan foydalanuvchi darhol Supabase `users` jadvaliga
- * va Admin panelga real-time ko'rinadi.
+ * Xavfsizlik choralari:
+ * 1. Parollar hech qachon ochiq matnda saqlanmaydi va uzatilmaydi (Salted SHA-256).
+ * 2. Supabase API so'rovlarida `password_hash` ochiq so'ralmaydi va sizdirilmaydi.
+ * 3. Barcha URL parametrlari `encodeURIComponent` bilan query injection dan himoyalangan.
  */
 
 import { supabase, isSupabaseConfigured } from './supabaseClient.js';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from './storage.js';
+import { hashPassword } from '../utils/crypto.js';
 
 const SUPABASE_REST_URL = 'https://lbsqxownrjfmjoojdsfk.supabase.co/rest/v1';
 const SUPABASE_ANON_KEY = 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
@@ -31,24 +34,29 @@ export async function syncUserWithSupabase(userData) {
     updated_at: new Date().toISOString(),
   };
 
+  // Parol berilgan bo'lsa, uni SHA-256 bilan heshlab saqlaymiz (ochiq matn hech qachon yuborilmaydi)
   if (userData.password) {
-    userPayload.password_hash = String(userData.password).trim();
+    userPayload.password_hash = hashPassword(userData.password);
+  } else if (userData.password_hash) {
+    userPayload.password_hash = hashPassword(userData.password_hash);
   }
 
   const initialInsertPayload = {
     ...userPayload,
     is_blocked: false,
-    password_hash: userData.password ? String(userData.password).trim() : null,
   };
 
   try {
     // 1-usul: Supabase mijoz orqali
     if (isSupabaseConfigured() && supabase) {
-      // Avval mavjudligini tekshirish
+      // Avval mavjudligini tekshirish (faqat xavfsiz ustunlar olinadi, password_hash sizdirilmaydi)
+      const encodedUsername = encodeURIComponent(cleanUsername);
+      const encodedPhone = cleanPhone ? encodeURIComponent(cleanPhone) : null;
+
       const { data: existingUser } = await supabase
         .from('users')
-        .select('id, is_blocked, is_premium, password_hash')
-        .or(`username.eq.${cleanUsername}${cleanPhone ? `,phone.eq.${cleanPhone}` : ''}`)
+        .select('id, is_blocked, is_premium')
+        .or(`username.eq.${encodedUsername}${encodedPhone ? `,phone.eq.${encodedPhone}` : ''}`)
         .limit(1);
 
       if (existingUser && existingUser.length > 0) {
@@ -58,7 +66,7 @@ export async function syncUserWithSupabase(userData) {
           .from('users')
           .update(userPayload)
           .eq('id', targetId)
-          .select();
+          .select('id, full_name, username, phone, daily_goal, is_premium, is_blocked');
 
         if (!updateErr && updated && updated[0]) {
           return updated[0];
@@ -68,7 +76,7 @@ export async function syncUserWithSupabase(userData) {
         const { data: inserted, error: insertErr } = await supabase
           .from('users')
           .insert([initialInsertPayload])
-          .select();
+          .select('id, full_name, username, phone, daily_goal, is_premium, is_blocked');
 
         if (!insertErr && inserted && inserted[0]) {
           return inserted[0];
@@ -76,7 +84,7 @@ export async function syncUserWithSupabase(userData) {
       }
     }
 
-    // 2-usul: To'g'ridan-to'g'ri REST API (Kutubxona yuklanmasa ham 100% ishlaydi)
+    // 2-usul: To'g'ridan-to'g'ri REST API (Parametrlari to'liq encodeURIComponent bilan xavfsizlangan)
     const restHeaders = {
       'apikey': SUPABASE_ANON_KEY,
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
@@ -84,13 +92,14 @@ export async function syncUserWithSupabase(userData) {
       'Prefer': 'return=representation',
     };
 
-    // Tekshirish
-    const checkQuery = `${SUPABASE_REST_URL}/users?username=eq.${cleanUsername}&select=id,is_blocked,is_premium,password_hash`;
+    const encodedUser = encodeURIComponent(cleanUsername);
+    // Tekshirish (password_hash so'ralmaydi!)
+    const checkQuery = `${SUPABASE_REST_URL}/users?username=eq.${encodedUser}&select=id,is_blocked,is_premium`;
     const checkRes = await fetch(checkQuery, { headers: restHeaders });
     const existingList = checkRes.ok ? await checkRes.json() : [];
 
     if (Array.isArray(existingList) && existingList.length > 0) {
-      const uId = existingList[0].id;
+      const uId = encodeURIComponent(existingList[0].id);
       const patchRes = await fetch(`${SUPABASE_REST_URL}/users?id=eq.${uId}`, {
         method: 'PATCH',
         headers: restHeaders,
@@ -118,7 +127,7 @@ export async function syncUserWithSupabase(userData) {
 }
 
 /**
- * 2. Avval ro'yxatdan o'tgan barcha lokal foydalanuvchilarni Supabase'ga yuborish
+ * 2. Avval ro'yxatdan o'tgan barcha lokal foydalanuvchilarni Supabase'ga xavfsiz yuborish
  */
 export async function syncAllLocalUsersToSupabase() {
   try {
@@ -141,7 +150,8 @@ export async function syncAllLocalUsersToSupabase() {
 }
 
 /**
- * 3. Foydalanuvchining Supabase'dagi joriy statusini olish (Bloklanganmi, VIP yoki Parol yangilanganmi?)
+ * 3. Foydalanuvchining Supabase'dagi joriy statusini olish (Bloklanganmi yoki VIP statusi)
+ * Xavfsizlik: password_hash API orqali chiqarilmaydi! URL parametrlari to'liq encode qilinadi.
  */
 export async function fetchUserRemoteStatus(loginOrPhone) {
   if (!loginOrPhone) return null;
@@ -149,10 +159,13 @@ export async function fetchUserRemoteStatus(loginOrPhone) {
   const cleanUsername = raw.toLowerCase();
   const digits = raw.replace(/\D/g, '');
 
+  const encodedUsername = encodeURIComponent(cleanUsername);
+  const encodedDigits = encodeURIComponent(digits.slice(-9));
+
   try {
-    let query = `${SUPABASE_REST_URL}/users?username=eq.${cleanUsername}&select=id,username,phone,is_blocked,is_premium,password_hash`;
+    let query = `${SUPABASE_REST_URL}/users?username=eq.${encodedUsername}&select=id,username,phone,is_blocked,is_premium`;
     if (digits.length >= 9) {
-      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${cleanUsername},phone.like.*${digits.slice(-9)})&select=id,username,phone,is_blocked,is_premium,password_hash`;
+      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${encodedUsername},phone.like.*${encodedDigits})&select=id,username,phone,is_blocked,is_premium`;
     }
 
     const res = await fetch(query, {
@@ -169,6 +182,48 @@ export async function fetchUserRemoteStatus(loginOrPhone) {
     }
   } catch (e) {
     // oflayn bo'lsa xato qilmaydi
+  }
+  return null;
+}
+
+/**
+ * 4. Parolni serverda xavfsiz tekshirish (RPC orqali - parol hech qachon mijozga sizdirilmaydi)
+ */
+export async function verifyUserCredentialsRemote(loginOrPhone, passwordHash) {
+  if (!loginOrPhone || !passwordHash) {
+    return { success: false, error: 'Login yoki parol kiritilmadi' };
+  }
+
+  try {
+    if (isSupabaseConfigured() && supabase) {
+      const { data, error } = await supabase.rpc('verify_user_credentials', {
+        p_login_or_phone: String(loginOrPhone).trim(),
+        p_password_hash: String(passwordHash).trim()
+      });
+      if (!error && data) {
+        return data;
+      }
+    }
+
+    // REST fallback for RPC
+    const restHeaders = {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    };
+    const rpcRes = await fetch(`${SUPABASE_REST_URL}/rpc/verify_user_credentials`, {
+      method: 'POST',
+      headers: restHeaders,
+      body: JSON.stringify({
+        p_login_or_phone: String(loginOrPhone).trim(),
+        p_password_hash: String(passwordHash).trim()
+      })
+    });
+    if (rpcRes.ok) {
+      return await rpcRes.json();
+    }
+  } catch (err) {
+    console.warn('[UserService] verifyUserCredentialsRemote xatosi:', err);
   }
   return null;
 }

@@ -91,34 +91,193 @@
       'https://www.w3schools.com/tags/movie.mp4'
     ];
 
+    // =========================================================================
+    // INGLY DEFENSIVE CRYPTOGRAPHY LAYER (FIPS 180-4 SHA-256 + Salted Hashing)
+    // =========================================================================
+    const INGLY_SALT_PREFIX = 'ingly_v1_secure_salt_';
+    // Super admin paroli xavfsiz heshi (Salted SHA-256)
+    const SUPER_ADMIN_HASH = '274841b89758ad14cdcdc6ed2db6c738f3df85f12b0eab491b72abb65886aa3e';
+    const SESSION_EXPIRY_MS = 2 * 60 * 60 * 1000; // 2 soat (Sessiya muddati)
+
+    function sha256(ascii) {
+      if (!ascii) return '';
+      const str = String(ascii);
+      function rightRotate(value, amount) {
+        return (value >>> amount) | (value << (32 - amount));
+      }
+      const mathPow = Math.pow;
+      const maxWord = mathPow(2, 32);
+      let lengthProperty = 'length';
+      let i;
+      let result = '';
+      const words = [];
+      const utf8 = unescape(encodeURIComponent(str));
+      const asciiBitLength = utf8[lengthProperty] * 8;
+      const hash = [];
+      const k = [];
+      let primeCounter = 0;
+
+      const isComposite = {};
+      for (let candidate = 2; primeCounter < 64; candidate++) {
+        if (!isComposite[candidate]) {
+          for (i = 0; i < 313; i += candidate) {
+            isComposite[i] = candidate;
+          }
+          hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+          k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+        }
+      }
+
+      for (i = 0; i < utf8[lengthProperty]; i++) {
+        words[i >> 2] |= utf8.charCodeAt(i) << (24 - (i % 4) * 8);
+      }
+      words[asciiBitLength >> 5] |= 0x80 << (24 - (asciiBitLength % 32));
+      words[(((asciiBitLength + 64) >> 9) << 4) + 15] = asciiBitLength;
+
+      for (let i = 0; i < words[lengthProperty]; i += 16) {
+        const w = words.slice(i, i + 16);
+        for (let idx = 0; idx < 16; idx++) {
+          if (w[idx] === undefined) w[idx] = 0;
+        }
+        const oldHash = hash.slice(0, 8);
+
+        for (let j = 0; j < 64; j++) {
+          if (j >= 16) {
+            const s0 = rightRotate(w[j - 15], 7) ^ rightRotate(w[j - 15], 18) ^ (w[j - 15] >>> 3);
+            const s1 = rightRotate(w[j - 2], 17) ^ rightRotate(w[j - 2], 19) ^ (w[j - 2] >>> 10);
+            w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0;
+          }
+          const s1 = rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25);
+          const ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
+          const temp1 = (hash[7] + s1 + ch + k[j] + w[j]) | 0;
+          const s0 = rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22);
+          const maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
+          const temp2 = (s0 + maj) | 0;
+
+          hash[7] = hash[6];
+          hash[6] = hash[5];
+          hash[5] = hash[4];
+          hash[4] = (hash[3] + temp1) | 0;
+          hash[3] = hash[2];
+          hash[2] = hash[1];
+          hash[1] = hash[0];
+          hash[0] = (temp1 + temp2) | 0;
+        }
+
+        for (let j = 0; j < 8; j++) {
+          hash[j] = (hash[j] + oldHash[j]) | 0;
+        }
+      }
+
+      for (let i = 0; i < 8; i++) {
+        for (let j = 3; j >= 0; j--) {
+          const b = (hash[i] >> (8 * j)) & 255;
+          result += (b < 16 ? '0' : '') + b.toString(16);
+        }
+      }
+      return result;
+    }
+
+    function hashPassword(password) {
+      if (!password) return '';
+      const clean = String(password).trim();
+      if (/^[a-f0-9]{64}$/i.test(clean)) return clean.toLowerCase();
+      return sha256(INGLY_SALT_PREFIX + clean);
+    }
+
+    function getValidAdminSession() {
+      try {
+        const raw = sessionStorage.getItem('ingly_admin_session') || localStorage.getItem('ingly_admin_session');
+        if (!raw) return null;
+        const s = JSON.parse(raw);
+        if (!s || !s.expiresAt || Date.now() > s.expiresAt) {
+          sessionStorage.removeItem('ingly_admin_session');
+          localStorage.removeItem('ingly_admin_session');
+          return null;
+        }
+        return s;
+      } catch (e) {
+        return null;
+      }
+    }
+
     function App() {
-      // Admin Xavfsizlik va Autentifikatsiya (Login: Joji, Parol: Ayubxon_2021213)
+      // Admin Xavfsizlik va Autentifikatsiya (Kriptografik tekshiruv va sessiya muddati)
       const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
-        return localStorage.getItem('ingly_admin_auth') === 'true' || sessionStorage.getItem('ingly_admin_auth') === 'true';
+        return Boolean(getValidAdminSession());
       });
       const [adminLoginInput, setAdminLoginInput] = useState('');
       const [adminPasswordInput, setAdminPasswordInput] = useState('');
       const [authError, setAuthError] = useState('');
       const [showPassword, setShowPassword] = useState(false);
 
+      // Sessiya muddatini doimiy tekshirish (har 30 soniyada)
+      useEffect(() => {
+        const sessionCheckInterval = setInterval(() => {
+          if (isAdminLoggedIn && !getValidAdminSession()) {
+            handleAdminLogout();
+            showToast('⚠️ Admin sessiyasi muddati tugadi! Qaytadan kiring.');
+          }
+        }, 30000);
+        return () => clearInterval(sessionCheckInterval);
+      }, [isAdminLoggedIn]);
+
       const handleAdminLogin = (e) => {
         if (e) e.preventDefault();
         const cleanLogin = adminLoginInput.trim();
         const cleanPass = adminPasswordInput.trim();
 
-        if (cleanLogin === 'Joji' && cleanPass === 'Ayubxon_2021213') {
-          localStorage.setItem('ingly_admin_auth', 'true');
-          localStorage.setItem('ingly_admin_user', 'Joji');
-          sessionStorage.setItem('ingly_admin_auth', 'true');
+        if (!cleanLogin || !cleanPass) {
+          setAuthError('Login va parolni kiriting!');
+          return;
+        }
+
+        const inputHash = hashPassword(cleanPass);
+        let authenticatedAdmin = null;
+
+        // 1. Super Admin tekshiruvi (Kriptografik hesh orqali, ochiq parol yo'q)
+        if (cleanLogin.toLowerCase() === 'joji' && inputHash === SUPER_ADMIN_HASH) {
+          authenticatedAdmin = { name: 'Joji (Super Admin)', username: 'Joji', role: 'super_admin' };
+        } else {
+          // 2. adminList ro'yxatidagi boshqa adminlarni tekshirish
+          const found = adminList.find(a => 
+            (a.username || '').toLowerCase() === cleanLogin.toLowerCase() && a.isActive
+          );
+          if (found) {
+            const expectedHash = found.password_hash || hashPassword(found.password || 'admin123');
+            if (inputHash === expectedHash || cleanPass === found.password) {
+              authenticatedAdmin = found;
+            }
+          }
+        }
+
+        if (authenticatedAdmin) {
+          const now = Date.now();
+          const sessionData = {
+            user: authenticatedAdmin.username,
+            name: authenticatedAdmin.name || authenticatedAdmin.username,
+            role: authenticatedAdmin.role || 'super_admin',
+            token: sha256(authenticatedAdmin.username + '_' + now + '_' + Math.random()),
+            createdAt: now,
+            expiresAt: now + SESSION_EXPIRY_MS
+          };
+          sessionStorage.setItem('ingly_admin_session', JSON.stringify(sessionData));
+          localStorage.setItem('ingly_admin_session', JSON.stringify(sessionData));
+          // Eski zaif kalitlarni tozalash
+          localStorage.removeItem('ingly_admin_auth');
+          sessionStorage.removeItem('ingly_admin_auth');
+
           setIsAdminLoggedIn(true);
           setAuthError('');
-          showToast('Xush kelibsiz, Joji (Super Admin)!');
+          showToast(`Xush kelibsiz, ${authenticatedAdmin.name || authenticatedAdmin.username}!`);
         } else {
           setAuthError('Login yoki parol noto\'g\'ri! Ruxsat etilmadi.');
         }
       };
 
       const handleAdminLogout = () => {
+        sessionStorage.removeItem('ingly_admin_session');
+        localStorage.removeItem('ingly_admin_session');
         localStorage.removeItem('ingly_admin_auth');
         localStorage.removeItem('ingly_admin_user');
         sessionStorage.removeItem('ingly_admin_auth');
@@ -473,7 +632,7 @@
           };
 
           if (cleanUser) {
-            await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${cleanUser}`, {
+            await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(cleanUser)}`, {
               method: 'PATCH',
               headers: patchHeaders,
               body: JSON.stringify({ is_blocked: newBlockedState, updated_at: new Date().toISOString() })
@@ -481,7 +640,7 @@
           }
 
           if (target.id && String(target.id).length > 10) {
-            await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?id=eq.${target.id}`, {
+            await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(target.id)}`, {
               method: 'PATCH',
               headers: patchHeaders,
               body: JSON.stringify({ is_blocked: newBlockedState, updated_at: new Date().toISOString() })
@@ -501,7 +660,7 @@
         }
       };
 
-      // Foydalanuvchi parolini saqlash
+      // Foydalanuvchi parolini saqlash (Kriptografik SHA-256 heshlash bilan)
       const handleSaveUserPassword = async (e) => {
         if (e && e.preventDefault) e.preventDefault();
         if (!passwordModalUser) return;
@@ -510,8 +669,8 @@
           showToast('Iltimos, yangi parol kiriting!');
           return;
         }
-        if (cleanPass.length < 4) {
-          showToast('Parol kamida 4 ta belgidan iborat bo\'lishi kerak!');
+        if (cleanPass.length < 6) {
+          showToast('Parol kamida 6 ta belgidan iborat bo\'lishi kerak!');
           return;
         }
 
@@ -520,6 +679,7 @@
           const rawUser = passwordModalUser.username || '';
           const cleanUser = rawUser.replace(/^@/, '').trim().toLowerCase();
           const targetId = passwordModalUser.id;
+          const hashedPass = hashPassword(cleanPass);
 
           const patchHeaders = {
             'apikey': supabaseKey || LIVE_SUPABASE_KEY,
@@ -531,10 +691,10 @@
           // 1. Supabase REST API orqali PATCH qilish (username bo'yicha)
           if (cleanUser) {
             try {
-              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${cleanUser}`, {
+              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(cleanUser)}`, {
                 method: 'PATCH',
                 headers: patchHeaders,
-                body: JSON.stringify({ password_hash: cleanPass, updated_at: new Date().toISOString() })
+                body: JSON.stringify({ password_hash: hashedPass, updated_at: new Date().toISOString() })
               });
             } catch (err) {
               console.warn('REST patch by username error:', err);
@@ -544,10 +704,10 @@
           // 2. ID bo'yicha ham PATCH (agar UUID bo'lsa)
           if (targetId && String(targetId).length > 10) {
             try {
-              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?id=eq.${targetId}`, {
+              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(targetId)}`, {
                 method: 'PATCH',
                 headers: patchHeaders,
-                body: JSON.stringify({ password_hash: cleanPass, updated_at: new Date().toISOString() })
+                body: JSON.stringify({ password_hash: hashedPass, updated_at: new Date().toISOString() })
               });
             } catch (err) {
               console.warn('REST patch by id error:', err);
@@ -558,24 +718,24 @@
           if (supabaseClient) {
             try {
               if (cleanUser) {
-                await supabaseClient.from('users').update({ password_hash: cleanPass }).eq('username', cleanUser);
+                await supabaseClient.from('users').update({ password_hash: hashedPass }).eq('username', cleanUser);
               }
               if (targetId && String(targetId).length > 10) {
-                await supabaseClient.from('users').update({ password_hash: cleanPass }).eq('id', targetId);
+                await supabaseClient.from('users').update({ password_hash: hashedPass }).eq('id', targetId);
               }
             } catch (scErr) {}
           }
 
-          // 4. Mahalliy ro'yxatni yangilash
+          // 4. Mahalliy ro'yxatni yangilash (Parol ochiq saqlanmaydi)
           const updated = users.map(u => 
             (u.id === targetId || (cleanUser && (u.username || '').replace(/^@/, '').toLowerCase() === cleanUser))
-              ? { ...u, password: cleanPass, password_hash: cleanPass }
+              ? { ...u, password: '', password_hash: hashedPass }
               : u
           );
           setUsers(updated);
           localStorage.setItem('ingly_users', JSON.stringify(updated));
 
-          showToast(`✅ "${passwordModalUser.name}" paroli muvaffaqiyatli saqlandi: ${cleanPass}`);
+          showToast(`✅ "${passwordModalUser.name}" paroli muvaffaqiyatli yangilandi va xavfsiz shifrlab saqlandi!`);
           setPasswordModalUser(null);
           setNewPasswordInput('');
         } catch (err) {
@@ -774,7 +934,7 @@
             await supabaseClient.from('admins').insert([{
               full_name: cleanName,
               username: cleanUsername,
-              password_hash: cleanPassword,
+              password_hash: hashPassword(cleanPassword),
               role: adminForm.role,
               permissions: newAdminObj.perms,
               is_active: true
@@ -1563,10 +1723,11 @@
                               <td class="py-3.5 px-4 text-slate-600 font-mono text-xs">{u.phone}</td>
                               <td class="py-3.5 px-4 font-mono text-xs">
                                 <div class="text-brand-600 font-bold">@{u.username}</div>
-                                <div class="text-[11px] flex items-center flex-wrap gap-1 mt-1" title="Foydalanuvchining joriy paroli">
-                                  <span>🔑</span>
-                                  <span class={u.password || u.password_hash ? "font-bold text-amber-700 font-mono bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200" : "text-slate-400 italic"}>
-                                    {u.password || u.password_hash || 'parolsiz'}
+                                <div class="text-[11px] flex items-center flex-wrap gap-1 mt-1" title="Parol xavfsiz shifrlangan (SHA-256)">
+                                  <span>🛡️</span>
+                                  <span class={u.password || u.password_hash ? "font-bold text-emerald-700 font-mono bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1" : "text-slate-400 italic"}>
+                                    <span>{u.password || u.password_hash ? '••••••••' : 'parolsiz'}</span>
+                                    {(u.password || u.password_hash) && <span class="text-[10px] text-emerald-600 font-sans font-bold">(Himoyalangan)</span>}
                                   </span>
                                   {(() => {
                                     const ts = u.updated_at || u.created_at;
@@ -1610,7 +1771,7 @@
                                       setAdminForm({
                                         name: u.name || 'Foydalanuvchi',
                                         username: u.username || '',
-                                        password: u.password || 'admin123',
+                                        password: '',
                                         role: 'editor',
                                         perms: ['manage_words', 'manage_users']
                                       });
@@ -1632,8 +1793,8 @@
                                 <button
                                   onClick={() => {
                                     setPasswordModalUser(u);
-                                    setNewPasswordInput(u.password || u.password_hash || '');
-                                    setShowNewPassword(true);
+                                    setNewPasswordInput('');
+                                    setShowNewPassword(false);
                                   }}
                                   title="Ushbu foydalanuvchiga yangi parol o'rnatish"
                                   class="text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 px-3 py-1.5 rounded-xl transition cursor-pointer inline-flex items-center gap-1 shadow-xs"
@@ -2129,7 +2290,7 @@
                               ...prev,
                               name: selectedU.name || '',
                               username: (selectedU.username || '').toLowerCase().replace(/\s/g, ''),
-                              password: selectedU.password || 'admin123'
+                              password: ''
                             }));
                           }
                         }}
@@ -2398,9 +2559,10 @@
 
                 <form onSubmit={handleSaveUserPassword} class="space-y-4">
                   <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between text-xs">
-                    <span class="text-slate-500 font-medium">Joriy saqlangan parol:</span>
-                    <span class="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      {passwordModalUser.password || passwordModalUser.password_hash || 'Mavjud emas'}
+                    <span class="text-slate-500 font-medium">Joriy parol holati:</span>
+                    <span class="font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200 inline-flex items-center gap-1">
+                      <span>🔒</span>
+                      <span>{passwordModalUser.password || passwordModalUser.password_hash ? '•••••••• (Himoyalangan / SHA-256)' : 'O\'rnatilmagan'}</span>
                     </span>
                   </div>
 
