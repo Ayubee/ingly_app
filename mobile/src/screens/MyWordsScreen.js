@@ -67,7 +67,46 @@ export default function MyWordsScreen({ onNavigate }) {
   }, []);
 
   const loadWords = async () => {
-    const list = await getCustomWords();
+    let list = await getCustomWords();
+    if (!list || list.length === 0) {
+      const initialSamples = [
+        {
+          id: 'custom_sample_1',
+          original: 'Kitob',
+          translated: 'Book',
+          phonetic: '/bʊk/',
+          example: 'I am reading an interesting book.',
+          learned: false,
+          created_at: new Date().toISOString(),
+          review_count: 0,
+        },
+        {
+          id: 'custom_sample_2',
+          original: 'Maktab',
+          translated: 'School',
+          phonetic: '/skuːl/',
+          example: 'Children go to school every morning.',
+          learned: false,
+          created_at: new Date().toISOString(),
+          review_count: 0,
+        },
+        {
+          id: 'custom_sample_3',
+          original: 'Muvaffaqiyat',
+          translated: 'Success',
+          phonetic: '/səkˈses/',
+          example: 'Hard work brings great success.',
+          learned: true,
+          learned_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          review_count: 1,
+        },
+      ];
+      for (const s of initialSamples) {
+        await addCustomWord(s);
+      }
+      list = initialSamples;
+    }
     setWordsList(list);
   };
 
@@ -291,9 +330,9 @@ export default function MyWordsScreen({ onNavigate }) {
               <Text style={styles.headerDot}>•</Text>
               <Text style={styles.headerSubBadge}>Tarjima & Kartochka</Text>
             </View>
-            <h1 style={styles.headerTitleH1} aria-level={1}>
+            <View style={{ marginTop: 2 }}>
               <Text style={styles.headerTitle}>Mening Lug'atim</Text>
-            </h1>
+            </View>
           </View>
           {counts.unlearned > 0 && (
             <TouchableOpacity
