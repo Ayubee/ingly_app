@@ -3,15 +3,21 @@ scratch_repo/
 
 # Dependencies
 node_modules/
+*/node_modules/
+**/node_modules/
 .pnp
 .pnp.js
+
+# Builds & Output
+dist/
+*/dist/
+**/dist/
 
 # Testing
 coverage/
 
 # Expo & Metro
 .expo/
-dist/
 web-build/
 
 # Environment & Logs

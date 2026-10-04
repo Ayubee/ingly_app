@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/preview", "destination": "/preview.html" },
+    { "source": "/all_words.json", "destination": "/all_words.json" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd admin && npm install && npm run build",
+  "outputDirectory": "admin/dist",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/preview", "destination": "/preview.html" },
+    { "source": "/all_words.json", "destination": "/all_words.json" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
