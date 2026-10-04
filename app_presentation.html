@@ -576,8 +576,8 @@
 
     .cover-pills-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 2.5mm;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 2.2mm;
       margin-bottom: 3mm;
     }
     .cover-pill {
@@ -1646,6 +1646,264 @@
       margin-top: 0.2mm;
     }
 
+    /* =====================================================================
+       PAGE 9: SHAXSIY LUG'AT & AQLLI KARTOCHKALAR (MY WORDS SCREEN)
+       ===================================================================== */
+    .vocab-screen-box {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5mm;
+      height: 100%;
+    }
+    .vocab-header-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 2mm;
+      padding: 1.4mm 1.8mm;
+    }
+    .vocab-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 1mm;
+      margin-bottom: 0.6mm;
+    }
+    .vocab-header-badge {
+      font-size: 4.8px;
+      font-weight: 900;
+      color: #5B4DFF;
+      background: #EEF2FF;
+      padding: 0.4px 1.4mm;
+      border-radius: 0.8mm;
+      letter-spacing: 0.3px;
+    }
+    .vocab-sub-badge {
+      font-size: 4.6px;
+      color: #64748B;
+      font-weight: 700;
+    }
+    .vocab-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .vocab-title {
+      font-size: 8.5px;
+      font-weight: 900;
+      color: #0F172A;
+    }
+    .vocab-study-now-btn {
+      background: linear-gradient(135deg, #5B4DFF 0%, #38BDF8 100%);
+      color: #FFFFFF;
+      font-size: 5px;
+      font-weight: 800;
+      padding: 0.8px 2mm;
+      border-radius: 1.2mm;
+      display: flex;
+      align-items: center;
+      gap: 0.6mm;
+    }
+    .vocab-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1mm;
+      margin-top: 1.2mm;
+    }
+    .vocab-stat-pill {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 1.4mm;
+      padding: 0.8mm 0.5mm;
+      text-align: center;
+    }
+    .vocab-stat-num {
+      font-size: 7px;
+      font-weight: 900;
+      color: #0F172A;
+    }
+    .vocab-stat-lbl {
+      font-size: 4.2px;
+      font-weight: 700;
+      color: #64748B;
+      margin-top: 0.2mm;
+    }
+
+    /* Input & Add Box */
+    .vocab-input-box {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 2mm;
+      padding: 1.4mm 1.8mm;
+      display: flex;
+      flex-direction: column;
+      gap: 1mm;
+    }
+    .vocab-input-title {
+      font-size: 5.6px;
+      font-weight: 800;
+      color: #0F172A;
+      display: flex;
+      align-items: center;
+      gap: 0.8mm;
+    }
+    .vocab-input-field {
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      border-radius: 1.5mm;
+      padding: 1.2mm 1.6mm;
+      font-size: 6px;
+      font-weight: 700;
+      color: #0F172A;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .vocab-add-btn {
+      background: #5B4DFF;
+      color: #FFFFFF;
+      font-size: 5.6px;
+      font-weight: 800;
+      padding: 1.2mm;
+      border-radius: 1.4mm;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(91, 77, 255, 0.25);
+    }
+
+    /* Study Card Flip Modal Box */
+    .vocab-study-card {
+      background: #FFFFFF;
+      border: 1.5px solid #5B4DFF;
+      border-radius: 2.4mm;
+      padding: 2mm 2.2mm;
+      box-shadow: 0 4px 14px rgba(91, 77, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 1.4mm;
+    }
+    .vocab-card-tag-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #F1F5F9;
+      padding-bottom: 0.8mm;
+    }
+    .vocab-card-tag {
+      font-size: 4.8px;
+      font-weight: 900;
+      color: #5B4DFF;
+      letter-spacing: 0.4px;
+    }
+    .vocab-card-step {
+      font-size: 4.6px;
+      font-weight: 800;
+      color: #94A3B8;
+    }
+    .vocab-original-word-box {
+      text-align: center;
+      padding: 1.2mm 0;
+    }
+    .vocab-word-lbl {
+      font-size: 4.6px;
+      color: #64748B;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .vocab-original-word {
+      font-size: 11px;
+      font-weight: 900;
+      color: #0F172A;
+      margin: 0.4mm 0;
+    }
+    .vocab-tts-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6mm;
+      background: #EEF2FF;
+      color: #4F46E5;
+      font-size: 4.6px;
+      font-weight: 800;
+      padding: 0.5px 1.6mm;
+      border-radius: 1mm;
+    }
+
+    /* Revealed Translation Box */
+    .vocab-revealed-box {
+      background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+      border: 1px solid #86EFAC;
+      border-radius: 1.8mm;
+      padding: 1.4mm 1.8mm;
+      text-align: center;
+    }
+    .vocab-revealed-lbl {
+      font-size: 4.4px;
+      color: #166534;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    .vocab-translated-word {
+      font-size: 10px;
+      font-weight: 900;
+      color: #15803D;
+      margin: 0.3mm 0;
+    }
+    .vocab-phonetic {
+      font-size: 5px;
+      color: #16A34A;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    .vocab-example-box {
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 1.2mm;
+      padding: 0.8mm 1.2mm;
+      margin-top: 0.8mm;
+      font-size: 4.8px;
+      color: #334155;
+      font-style: italic;
+    }
+
+    /* Action Buttons (Core Requirement) */
+    .vocab-actions-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2mm;
+      margin-top: 0.4mm;
+    }
+    .vocab-btn-unlearned {
+      background: #FEE2E2;
+      border: 1px solid #FCA5A5;
+      color: #B91C1C;
+      border-radius: 1.5mm;
+      padding: 1.2mm 1mm;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2mm;
+    }
+    .vocab-btn-learned {
+      background: #DCFCE7;
+      border: 1px solid #86EFAC;
+      color: #15803D;
+      border-radius: 1.5mm;
+      padding: 1.2mm 1mm;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2mm;
+    }
+    .vocab-btn-title {
+      font-size: 5.6px;
+      font-weight: 900;
+      letter-spacing: 0.2px;
+    }
+    .vocab-btn-desc {
+      font-size: 3.8px;
+      opacity: 0.85;
+      font-weight: 600;
+    }
+
   </style>
 </head>
 <body>
@@ -1764,7 +2022,7 @@
         </div>
       </div>
 
-      <!-- Feature Badges 4x1 -->
+      <!-- Feature Badges 5x1 -->
       <div class="cover-pills-grid">
         <div class="cover-pill">
           <div class="cover-pill-icon">📚</div>
@@ -1776,10 +2034,15 @@
           <div class="cover-pill-title">Kino Konteksti</div>
           <div class="cover-pill-desc">Gollivud filmlaridan 3-5s lavhalar</div>
         </div>
+        <div class="cover-pill" style="border-color: rgba(91, 77, 255, 0.4); background: #F5F3FF;">
+          <div class="cover-pill-icon">✍️</div>
+          <div class="cover-pill-title" style="color: #5B4DFF;">Shaxsiy Lug'at</div>
+          <div class="cover-pill-desc">Avto-tarjima & Aqlli kartochkalar</div>
+        </div>
         <div class="cover-pill" style="border-color: rgba(0, 115, 255, 0.4); background: #F0F7FF;">
           <div class="cover-pill-icon">💳</div>
-          <div class="cover-pill-title" style="color: #0056C6;">Click & Payme To'lov</div>
-          <div class="cover-pill-desc">🔵 Click Up, 🟢 Payme & Uzcard/Humo</div>
+          <div class="cover-pill-title" style="color: #0056C6;">Click & Payme</div>
+          <div class="cover-pill-desc">🔵 Click Up, 🟢 Payme & Bank karta</div>
         </div>
         <div class="cover-pill">
           <div class="cover-pill-icon">🛡️</div>
@@ -1791,7 +2054,7 @@
       <!-- Cover Bottom Meta -->
       <div class="cover-footer">
         <div>Muallif & Buyurtmachi: <strong>inglyJon</strong></div>
-        <div>Texnologiyalar: <strong>React Native • Click Up • Payme • Uzcard/Humo • Supabase • TailwindCSS</strong></div>
+        <div>Texnologiyalar: <strong>React Native • Click Up • Payme • Uzcard/Humo • Supabase • Auto-Translator • TailwindCSS</strong></div>
         <div>Holat: <strong>v1.0 Rasmiy Taqdimot</strong></div>
       </div>
 
@@ -1811,7 +2074,7 @@
       </div>
       <div class="page-meta-badge">
         <span>MOBIL ILOVA</span>
-        <span class="page-num-pill">02 / 08</span>
+        <span class="page-num-pill">02 / 09</span>
       </div>
     </div>
 
@@ -2137,7 +2400,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Bosh Sahifa va Navigatsiya UI</span>
       </div>
-      <div>Sahifa 2 / 8</div>
+      <div>Sahifa 2 / 9</div>
     </div>
   </div>
 
@@ -2154,7 +2417,7 @@
       </div>
       <div class="page-meta-badge">
         <span>DARSLAR & UNITLAR</span>
-        <span class="page-num-pill">03 / 08</span>
+        <span class="page-num-pill">03 / 09</span>
       </div>
     </div>
 
@@ -2372,7 +2635,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Darslar va Unitlar Ierarxiyasi</span>
       </div>
-      <div>Sahifa 3 / 8</div>
+      <div>Sahifa 3 / 9</div>
     </div>
   </div>
 
@@ -2389,7 +2652,7 @@
       </div>
       <div class="page-meta-badge">
         <span>FLASHKARTALAR & KINO</span>
-        <span class="page-num-pill">04 / 08</span>
+        <span class="page-num-pill">04 / 09</span>
       </div>
     </div>
 
@@ -2598,7 +2861,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Flashkartalar va Gollivud Kinolari</span>
       </div>
-      <div>Sahifa 4 / 8</div>
+      <div>Sahifa 4 / 9</div>
     </div>
   </div>
 
@@ -2615,7 +2878,7 @@
       </div>
       <div class="page-meta-badge">
         <span>TEST & QUIZ</span>
-        <span class="page-num-pill">05 / 08</span>
+        <span class="page-num-pill">05 / 09</span>
       </div>
     </div>
 
@@ -2809,7 +3072,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Testlar, Quizlar va Imtihon Mexanikasi</span>
       </div>
-      <div>Sahifa 5 / 8</div>
+      <div>Sahifa 5 / 9</div>
     </div>
   </div>
 
@@ -2826,7 +3089,7 @@
       </div>
       <div class="page-meta-badge">
         <span>PROFIL & XAVFSIZLIK</span>
-        <span class="page-num-pill">06 / 08</span>
+        <span class="page-num-pill">06 / 09</span>
       </div>
     </div>
 
@@ -3045,7 +3308,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Mobil Tizimi • Foydalanuvchi Xavfsizligi va Profil</span>
       </div>
-      <div>Sahifa 6 / 8</div>
+      <div>Sahifa 6 / 9</div>
     </div>
   </div>
 
@@ -3062,7 +3325,7 @@
       </div>
       <div class="page-meta-badge">
         <span>WEB ADMIN PANEL</span>
-        <span class="page-num-pill">07 / 08</span>
+        <span class="page-num-pill">07 / 09</span>
       </div>
     </div>
 
@@ -3269,7 +3532,7 @@
         <div class="footer-dot"></div>
         <span>Ingly Web Ekotizimi • React.js + Supabase Admin Dashboard</span>
       </div>
-      <div>Sahifa 7 / 8</div>
+      <div>Sahifa 7 / 9</div>
     </div>
   </div>
 
@@ -3287,7 +3550,7 @@
       </div>
       <div class="page-meta-badge">
         <span>FINTECH EKOTIZIMI</span>
-        <span class="page-num-pill">08 / 08</span>
+        <span class="page-num-pill">08 / 09</span>
       </div>
     </div>
 
@@ -3551,7 +3814,282 @@
         <div class="footer-dot"></div>
         <span>Ingly FinTech Ekotizimi • Click, Payme, Uzcard & Humo To'lov Integratsiyasi</span>
       </div>
-      <div>Sahifa 8 / 8</div>
+      <div>Sahifa 8 / 9</div>
+    </div>
+  </div>
+
+
+  <!-- ===================================================================
+       PAGE 9: SHAXSIY LUG'AT & AQLLI KARTOCHKALAR (MY WORDS SCREEN)
+       =================================================================== -->
+  <div class="page" id="page9">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="brand-mini">
+        <div class="brand-logo-icon">I</div>
+        <span class="brand-name">INGLY</span>
+        <span class="brand-tag">Shaxsiy Lug'at & Kartochkalar</span>
+      </div>
+      <div class="page-meta-badge">
+        <span>INTERAKTIV TA'LIM</span>
+        <span class="page-num-pill">09 / 09</span>
+      </div>
+    </div>
+
+    <!-- Title Section -->
+    <div class="title-section">
+      <div class="section-eyebrow">AVTOMATIK TARJIMA, FAOL XOTIRA (ACTIVE RECALL) VA AQLLI SARALASH</div>
+      <h2 class="page-main-title">Mening Lug'atim & Shaxsiy Kartochkalar (MyWordsScreen.js)</h2>
+      <p class="page-main-desc">
+        Foydalanuvchi so'z yozganda bir zumda avto-tarjima qilish, yashirin tarjima bilan miyani faollashtirish va "Yodladim" / "Yodlamadim" tugmalari orqali saralash tizimi.
+      </p>
+    </div>
+
+    <!-- Content 2 Columns -->
+    <div class="content-grid">
+      
+      <!-- Phone Mockup Left -->
+      <div class="phone-mockup-wrapper">
+        <div class="iphone-case">
+          <div class="iphone-screen">
+            <!-- Status Bar -->
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="dynamic-island"><div class="island-camera"></div></div>
+              <span>5G 􀛨 100%</span>
+            </div>
+
+            <!-- Screen Body (Soft Slate White #F8FAFC) -->
+            <div class="screen-content" style="background:#F8FAFC; padding: 1.5mm 1.8mm;">
+              <div class="vocab-screen-box">
+
+                <!-- Header Card -->
+                <div class="vocab-header-card">
+                  <div class="vocab-badge-row">
+                    <span class="vocab-header-badge">SHAXSIY LUG'AT</span>
+                    <span class="vocab-sub-badge">• Tarjima & Kartochka</span>
+                  </div>
+                  <div class="vocab-title-row">
+                    <h3 class="vocab-title">Mening Lug'atim</h3>
+                    <div class="vocab-study-now-btn">
+                      <span>🎴</span>
+                      <span>Takrorlash</span>
+                    </div>
+                  </div>
+                  <!-- Stats Row -->
+                  <div class="vocab-stats-grid">
+                    <div class="vocab-stat-pill" style="border-color:#FCA5A5; background:#FEF2F2;">
+                      <div class="vocab-stat-num" style="color:#DC2626;">2</div>
+                      <div class="vocab-stat-lbl">⏳ Yodlanmagan</div>
+                    </div>
+                    <div class="vocab-stat-pill" style="border-color:#86EFAC; background:#F0FDF4;">
+                      <div class="vocab-stat-num" style="color:#16A34A;">1</div>
+                      <div class="vocab-stat-lbl">✅ Yodlangan</div>
+                    </div>
+                    <div class="vocab-stat-pill" style="border-color:#C7D2FE; background:#EEF2FF;">
+                      <div class="vocab-stat-num" style="color:#4F46E5;">3</div>
+                      <div class="vocab-stat-lbl">📑 Jami so'z</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Input & Translate Box -->
+                <div class="vocab-input-box">
+                  <div class="vocab-input-title">
+                    <span>✍️</span>
+                    <span>Yangi So'z Qo'shish & Tarjima Qilish</span>
+                  </div>
+                  <div class="vocab-input-field">
+                    <span style="color:#0F172A;">Kitob</span>
+                    <span style="font-size:5px; background:#E2E8F0; padding:1px 3px; border-radius:3px; color:#475569;">Avto-UZ</span>
+                  </div>
+                  <div class="vocab-add-btn">
+                    ✨ Tarjima Qilish & Kartochka Yaratish
+                  </div>
+                </div>
+
+                <!-- Active Study Card Modal Box (Core Requirement Showcase) -->
+                <div class="vocab-study-card">
+                  <div class="vocab-card-tag-row">
+                    <span class="vocab-card-tag">🎴 KARTOCHKA BILAN O'RGANISH</span>
+                    <span class="vocab-card-step">1 / 2</span>
+                  </div>
+
+                  <!-- 1. User word (Always Visible) -->
+                  <div class="vocab-original-word-box">
+                    <div class="vocab-word-lbl">Kiritilgan so'z (O'zbekcha):</div>
+                    <div class="vocab-original-word">Kitob</div>
+                    <div class="vocab-tts-chip">
+                      <span>🔊</span>
+                      <span>Talaffuzni tinglash</span>
+                    </div>
+                  </div>
+
+                  <!-- 2. Revealed Translation State (Ochildi holati) -->
+                  <div class="vocab-revealed-box">
+                    <div class="vocab-revealed-lbl">Inglizcha Tarjimasi: Ochildi ✓</div>
+                    <div class="vocab-translated-word">Book</div>
+                    <div class="vocab-phonetic">/bʊk/</div>
+                    <div class="vocab-example-box">
+                      "I am reading an interesting book."
+                    </div>
+                  </div>
+
+                  <!-- 3. Yodladim / Yodlamadim Buttons (Core Requirement) -->
+                  <div class="vocab-actions-row">
+                    <div class="vocab-btn-unlearned">
+                      <div class="vocab-btn-title">❌ YODLAMADIM</div>
+                      <div class="vocab-btn-desc">Yodlanmaganlarda qoladi</div>
+                    </div>
+                    <div class="vocab-btn-learned">
+                      <div class="vocab-btn-title">✅ YODLADIM</div>
+                      <div class="vocab-btn-desc">Yodlanganlarga o'tadi</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Bottom Navigation (6 Tabs - Lug'atim Active) -->
+            <div class="bottom-nav">
+              <div class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">📖</span>
+                <span>Learn</span>
+              </div>
+              <div class="nav-item active">
+                <span class="nav-icon">✍️</span>
+                <span>Lug'atim</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🎴</span>
+                <span>Kartalar</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🏆</span>
+                <span>Quiz</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">👤</span>
+                <span>Profil</span>
+              </div>
+            </div>
+
+            <!-- Home Indicator -->
+            <div class="home-indicator"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Details Right (4 Cards + Spec Box) -->
+      <div class="features-list">
+        
+        <!-- Card 1: Avtomatik Sun'iy Intellekt & Lug'at Tarjimasi -->
+        <div class="feature-card highlight" style="border-left: 3.5px solid #5B4DFF;">
+          <div class="card-top">
+            <div class="card-icon icon-indigo">🌐</div>
+            <h3 class="card-title">Avtomatik Sun'iy Intellekt & Lug'at Tarjimasi</h3>
+            <span class="card-badge badge-blue">TEZKOR TARJIMA</span>
+          </div>
+          <p class="card-text">
+            Foydalanuvchi istalgan o'zbekcha yoki inglizcha so'z va iborani kiritishi bilan tizim uni <strong>Google GTX</strong>, <strong>MyMemory API</strong> va <strong>4000 Essential English Words</strong> bazasi orqali bir zumda aniq tarjima qiladi, transkripsiyasini hisoblaydi va avtomatik yangi kartochka yaratadi.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill" style="background:#EEF2FF; color:#4338CA; font-weight:800;">🌐 Google GTX API</span>
+            <span class="tech-pill" style="background:#E0F2FE; color:#0369A1; font-weight:800;">📚 4000 Words Bazasi</span>
+            <span class="tech-pill">Avtomatik Til Aniqlash</span>
+            <span class="tech-pill">Bir Zumda Yaratish</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Yashirin Tarjima & Faol Xotira (Active Recall) -->
+        <div class="feature-card">
+          <div class="card-top">
+            <div class="card-icon icon-sky">🔒</div>
+            <h3 class="card-title">Yashirin Tarjima & Faol Xotira (Active Recall)</h3>
+            <span class="card-badge badge-purple">XOTIRA METODI</span>
+          </div>
+          <p class="card-text">
+            Kartochka bosilganda, faqat foydalanuvchi kiritgan so'z ko'rinadi, lekin tarjimasi dastlab maxfiy <strong>yashiringan</strong> bo'ladi. Bu foydalanuvchi miyasini faol eslashga (active recall) majbur qiladi. <strong>"👁️ Tarjimani ko'rish"</strong> tugmasi bosilgandagina tarjima, transkripsiya va audio talaffuz ochiladi.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill">Active Recall Metodi</span>
+            <span class="tech-pill">Yashirin Tarjima</span>
+            <span class="tech-pill">Audio Talaffuz (TTS)</span>
+            <span class="tech-pill">Interaktiv Flip Card</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Aqlli Saralash: "Yodladim" va "Yodlamadim" Tizimi -->
+        <div class="feature-card highlight" style="border-left: 3.5px solid #22C55E;">
+          <div class="card-top">
+            <div class="card-icon" style="background:#DCFCE7; color:#15803D;">🎯</div>
+            <h3 class="card-title">Aqlli Saralash: "Yodladim" & "Yodlamadim" Tizimi</h3>
+            <span class="card-badge" style="background:#22C55E; color:#FFF;">SARALASH MEXANIZMI</span>
+          </div>
+          <p class="card-text">
+            Tarjima ko'rilgach, tagida 2 ta asosiy tugma chiqadi: <strong>"✅ YODLADIM"</strong> bosilsa kartochka yopilib, "Yodlanganlar" ro'yxatiga o'tadi va kunlik streak hamda profil progressiga ball qo'shiladi; <strong>"❌ YODLAMADIM"</strong> bosilsa "Yodlanmaganlar" bo'limida qolib, qayta takrorlash ro'yxatiga olinadi.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill" style="background:#DCFCE7; color:#166534; font-weight:800;">✅ Yodlanganlar Bo'limi</span>
+            <span class="tech-pill" style="background:#FEE2E2; color:#991B1B; font-weight:800;">❌ Yodlanmaganlar Bo'limi</span>
+            <span class="tech-pill">Avtomatik Saralash</span>
+            <span class="tech-pill">Streak & Progress Sync</span>
+          </div>
+        </div>
+
+        <!-- Card 4: 3 Xil Bo'lim, Qidiruv va Ketma-ket Takrorlash -->
+        <div class="feature-card">
+          <div class="card-top">
+            <div class="card-icon icon-amber">📑</div>
+            <h3 class="card-title">3 Xil Bo'lim, Jonli Qidiruv & Study Session</h3>
+            <span class="card-badge badge-amber">TO'LIQ NAZORAT</span>
+          </div>
+          <p class="card-text">
+            <strong>"⏳ Yodlanmaganlar"</strong>, <strong>"✅ Yodlanganlar"</strong> va <strong>"📑 Barchasi"</strong> tablari orqali kartochkalarni ko'rish, jonli qidiruv orqali izlash hamda <strong>"🎴 Takrorlash"</strong> tugmasi orqali barcha yodlanmagan kartochkalar bo'yicha ketma-ket (Study Session) mashg'ulotini o'tkazish imkoniyati.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill">3 Xil Tab Filtr</span>
+            <span class="tech-pill">Jonli Qidiruv</span>
+            <span class="tech-pill">Ketma-ket Takrorlash</span>
+            <span class="tech-pill">Mahalliy Saqlash (Storage)</span>
+          </div>
+        </div>
+
+        <!-- Spec Strip Bottom -->
+        <div class="spec-box" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="spec-item">
+            <div class="spec-num" style="color:#5B4DFF;">100%</div>
+            <div class="spec-lbl">Avtomatik Tarjima</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-num" style="color:#0284C7;">Maxfiy</div>
+            <div class="spec-lbl">Active Recall Tizimi</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-num" style="color:#16A34A;">2 Ta</div>
+            <div class="spec-lbl">Saralash Holati</div>
+          </div>
+          <div class="spec-item">
+            <div class="spec-num" style="color:#7E22CE;">Cheksiz</div>
+            <div class="spec-lbl">Shaxsiy Kartochkalar</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="page-footer">
+      <div class="footer-left">
+        <div class="footer-dot"></div>
+        <span>Ingly Ta'lim Ekotizimi • Shaxsiy Lug'at, Avto-Tarjima & Aqlli Saralash Kartochkalari</span>
+      </div>
+      <div>Sahifa 9 / 9</div>
     </div>
   </div>
 
