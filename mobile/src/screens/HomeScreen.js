@@ -33,7 +33,7 @@ const BOOKS_METADATA = [
 ];
 
 export default function HomeScreen({ onNavigate }) {
-  const { user } = useUser();
+  const { user, isPasswordExpired } = useUser();
   const [appSettings, setAppSettings] = useState({
     ads_enabled: false,
     premium_mode_enabled: false,
@@ -132,6 +132,31 @@ export default function HomeScreen({ onNavigate }) {
             </View>
           </View>
         </View>
+
+        {/* Security Reminder: 6 Month Password Expiry */}
+        {isPasswordExpired && (
+          <TouchableOpacity
+            style={styles.securityBanner}
+            activeOpacity={0.85}
+            onPress={() => onNavigate && onNavigate('Profile')}
+          >
+            <View style={styles.securityIconBox}>
+              <Text style={{ fontSize: 20 }}>🛡️</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                <Text style={styles.securityTitle}>Parolni yangilash tavsiya etiladi</Text>
+                <View style={styles.securityTag}>
+                  <Text style={styles.securityTagText}>6 oy bo'ldi</Text>
+                </View>
+              </View>
+              <Text style={styles.securitySubtitle}>
+                Hisobingiz daxlsizligi uchun parolingizni yangilab turing.
+              </Text>
+            </View>
+            <Text style={styles.securityArrow}>➔</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Dynamic AdMob Banner when enabled from Admin */}
         {appSettings.ads_enabled && (
@@ -634,5 +659,56 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#3B82F6',
     marginTop: 2,
+  },
+  securityBanner: {
+    width: '100%',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1.5,
+    borderColor: '#FDE68A',
+    borderRadius: 18,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 14,
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  securityIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  securityTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  securityTag: {
+    backgroundColor: '#FDE68A',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  securityTagText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#B45309',
+  },
+  securitySubtitle: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#B45309',
+  },
+  securityArrow: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#D97706',
   },
 });

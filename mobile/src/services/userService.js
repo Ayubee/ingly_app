@@ -21,7 +21,6 @@ export async function syncUserWithSupabase(userData) {
   const cleanPhone = userData.phone ? String(userData.phone).trim() : null;
   const fullName = String(userData.name || userData.fullName || cleanUsername).trim();
 
-  // MUHIM: is_blocked maydoni mobil ilova orqali yangilanmaydi (faqat Admin o'zgartiradi)
   const userPayload = {
     full_name: fullName,
     username: cleanUsername,
@@ -29,7 +28,12 @@ export async function syncUserWithSupabase(userData) {
     daily_goal: Number(userData.dailyGoal) || 20,
     is_premium: !!userData.isPremium,
     last_login_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   };
+
+  if (userData.password) {
+    userPayload.password_hash = String(userData.password).trim();
+  }
 
   const initialInsertPayload = {
     ...userPayload,

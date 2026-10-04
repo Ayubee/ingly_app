@@ -279,7 +279,9 @@
                 words: Number(uStats.mastered_words_count || u.total_words_learned || 0),
                 streak: Number(uStats.current_streak || u.current_streak || 0),
                 isBlocked: !!u.is_blocked,
-                isVip: !!u.is_premium
+                isVip: !!u.is_premium,
+                created_at: u.created_at,
+                updated_at: u.updated_at
               };
             });
             setUsers(mapped);
@@ -1561,11 +1563,28 @@
                               <td class="py-3.5 px-4 text-slate-600 font-mono text-xs">{u.phone}</td>
                               <td class="py-3.5 px-4 font-mono text-xs">
                                 <div class="text-brand-600 font-bold">@{u.username}</div>
-                                <div class="text-[11px] flex items-center gap-1 mt-1" title="Foydalanuvchining joriy paroli">
+                                <div class="text-[11px] flex items-center flex-wrap gap-1 mt-1" title="Foydalanuvchining joriy paroli">
                                   <span>🔑</span>
                                   <span class={u.password || u.password_hash ? "font-bold text-amber-700 font-mono bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200" : "text-slate-400 italic"}>
                                     {u.password || u.password_hash || 'parolsiz'}
                                   </span>
+                                  {(() => {
+                                    const ts = u.updated_at || u.created_at;
+                                    if (!ts || !u.password_hash) return null;
+                                    const days = Math.floor((Date.now() - new Date(ts).getTime()) / (1000 * 60 * 60 * 24));
+                                    if (days >= 180) {
+                                      return (
+                                        <span class="text-[10px] bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded font-bold" title={`Parol ${days} kun oldin o'rnatilgan (>6 oy)`}>
+                                          ⚠️ >6 oy
+                                        </span>
+                                      );
+                                    }
+                                    return (
+                                      <span class="text-[10px] text-slate-400 font-normal">
+                                        ({days} kun)
+                                      </span>
+                                    );
+                                  })()}
                                 </div>
                               </td>
                               <td class="py-3.5 px-4 font-bold text-slate-800">{u.words} ta</td>

@@ -14,12 +14,34 @@ import { syncUserWithSupabase, syncAllLocalUsersToSupabase, fetchUserRemoteStatu
 
 const UserContext = createContext();
 
+export const SIX_MONTHS_MS = 180 * 24 * 60 * 60 * 1000; // 180 kun (~6 oy)
+
+/**
+ * Parol oxirgi marta o'rnatilganidan buyon 6 oy (180 kun) o'tganligini tekshirish
+ */
+export const isPasswordOlderThan6Months = (user) => {
+  if (!user || !user.isLoggedIn) return false;
+  // Google orqali kirgan va paroli yo'q bo'lsa, eslatma kerak emas
+  if (user.authMethod === 'google' && !user.password) return false;
+
+  const changedAt = user.passwordChangedAt || user.createdAt;
+  if (!changedAt) {
+    // Agar foydalanuvchida parol bo'lsa-yu, sana saqlanmagan bo'lsa (eski foydalanuvchi) -> yangilash tavsiya etiladi
+    return Boolean(user.password);
+  }
+  const ageMs = Date.now() - new Date(changedAt).getTime();
+  return ageMs > SIX_MONTHS_MS;
+};
+
 export const INITIAL_USER = {
   isLoggedIn: false,
   name: '',
   phone: '',
   username: '',
   password: '',
+  passwordChangedAt: null, // Qachon oxirgi marta parol qo'yilgan yoki o'zgartirilgan
+  lastPasswordReminderDate: null, // Oxirgi marta 6 oylik eslatma ko'rsatilgan kun (YYYY-MM-DD)
+  createdAt: null, // Ro'yxatdan o'tgan sana
   avatar: '👨‍🎓',
   authMethod: 'credentials', // 'credentials' | 'google'
   streakDays: 0,
@@ -242,6 +264,8 @@ export function UserProvider({ children }) {
       };
     }
 
+    const nowIso = new Date().toISOString();
+
     // Yangi foydalanuvchi obyekti (Barcha natijalar 0 dan)
     const newUser = {
       ...INITIAL_USER,
@@ -250,6 +274,8 @@ export function UserProvider({ children }) {
       phone: String(phone || '').trim(),
       username: cleanUsername,
       password: cleanPassword,
+      passwordChangedAt: nowIso,
+      createdAt: nowIso,
       avatar: avatar,
       authMethod: 'credentials',
       dailyGoal: Number(dailyGoal) || 20,
@@ -585,6 +611,103 @@ export function UserProvider({ children }) {
     await saveUserData(updated);
   };
 
+  // 10. Foydalanuvchi parolini o'zgartirish (Faqat eski parolni to'g'ri yozganda yangi parol qo'yish imkoni)
+  const changePassword = async ({ oldPassword, newPassword, confirmPassword }) => {
+    const cleanOld = String(oldPassword || '').trim();
+    const cleanNew = String(newPassword || '').trim();
+    const cleanConfirm = String(confirmPassword || '').trim();
+
+    let currentPassword = String(user.password || '').trim();
+
+    // Eng so'nggi parolni Supabase'dan ham tekshirib olish
+    if (user.username) {
+      try {
+        const remote = await fetchUserRemoteStatus(user.username);
+        if (remote && remote.password_hash) {
+          currentPassword = String(remote.password_hash).trim();
+        }
+      } catch (e) {}
+    }
+
+    if (currentPassword) {
+      if (!cleanOld) {
+        return {
+          success: false,
+          error: 'Iltimos, avval joriy (eski) parolingizni kiriting!',
+        };
+      }
+      if (cleanOld !== currentPassword) {
+        return {
+          success: false,
+          error: 'Kiritilgan eski parol noto\'g\'ri! Qaytadan tekshirib kiriting.',
+        };
+      }
+    }
+
+    if (!cleanNew) {
+      return {
+        success: false,
+        error: 'Iltimos, yangi parolni kiriting!',
+      };
+    }
+
+    if (cleanNew.length < 6) {
+      return {
+        success: false,
+        error: 'Yangi parol kamida 6 ta belgidan iborat bo\'lishi kerak!',
+      };
+    }
+
+    if (cleanConfirm && cleanNew !== cleanConfirm) {
+      return {
+        success: false,
+        error: 'Yangi parollar bir-biriga mos kelmadi! Qaytadan tekshiring.',
+      };
+    }
+
+    if (currentPassword && cleanOld === cleanNew) {
+      return {
+        success: false,
+        error: 'Yangi parol eski parolingiz bilan bir xil bo\'lishi mumkin emas. Yangi parol tanlang!',
+      };
+    }
+
+    const nowIso = new Date().toISOString();
+    const todayStr = nowIso.split('T')[0];
+
+    const updatedUser = {
+      ...user,
+      password: cleanNew,
+      passwordChangedAt: nowIso,
+      lastPasswordReminderDate: todayStr,
+    };
+
+    await saveUserData(updatedUser);
+
+    // Supabase bulut bazasiga ham zudlik bilan yangi parolni sinxron qilish
+    try {
+      await syncUserWithSupabase({
+        ...updatedUser,
+        password: cleanNew,
+      });
+    } catch (e) {}
+
+    return { success: true };
+  };
+
+  // 11. 6 oylik parol eslatmasini keyinroqqa qoldirish (Bugungi kun uchun bekor qilish)
+  const dismissPasswordReminder = async () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const updated = {
+      ...user,
+      lastPasswordReminderDate: todayStr,
+    };
+    setUser(updated);
+    await setStorageItem(STORAGE_KEYS.USER_PROFILE, updated);
+  };
+
+  const isPasswordExpired = isPasswordOlderThan6Months(user);
+
   return (
     <UserContext.Provider
       value={{
@@ -599,6 +722,10 @@ export function UserProvider({ children }) {
         recordQuizResult,
         resetProgress,
         setActiveLesson,
+        changePassword,
+        dismissPasswordReminder,
+        isPasswordExpired,
+        isPasswordOlderThan6Months,
       }}
     >
       {children}

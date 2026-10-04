@@ -4,7 +4,7 @@
  * bildirishnomalar va natijalarni 0 dan boshlash.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -28,7 +28,15 @@ const AVAILABLE_AVATARS = ['👨‍🎓', '👩‍🎓', '🦁', '🦊', '🚀',
 const REMINDER_TIMES = ['08:00', '13:00', '19:00', '21:00'];
 
 export default function ProfileScreen({ onNavigate }) {
-  const { user, updateProfile, resetProgress, logout } = useUser();
+  const {
+    user,
+    updateProfile,
+    resetProgress,
+    logout,
+    changePassword,
+    dismissPasswordReminder,
+    isPasswordExpired,
+  } = useUser();
 
   // Edit Modal State
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -36,12 +44,100 @@ export default function ProfileScreen({ onNavigate }) {
   const [editPhone, setEditPhone] = useState(user.phone || '');
   const [editAvatar, setEditAvatar] = useState(user.avatar || '👨‍🎓');
 
+  // Change Password Modal States
+  const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Har 6 oyda bir marta parolni o'zgartirish eslatmasi (Alert)
+  useEffect(() => {
+    if (isPasswordExpired) {
+      const today = new Date().toISOString().split('T')[0];
+      if (user.lastPasswordReminderDate !== today) {
+        Alert.alert(
+          '🛡️ Xavfsizlik eslatmasi (6 oy)',
+          'Siz parolingizni 6 oydan buyon yangilamadingiz. Hisobingiz xavfsizligini ta\'minlash uchun har 6 oyda yangi parol o\'rnatish tavsiya etiladi.',
+          [
+            {
+              text: 'Keyinroq',
+              style: 'cancel',
+              onPress: () => dismissPasswordReminder(),
+            },
+            {
+              text: 'Parolni yangilash 🔑',
+              onPress: () => {
+                dismissPasswordReminder();
+                setIsPasswordModalVisible(true);
+              },
+            },
+          ]
+        );
+      }
+    }
+  }, [isPasswordExpired]);
+
   // Open Edit Modal
   const openEditModal = () => {
     setEditName(user.name);
     setEditPhone(user.phone || '');
     setEditAvatar(user.avatar || '👨‍🎓');
     setIsEditModalVisible(true);
+  };
+
+  // Parolni o'zgartirishni tasdiqlash va saqlash
+  const handleChangePasswordSubmit = async () => {
+    const cleanOld = oldPassword.trim();
+    const cleanNew = newPassword.trim();
+    const cleanConfirm = confirmPassword.trim();
+
+    if (user.password && !cleanOld) {
+      Alert.alert('Xatolik', 'Iltimos, avval joriy (eski) parolingizni kiriting!');
+      return;
+    }
+    if (!cleanNew) {
+      Alert.alert('Xatolik', 'Iltimos, yangi parol kiriting!');
+      return;
+    }
+    if (cleanNew.length < 6) {
+      Alert.alert('Xatolik', 'Yangi parol kamida 6 ta belgidan iborat bo\'lishi shart!');
+      return;
+    }
+    if (cleanNew !== cleanConfirm) {
+      Alert.alert('Xatolik', 'Yangi parollar bir-biriga mos kelmadi! Qaytadan tekshiring.');
+      return;
+    }
+    if (cleanOld && cleanOld === cleanNew) {
+      Alert.alert('Xatolik', 'Yangi parol eski paroldan farq qilishi kerak!');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await changePassword({
+        oldPassword: cleanOld,
+        newPassword: cleanNew,
+        confirmPassword: cleanConfirm,
+      });
+
+      if (res && res.success) {
+        setIsPasswordModalVisible(false);
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        Alert.alert('Muvaffaqiyatli ✅', 'Parolingiz muvaffaqiyatli yangilandi!');
+      } else {
+        Alert.alert('Xatolik ❌', res?.error || 'Parolni yangilashda xatolik yuz berdi!');
+      }
+    } catch (err) {
+      Alert.alert('Xatolik', 'Kutilmagan xatolik yuz berdi!');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   // Save Profile Edits
@@ -307,7 +403,39 @@ export default function ProfileScreen({ onNavigate }) {
 
         {/* 4. Amallar & Tozalash */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Boshqaruv</Text>
+          <Text style={styles.sectionTitle}>Boshqaruv & Xavfsizlik</Text>
+
+          {/* Parolni o'zgartirish */}
+          <TouchableOpacity
+            style={styles.actionRow}
+            activeOpacity={0.7}
+            onPress={() => {
+              setOldPassword('');
+              setNewPassword('');
+              setConfirmPassword('');
+              setIsPasswordModalVisible(true);
+            }}
+          >
+            <Text style={styles.actionIcon}>🔑</Text>
+            <View style={{ flex: 1 }}>
+              <View style={styles.passwordTitleRow}>
+                <Text style={styles.actionTitle}>Parolni o'zgartirish</Text>
+                {isPasswordExpired && (
+                  <View style={styles.expiredBadge}>
+                    <Text style={styles.expiredBadgeText}>6 oydan oshdi ⚠️</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.actionSubtitle, isPasswordExpired && { color: '#D97706', fontWeight: '700' }]}>
+                {isPasswordExpired
+                  ? '6 oydan beri yangilanmadi! Yangilash tavsiya etiladi'
+                  : user.passwordChangedAt
+                  ? `Oxirgi marta: ${new Date(user.passwordChangedAt).toLocaleDateString('uz-UZ')}`
+                  : 'Eski parolni kiritish orqali yangilash'}
+              </Text>
+            </View>
+            <Text style={styles.chevron}>➔</Text>
+          </TouchableOpacity>
 
           {/* Reset progress */}
           <TouchableOpacity
@@ -458,6 +586,167 @@ export default function ProfileScreen({ onNavigate }) {
                       }}
                     >
                       <Text style={styles.modalSaveText}>Saqlash ✓</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Parolni O'zgartirish Modal Aynasi */}
+      <Modal
+        visible={isPasswordModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          Keyboard.dismiss();
+          setIsPasswordModalVisible(false);
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalBackdrop}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={{ fontSize: 20 }}>🔑</Text>
+                      <Text style={styles.modalTitle}>Parolni O'zgartirish</Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setIsPasswordModalVisible(false);
+                      }}
+                      style={styles.closeBtnBox}
+                    >
+                      <Text style={styles.modalCloseText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={{ paddingBottom: 10 }}
+                  >
+                    {isPasswordExpired && (
+                      <View style={styles.alertNoticeBox}>
+                        <Text style={styles.alertNoticeIcon}>⚠️</Text>
+                        <Text style={styles.alertNoticeText}>
+                          Parolingiz 6 oydan buyon yangilanmagan. Hisobingiz xavfsizligini ta'minlash uchun yangi parol o'rnating.
+                        </Text>
+                      </View>
+                    )}
+
+                    <Text style={styles.passwordHintText}>
+                      Xavfsizlik talablariga ko'ra, yangi parol qo'yish uchun avval joriy (eski) parolingizni kiritishingiz shart.
+                    </Text>
+
+                    {/* Eski Parol */}
+                    {Boolean(user.password) && (
+                      <View>
+                        <Text style={styles.modalLabel}>Joriy (eski) parol: *</Text>
+                        <View style={styles.passwordInputContainer}>
+                          <TextInput
+                            style={styles.passwordInput}
+                            value={oldPassword}
+                            onChangeText={setOldPassword}
+                            placeholder="Eski parolingizni kiriting"
+                            placeholderTextColor="#94A3B8"
+                            secureTextEntry={!showOldPassword}
+                            autoCapitalize="none"
+                            returnKeyType="next"
+                          />
+                          <TouchableOpacity
+                            onPress={() => setShowOldPassword(!showOldPassword)}
+                            style={styles.eyeBtn}
+                          >
+                            <Text style={styles.eyeIcon}>{showOldPassword ? '🙈' : '👁️'}</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Yangi Parol */}
+                    <Text style={styles.modalLabel}>Yangi parol: *</Text>
+                    <View style={styles.passwordInputContainer}>
+                      <TextInput
+                        style={styles.passwordInput}
+                        value={newPassword}
+                        onChangeText={setNewPassword}
+                        placeholder="Kamida 6 ta belgi kiriting"
+                        placeholderTextColor="#94A3B8"
+                        secureTextEntry={!showNewPassword}
+                        autoCapitalize="none"
+                        returnKeyType="next"
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowNewPassword(!showNewPassword)}
+                        style={styles.eyeBtn}
+                      >
+                        <Text style={styles.eyeIcon}>{showNewPassword ? '🙈' : '👁️'}</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Yangi Parolni Tasdiqlash */}
+                    <Text style={styles.modalLabel}>Yangi parolni tasdiqlash: *</Text>
+                    <View style={styles.passwordInputContainer}>
+                      <TextInput
+                        style={styles.passwordInput}
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        placeholder="Yangi parolni qayta kiriting"
+                        placeholderTextColor="#94A3B8"
+                        secureTextEntry={!showConfirmPassword}
+                        autoCapitalize="none"
+                        returnKeyType="done"
+                        onSubmitEditing={() => {
+                          Keyboard.dismiss();
+                          handleChangePasswordSubmit();
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={styles.eyeBtn}
+                      >
+                        <Text style={styles.eyeIcon}>{showConfirmPassword ? '🙈' : '👁️'}</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <Text style={styles.passwordRequirementText}>
+                      🔒 Tavsiya: Har 6 oyda yangilash hisobingiz daxlsizligini ta'minlaydi.
+                    </Text>
+                  </ScrollView>
+
+                  {/* Actions */}
+                  <View style={styles.modalActionsRow}>
+                    <TouchableOpacity
+                      style={styles.modalCancelBtn}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setIsPasswordModalVisible(false);
+                      }}
+                    >
+                      <Text style={styles.modalCancelText}>Bekor qilish</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modalSaveBtn, isChangingPassword && { opacity: 0.6 }]}
+                      activeOpacity={0.85}
+                      disabled={isChangingPassword}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        handleChangePasswordSubmit();
+                      }}
+                    >
+                      <Text style={styles.modalSaveText}>
+                        {isChangingPassword ? 'Saqlanmoqda...' : 'Parolni Saqlash 💾'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -891,5 +1180,81 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+  passwordTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  expiredBadge: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  expiredBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#D97706',
+  },
+  alertNoticeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 12,
+  },
+  alertNoticeIcon: {
+    fontSize: 20,
+  },
+  alertNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#B45309',
+    fontWeight: '600',
+    lineHeight: 17,
+  },
+  passwordHintText: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 18,
+    marginBottom: 10,
+    fontWeight: '500',
+  },
+  passwordInputContainer: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  passwordInput: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingRight: 48,
+    fontSize: 15,
+    color: '#0F172A',
+    fontWeight: '600',
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: 14,
+    padding: 6,
+  },
+  eyeIcon: {
+    fontSize: 18,
+  },
+  passwordRequirementText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 12,
+    fontWeight: '500',
   },
 });
