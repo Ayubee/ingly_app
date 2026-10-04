@@ -332,14 +332,30 @@ export function UserProvider({ children }) {
       return matchUsername || matchPhone;
     });
 
-    if (matchedUserIndex === -1) {
+    let userIdx = matchedUserIndex;
+    let matchedUser = userIdx !== -1 ? allUsers[userIdx] : null;
+
+    if (!matchedUser && remote) {
+      matchedUser = {
+        ...INITIAL_USER,
+        name: remote.full_name || remote.username || rawInput,
+        username: remote.username || cleanLower,
+        phone: remote.phone || '',
+        password: remote.password_hash || enteredPassword,
+        isPremium: !!remote.is_premium,
+        isBlocked: !!remote.is_blocked,
+      };
+      allUsers.push(matchedUser);
+      userIdx = allUsers.length - 1;
+    }
+
+    if (!matchedUser) {
       return {
         success: false,
         error: `"${rawInput}" login yoki telefon raqamiga ega foydalanuvchi topilmadi! Iltimos, avval ro'yxatdan o'ting.`,
       };
     }
 
-    const matchedUser = allUsers[matchedUserIndex];
     let expectedPassword = String(matchedUser.password || '').trim();
 
     // Agar admin Supabase'da yangi parol o'rnatgan bo'lsa, ushbu yangi parol tekshiriladi
