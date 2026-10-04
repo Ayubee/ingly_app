@@ -18,20 +18,31 @@ const UserContext = createContext();
 export const SIX_MONTHS_MS = 180 * 24 * 60 * 60 * 1000; // 180 kun (~6 oy)
 
 /**
- * Parol oxirgi marta o'rnatilganidan buyon 6 oy (180 kun) o'tganligini tekshirish
+ * Parol oxirgi marta o'rnatilganidan buyon 6 oy (180 kun) o'tganligini tekshirish.
+ * TALAB: Ilovaga kirishi bilanoq xabar chiqmasin! Ro'yxatdan o'tgan yoki oxirgi o'zgartirilgan kundan 6 oy (180 kun) o'tgachgina chiqadi.
  */
 export const isPasswordOlderThan6Months = (user) => {
   if (!user || !user.isLoggedIn) return false;
   // Google orqali kirgan va paroli yo'q bo'lsa, eslatma kerak emas
   if (user.authMethod === 'google' && !user.password_hash && !user.password) return false;
 
-  const changedAt = user.passwordChangedAt || user.createdAt;
+  // Foydalanuvchi ro'yxatdan o'tgan sana (createdAt) yoki paroli yangilangan sana (passwordChangedAt)
+  const regDate = user.createdAt || user.created_at;
+  const changedAt = user.passwordChangedAt || user.password_changed_at || regDate;
+
+  // Agar sana bo'lmasa, darhol xabar chiqmasligi uchun yangi ro'yxatdan o'tgan deb hisoblab false qaytaramiz
   if (!changedAt) {
-    // Agar foydalanuvchida parol bo'lsa-yu, sana saqlanmagan bo'lsa (eski foydalanuvchi) -> yangilash tavsiya etiladi
-    return Boolean(user.password_hash || user.password);
+    return false;
   }
-  const ageMs = Date.now() - new Date(changedAt).getTime();
-  return ageMs > SIX_MONTHS_MS;
+
+  const changeTime = new Date(changedAt).getTime();
+  if (isNaN(changeTime)) {
+    return false;
+  }
+
+  const ageMs = Date.now() - changeTime;
+  // Qat'iy 6 oy (180 kun) o'tgandagina ogohlantirish beriladi
+  return ageMs >= SIX_MONTHS_MS;
 };
 
 export const INITIAL_USER = {
@@ -98,9 +109,14 @@ export function UserProvider({ children }) {
             }
           }
 
+          const userCreatedAt = saved.createdAt || saved.created_at || new Date().toISOString();
+          const userPassChanged = saved.passwordChangedAt || saved.password_changed_at || userCreatedAt;
+
           setUser({
             ...INITIAL_USER,
             ...saved,
+            createdAt: userCreatedAt,
+            passwordChangedAt: userPassChanged,
             isPremium: !!saved.isPremium,
             premiumUntil: saved.premiumUntil || null,
             unlockedBooks: Array.isArray(saved.unlockedBooks) && saved.unlockedBooks.length > 0 ? saved.unlockedBooks : [1],
@@ -428,10 +444,21 @@ export function UserProvider({ children }) {
     if (remote && remote.is_premium !== undefined) {
       matchedUser.isPremium = !!remote.is_premium;
     }
+
+    const userCreatedAt = matchedUser.createdAt || matchedUser.created_at || remote?.created_at || new Date().toISOString();
+    const userPassChanged = matchedUser.passwordChangedAt || matchedUser.password_changed_at || userCreatedAt;
+
+    matchedUser.createdAt = userCreatedAt;
+    matchedUser.passwordChangedAt = userPassChanged;
     allUsers[userIdx] = matchedUser;
     await setStorageItem(STORAGE_KEYS.REGISTERED_USERS, allUsers);
 
-    const activeUser = { ...matchedUser, isLoggedIn: true };
+    const activeUser = {
+      ...matchedUser,
+      isLoggedIn: true,
+      createdAt: userCreatedAt,
+      passwordChangedAt: userPassChanged,
+    };
     await setStorageItem(STORAGE_KEYS.USER_PROFILE, activeUser);
     setUser(activeUser);
 

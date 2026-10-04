@@ -24,6 +24,8 @@ export async function syncUserWithSupabase(userData) {
   const cleanPhone = userData.phone ? String(userData.phone).trim() : null;
   const fullName = String(userData.name || userData.fullName || cleanUsername).trim();
 
+  const createdAtIso = userData.createdAt || userData.created_at || new Date().toISOString();
+
   const userPayload = {
     full_name: fullName,
     username: cleanUsername,
@@ -45,6 +47,7 @@ export async function syncUserWithSupabase(userData) {
   const initialInsertPayload = {
     ...userPayload,
     is_blocked: false,
+    created_at: createdAtIso,
   };
 
   try {
@@ -56,7 +59,7 @@ export async function syncUserWithSupabase(userData) {
 
       const { data: existingUser } = await supabase
         .from('users')
-        .select('id, is_blocked, is_premium')
+        .select('id, is_blocked, is_premium, created_at')
         .or(`username.eq.${encodedUsername}${encodedPhone ? `,phone.eq.${encodedPhone}` : ''}`)
         .limit(1);
 
@@ -67,7 +70,7 @@ export async function syncUserWithSupabase(userData) {
           .from('users')
           .update(userPayload)
           .eq('id', targetId)
-          .select('id, full_name, username, phone, daily_goal, is_premium, is_blocked');
+          .select('id, full_name, username, phone, daily_goal, is_premium, is_blocked, created_at');
 
         if (!updateErr && updated && updated[0]) {
           return updated[0];
@@ -77,7 +80,7 @@ export async function syncUserWithSupabase(userData) {
         const { data: inserted, error: insertErr } = await supabase
           .from('users')
           .insert([initialInsertPayload])
-          .select('id, full_name, username, phone, daily_goal, is_premium, is_blocked');
+          .select('id, full_name, username, phone, daily_goal, is_premium, is_blocked, created_at');
 
         if (!insertErr && inserted && inserted[0]) {
           return inserted[0];
@@ -95,7 +98,7 @@ export async function syncUserWithSupabase(userData) {
 
     const encodedUser = encodeURIComponent(cleanUsername);
     // Tekshirish (password_hash so'ralmaydi!)
-    const checkQuery = `${SUPABASE_REST_URL}/users?username=eq.${encodedUser}&select=id,is_blocked,is_premium`;
+    const checkQuery = `${SUPABASE_REST_URL}/users?username=eq.${encodedUser}&select=id,is_blocked,is_premium,created_at`;
     const checkRes = await fetch(checkQuery, { headers: restHeaders });
     const existingList = checkRes.ok ? await checkRes.json() : [];
 
@@ -164,9 +167,9 @@ export async function fetchUserRemoteStatus(loginOrPhone) {
   const encodedDigits = encodeURIComponent(digits.slice(-9));
 
   try {
-    let query = `${SUPABASE_REST_URL}/users?username=eq.${encodedUsername}&select=id,username,full_name,phone,is_blocked,is_premium,premium_until,password_hash`;
+    let query = `${SUPABASE_REST_URL}/users?username=eq.${encodedUsername}&select=id,username,full_name,phone,is_blocked,is_premium,premium_until,password_hash,created_at`;
     if (digits.length >= 9) {
-      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${encodedUsername},phone.like.*${encodedDigits})&select=id,username,full_name,phone,is_blocked,is_premium,premium_until,password_hash`;
+      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${encodedUsername},phone.like.*${encodedDigits})&select=id,username,full_name,phone,is_blocked,is_premium,premium_until,password_hash,created_at`;
     }
 
     const res = await fetch(query, {
