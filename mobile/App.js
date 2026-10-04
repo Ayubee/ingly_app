@@ -16,6 +16,7 @@ import LearnScreen from './src/screens/LearnScreen.js';
 import FlashcardScreen from './src/screens/FlashcardScreen.js';
 import QuizScreen from './src/screens/QuizScreen.js';
 import ProfileScreen from './src/screens/ProfileScreen.js';
+import MyWordsScreen from './src/screens/MyWordsScreen.js';
 import BottomNavigation from './src/components/BottomNavigation.js';
 
 function MainAppContent() {
@@ -45,6 +46,8 @@ function MainAppContent() {
         return <HomeScreen onNavigate={setCurrentTab} />;
       case 'Learn':
         return <LearnScreen onNavigate={setCurrentTab} />;
+      case 'MyWords':
+        return <MyWordsScreen onNavigate={setCurrentTab} />;
       case 'Flashcards':
         return <FlashcardScreen onNavigate={setCurrentTab} />;
       case 'Quiz':

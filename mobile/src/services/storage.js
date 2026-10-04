@@ -15,6 +15,7 @@ export const STORAGE_KEYS = {
   APP_SETTINGS: '@ingly_app_settings',     // Foydalanuvchi ilova sozlamalari
   USER_PROFILE: '@ingly_user_profile',     // Foydalanuvchi profili kesh
   REGISTERED_USERS: '@ingly_registered_users', // Ro'yxatdan o'tgan barcha foydalanuvchilar bazasi
+  CUSTOM_WORDS: '@ingly_custom_words',     // Foydalanuvchi o'zi qo'shgan shaxsiy so'zlar va kartochkalar
 };
 
 // In-memory fallback (agar AsyncStorage bo'lmasa yoki xatolik bersa)
@@ -373,3 +374,64 @@ export async function clearAllLocalData() {
     return false;
   }
 }
+
+/**
+ * Foydalanuvchi qo'shgan shaxsiy so'zlar ro'yxatini olish
+ */
+export async function getCustomWords() {
+  return (await getStorageItem(STORAGE_KEYS.CUSTOM_WORDS, [])) || [];
+}
+
+/**
+ * Yangi shaxsiy so'z qo'shish
+ */
+export async function addCustomWord(wordItem) {
+  const list = await getCustomWords();
+  const newItem = {
+    id: wordItem.id || 'custom_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+    original: (wordItem.original || '').trim(),
+    translated: (wordItem.translated || '').trim(),
+    phonetic: wordItem.phonetic || '',
+    pos: wordItem.pos || '',
+    definition: wordItem.definition || '',
+    example: wordItem.example || '',
+    learned: !!wordItem.learned,
+    learned_at: wordItem.learned ? new Date().toISOString() : null,
+    created_at: new Date().toISOString(),
+    review_count: 0
+  };
+  const updated = [newItem, ...list];
+  await setStorageItem(STORAGE_KEYS.CUSTOM_WORDS, updated);
+  return newItem;
+}
+
+/**
+ * Shaxsiy so'z holatini yangilash (Yodlangan / Yodlanmagan)
+ */
+export async function setCustomWordLearnedStatus(wordId, isLearned) {
+  const list = await getCustomWords();
+  const updated = list.map(item => {
+    if (item.id === wordId) {
+      return {
+        ...item,
+        learned: isLearned,
+        learned_at: isLearned ? new Date().toISOString() : null,
+        review_count: (item.review_count || 0) + 1
+      };
+    }
+    return item;
+  });
+  await setStorageItem(STORAGE_KEYS.CUSTOM_WORDS, updated);
+  return updated;
+}
+
+/**
+ * Shaxsiy so'zni o'chirish
+ */
+export async function deleteCustomWord(wordId) {
+  const list = await getCustomWords();
+  const updated = list.filter(item => item.id !== wordId);
+  await setStorageItem(STORAGE_KEYS.CUSTOM_WORDS, updated);
+  return updated;
+}
+

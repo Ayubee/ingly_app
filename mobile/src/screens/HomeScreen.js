@@ -156,6 +156,29 @@ export default function HomeScreen({ onNavigate }) {
           </View>
         </View>
 
+        {/* Quick Access: Mening Lug'atim & Shaxsiy Kartochkalar */}
+        <TouchableOpacity
+          style={styles.myWordsBanner}
+          activeOpacity={0.85}
+          onPress={() => onNavigate && onNavigate('MyWords')}
+        >
+          <View style={styles.myWordsBannerIconBox}>
+            <Text style={{ fontSize: 22 }}>✍️</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={styles.myWordsBannerTitle}>Mening Lug'atim & Tarjimon</Text>
+              <View style={styles.myWordsNewTag}>
+                <Text style={styles.myWordsNewTagText}>YANGI</Text>
+              </View>
+            </View>
+            <Text style={styles.myWordsBannerSubtitle}>
+              Istalgan so'zni yozing, tarjima qiling va kartochkalarda yodlang!
+            </Text>
+          </View>
+          <Text style={styles.myWordsBannerArrow}>➔</Text>
+        </TouchableOpacity>
+
         {/* Security Reminder: 6 Month Password Expiry */}
         {isPasswordExpired && (
           <TouchableOpacity
@@ -761,5 +784,57 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: '#D97706',
+  },
+  myWordsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderLeftWidth: 4.5,
+    borderLeftColor: colors.primary.DEFAULT,
+    gap: 12,
+    shadowColor: colors.primary.DEFAULT,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+    marginTop: 14,
+  },
+  myWordsBannerIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: colors.primary.light,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  myWordsBannerTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  myWordsNewTag: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  myWordsNewTagText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#B45309',
+  },
+  myWordsBannerSubtitle: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  myWordsBannerArrow: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.primary.DEFAULT,
   },
 });

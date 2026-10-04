@@ -92,6 +92,24 @@ export default function LearnScreen({ onNavigate }) {
           </Text>
         </View>
 
+        {/* Shaxsiy Lug'atga tezkor o'tish */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => onNavigate && onNavigate('MyWords')}
+          style={styles.customWordsShortcut}
+        >
+          <View style={styles.customWordsShortcutIcon}>
+            <Text style={{ fontSize: 18 }}>✍️</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.customWordsShortcutTitle}>Shaxsiy Lug'atga So'z Qo'shish</Text>
+            <Text style={styles.customWordsShortcutSub}>
+              O'zingiz istagan so'zlarni tarjima qilib kartochkalarda yodlang
+            </Text>
+          </View>
+          <Text style={styles.customWordsShortcutArrow}>➔</Text>
+        </TouchableOpacity>
+
         {/* Book Tabs (Gorizontal aylantirish) */}
         <ScrollView
           horizontal
@@ -479,6 +497,48 @@ const styles = StyleSheet.create({
   },
   startBtnSmallText: {
     fontSize: 10,
+    fontWeight: '800',
+    color: colors.primary.DEFAULT,
+  },
+  customWordsShortcut: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderLeftWidth: 4.5,
+    borderLeftColor: colors.primary.DEFAULT,
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    gap: 10,
+    shadowColor: colors.primary.DEFAULT,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  customWordsShortcutIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.primary.light,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customWordsShortcutTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  customWordsShortcutSub: {
+    fontSize: 10.5,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  customWordsShortcutArrow: {
+    fontSize: 14,
     fontWeight: '800',
     color: colors.primary.DEFAULT,
   },

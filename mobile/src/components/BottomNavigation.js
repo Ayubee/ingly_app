@@ -6,9 +6,10 @@ export default function BottomNavigation({ currentTab, onSelectTab }) {
   const tabs = [
     { id: 'Home', label: 'Home', icon: '🏠' },
     { id: 'Learn', label: 'Learn', icon: '📖' },
-    { id: 'Flashcards', label: 'Flashcards', icon: '🎴' },
+    { id: 'MyWords', label: 'Lug\'atim', icon: '✍️' },
+    { id: 'Flashcards', label: 'Kartalar', icon: '🎴' },
     { id: 'Quiz', label: 'Quiz', icon: '🏆' },
-    { id: 'Profile', label: 'Profile', icon: '👤' },
+    { id: 'Profile', label: 'Profil', icon: '👤' },
   ];
 
   return (
@@ -61,18 +62,20 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 1,
   },
   tabIcon: {
-    fontSize: 22,
-    marginBottom: 3,
+    fontSize: 20,
+    marginBottom: 2,
   },
   activeIcon: {
-    transform: [{ scale: 1.15 }],
+    transform: [{ scale: 1.12 }],
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '700',
+    textAlign: 'center',
   },
   activeLabel: {
     color: colors.primary.DEFAULT,
