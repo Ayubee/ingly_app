@@ -2,10 +2,11 @@
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
-  <title>Ingly - 4000 Essential English Words | Taqdimot</title>
+  <title>Ingly - 4000 Essential English Words | Rasmiy Taqdimot</title>
   <style>
     /* =====================================================================
-       GLOBAL PRINT & PAGE SETUP (A4 PORTRAIT)
+       GLOBAL PRINT & PAGE SETUP (A4 PORTRAIT: 210mm x 297mm)
+       100% LIGHT THEME - APPLE / GOOGLE DESIGN STANDARD
        ===================================================================== */
     @page {
       size: A4 portrait;
@@ -19,13 +20,12 @@
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #080D1A;
+      background-color: #F8FAFC;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      color: #F8FAFC;
+      color: #0F172A;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* A4 Dimensions: 210mm x 297mm */
     .page {
       width: 210mm;
       height: 297mm;
@@ -34,37 +34,37 @@
       page-break-inside: avoid;
       position: relative;
       overflow: hidden;
-      background: radial-gradient(circle at 10% 10%, #151D36 0%, #080D1A 75%);
+      background: radial-gradient(circle at 10% 8%, #FFFFFF 0%, #F8FAFC 60%, #F1F5F9 100%);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 12mm 14mm 10mm 14mm;
+      padding: 10mm 13mm 8mm 13mm;
+      box-sizing: border-box;
     }
 
-    /* Ambient background glows */
+    /* Soft ambient lighting in light mode */
     .page::before {
       content: "";
       position: absolute;
-      top: -60mm;
-      right: -60mm;
-      width: 140mm;
-      height: 140mm;
-      background: radial-gradient(circle, rgba(91, 77, 255, 0.15) 0%, transparent 70%);
+      top: -40mm;
+      right: -40mm;
+      width: 110mm;
+      height: 110mm;
+      background: radial-gradient(circle, rgba(91, 77, 255, 0.06) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
     .page::after {
       content: "";
       position: absolute;
-      bottom: -60mm;
-      left: -60mm;
-      width: 140mm;
-      height: 140mm;
-      background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%);
+      bottom: -40mm;
+      left: -40mm;
+      width: 110mm;
+      height: 110mm;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
     }
-
     .page > * {
       position: relative;
       z-index: 1;
@@ -77,100 +77,98 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1.5px solid #E2E8F0;
+      margin-bottom: 6px;
     }
     .brand-mini {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     .brand-logo-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
+      width: 25px;
+      height: 25px;
+      border-radius: 6px;
       background: linear-gradient(135deg, #5B4DFF, #38BDF8);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 900;
-      font-size: 14px;
-      color: #fff;
-      box-shadow: 0 4px 10px rgba(91, 77, 255, 0.4);
+      font-size: 13px;
+      color: #FFFFFF;
+      box-shadow: 0 3px 8px rgba(91, 77, 255, 0.3);
     }
     .brand-name {
-      font-size: 15px;
-      font-weight: 800;
+      font-size: 14.5px;
+      font-weight: 900;
       letter-spacing: 0.5px;
-      background: linear-gradient(90deg, #FFFFFF, #94A3B8);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: #0F172A;
     }
     .brand-tag {
-      font-size: 9px;
+      font-size: 8px;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      color: #38BDF8;
-      font-weight: 700;
-      background: rgba(56, 189, 248, 0.1);
-      padding: 3px 7px;
+      letter-spacing: 0.8px;
+      color: #5B4DFF;
+      font-weight: 800;
+      background: #EEF0FF;
+      padding: 2px 6.5px;
       border-radius: 4px;
-      border: 1px solid rgba(56, 189, 248, 0.2);
+      border: 1px solid rgba(91, 77, 255, 0.2);
     }
     .page-meta-badge {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 10px;
-      color: #94A3B8;
-      font-weight: 600;
-      letter-spacing: 0.5px;
+      gap: 7px;
+      font-size: 9px;
+      color: #64748B;
+      font-weight: 700;
     }
     .page-num-pill {
-      background: rgba(91, 77, 255, 0.15);
-      color: #A5B4FC;
-      border: 1px solid rgba(91, 77, 255, 0.3);
-      padding: 3px 9px;
-      border-radius: 12px;
-      font-weight: 700;
+      background: #EEF0FF;
+      color: #5B4DFF;
+      border: 1px solid rgba(91, 77, 255, 0.25);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 800;
     }
 
     /* Page Titles */
     .title-section {
-      margin-bottom: 12px;
+      margin-bottom: 7px;
     }
     .section-eyebrow {
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 800;
-      color: #38BDF8;
+      color: #5B4DFF;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.2px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 3px;
+      gap: 5px;
+      margin-bottom: 2px;
     }
     .section-eyebrow::before {
       content: "";
-      width: 6px;
-      height: 6px;
-      background: #38BDF8;
+      width: 5px;
+      height: 5px;
+      background: #5B4DFF;
       border-radius: 50%;
       display: inline-block;
     }
     .page-main-title {
-      font-size: 19px;
-      font-weight: 800;
-      color: #FFFFFF;
-      margin: 0 0 3px 0;
+      font-size: 17px;
+      font-weight: 900;
+      color: #0F172A;
+      margin: 0 0 2px 0;
       letter-spacing: -0.3px;
     }
     .page-main-desc {
-      font-size: 10.5px;
-      color: #94A3B8;
+      font-size: 9.8px;
+      color: #64748B;
       margin: 0;
-      line-height: 1.4;
+      line-height: 1.35;
+      font-weight: 500;
     }
 
     /* Page Footer */
@@ -178,10 +176,11 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 8px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: 9px;
+      padding-top: 6px;
+      border-top: 1.5px solid #E2E8F0;
+      font-size: 8.5px;
       color: #64748B;
+      font-weight: 600;
     }
     .footer-left {
       display: flex;
@@ -189,27 +188,26 @@
       gap: 6px;
     }
     .footer-dot {
-      width: 4px;
-      height: 4px;
+      width: 5px;
+      height: 5px;
       background: #22C55E;
       border-radius: 50%;
-      box-shadow: 0 0 6px #22C55E;
     }
 
     /* =====================================================================
-       TWO-COLUMN LAYOUT FOR PAGES 2-6
+       TWO-COLUMN LAYOUT (PAGES 2-6)
        ===================================================================== */
     .content-grid {
       display: grid;
-      grid-template-columns: 88mm 1fr;
-      gap: 10mm;
+      grid-template-columns: 86mm 1fr;
+      gap: 8mm;
       align-items: center;
       flex: 1;
       min-height: 0;
     }
 
     /* =====================================================================
-       REALISTIC IPHONE 16 PRO MOCKUP (CSS VECTOR HIGH-DPI)
+       REALISTIC IPHONE 16 PRO TITANIUM MOCKUP (LIGHT THEME SCREEN)
        ===================================================================== */
     .phone-mockup-wrapper {
       display: flex;
@@ -217,156 +215,163 @@
       align-items: center;
     }
     .iphone-case {
-      width: 82mm;
-      height: 172mm;
-      background: #000000;
-      border-radius: 20mm;
+      width: 84mm;
+      height: 184mm;
+      background: #E5E7EB;
+      border-radius: 19mm;
       padding: 3mm;
       box-shadow:
-        0 0 0 1.2px #4B5563,
-        0 0 0 2.5px #1F2937,
-        0 20px 45px rgba(0, 0, 0, 0.8),
-        0 0 35px rgba(91, 77, 255, 0.25);
+        0 0 0 1.2px #9CA3AF,
+        0 0 0 2.5px #D1D5DB,
+        0 15px 35px rgba(15, 23, 42, 0.12),
+        0 3px 10px rgba(0, 0, 0, 0.05);
       position: relative;
       display: flex;
       flex-direction: column;
     }
-    /* Side buttons */
+    /* Titanium bezel side buttons */
     .iphone-case::before {
       content: "";
       position: absolute;
       top: 36mm;
-      left: -3.5px;
-      width: 3.5px;
+      left: -3px;
+      width: 3px;
       height: 18mm;
-      background: #374151;
+      background: #9CA3AF;
       border-radius: 2px 0 0 2px;
     }
     .iphone-case::after {
       content: "";
       position: absolute;
       top: 32mm;
-      right: -3.5px;
-      width: 3.5px;
+      right: -3px;
+      width: 3px;
       height: 14mm;
-      background: #374151;
+      background: #9CA3AF;
       border-radius: 0 2px 2px 0;
     }
 
     .iphone-screen {
       width: 100%;
       height: 100%;
-      background: #0F172A;
-      border-radius: 17mm;
+      background: #F8FAFC;
+      border-radius: 16mm;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       position: relative;
-      font-size: 8.5px;
-      color: #F8FAFC;
+      font-size: 8px;
+      color: #0F172A;
+      border: 1px solid #E2E8F0;
     }
 
-    /* Dynamic Island */
     .status-bar {
-      height: 9mm;
+      height: 8mm;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 0 5mm;
       font-weight: 700;
-      font-size: 7.5px;
+      font-size: 7px;
       z-index: 10;
-      color: #FFFFFF;
+      color: #0F172A;
+      flex-shrink: 0;
+      background: #F8FAFC;
     }
     .dynamic-island {
-      width: 23mm;
-      height: 5mm;
-      background: #000;
-      border-radius: 3mm;
+      width: 22mm;
+      height: 4.6mm;
+      background: #000000;
+      border-radius: 2.8mm;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      top: 1.8mm;
+      top: 1.7mm;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 2mm;
     }
     .island-camera {
-      width: 2.5mm;
-      height: 2.5mm;
+      width: 2.2mm;
+      height: 2.2mm;
       background: #111827;
       border-radius: 50%;
-      border: 0.5px solid #1F2937;
+      border: 0.5px solid #374151;
     }
 
     .screen-content {
       flex: 1;
-      padding: 2mm 3.5mm;
+      padding: 1.5mm 3mm;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 2.5mm;
+      justify-content: flex-start;
+      gap: 2.2mm;
+      background: #F8FAFC;
     }
 
-    /* Bottom Nav Bar */
+    /* Bottom Navigation Bar (Real React Native style) */
     .bottom-nav {
-      height: 10mm;
-      background: rgba(15, 23, 42, 0.95);
-      border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+      height: 9.8mm;
+      background: #FFFFFF;
+      border-top: 1px solid #E2E8F0;
       display: flex;
       justify-content: space-around;
       align-items: center;
       padding-bottom: 2mm;
+      flex-shrink: 0;
+      box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.02);
     }
     .nav-item {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 1px;
-      font-size: 6px;
+      font-size: 5.6px;
       color: #64748B;
-      font-weight: 600;
+      font-weight: 700;
     }
     .nav-item.active {
-      color: #38BDF8;
+      color: #5B4DFF;
+      font-weight: 800;
     }
-    .nav-item svg {
-      width: 3.5mm;
-      height: 3.5mm;
-      fill: currentColor;
+    .nav-item.active .nav-icon {
+      transform: scale(1.1);
+    }
+    .nav-icon {
+      font-size: 9px;
     }
     .home-indicator {
       width: 24mm;
       height: 1mm;
-      background: #94A3B8;
+      background: #CBD5E1;
       border-radius: 1mm;
       position: absolute;
-      bottom: 1.2mm;
+      bottom: 0.8mm;
       left: 50%;
       transform: translateX(-50%);
     }
 
     /* =====================================================================
-       FEATURE EXPLANATION CARDS (RIGHT COLUMN)
+       FEATURE EXPLANATION CARDS (RIGHT COLUMN - LIGHT THEME)
        ===================================================================== */
     .features-list {
       display: flex;
       flex-direction: column;
-      gap: 3mm;
+      gap: 2.5mm;
     }
     .feature-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 9px;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
       padding: 3mm 3.5mm;
-      backdrop-filter: blur(10px);
-      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     }
     .feature-card.highlight {
-      background: linear-gradient(135deg, rgba(91, 77, 255, 0.12), rgba(56, 189, 248, 0.06));
-      border: 1px solid rgba(91, 77, 255, 0.35);
-      box-shadow: 0 4px 20px rgba(91, 77, 255, 0.15);
+      background: #FFFFFF;
+      border: 1.5px solid #5B4DFF;
+      box-shadow: 0 4px 15px rgba(91, 77, 255, 0.08);
     }
     .card-top {
       display: flex;
@@ -375,8 +380,8 @@
       margin-bottom: 1.5mm;
     }
     .card-icon {
-      width: 6.5mm;
-      height: 6.5mm;
+      width: 6.2mm;
+      height: 6.2mm;
       border-radius: 6px;
       display: flex;
       align-items: center;
@@ -384,91 +389,93 @@
       font-size: 11px;
       flex-shrink: 0;
     }
-    .icon-indigo { background: rgba(91, 77, 255, 0.2); color: #818CF8; border: 1px solid rgba(91, 77, 255, 0.4); }
-    .icon-sky { background: rgba(56, 189, 248, 0.2); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.4); }
-    .icon-emerald { background: rgba(34, 197, 94, 0.2); color: #4ADE80; border: 1px solid rgba(34, 197, 94, 0.4); }
-    .icon-amber { background: rgba(245, 158, 11, 0.2); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.4); }
-    .icon-rose { background: rgba(244, 63, 94, 0.2); color: #FB7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+    .icon-indigo { background: #EEF0FF; color: #5B4DFF; border: 1px solid rgba(91, 77, 255, 0.3); }
+    .icon-sky { background: #E0F2FE; color: #0284C7; border: 1px solid rgba(2, 132, 199, 0.3); }
+    .icon-emerald { background: #DCFCE7; color: #16A34A; border: 1px solid rgba(22, 163, 74, 0.3); }
+    .icon-amber { background: #FEF3C7; color: #D97706; border: 1px solid rgba(217, 119, 6, 0.3); }
+    .icon-rose { background: #FEE2E2; color: #DC2626; border: 1px solid rgba(220, 38, 38, 0.3); }
 
     .card-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: #FFFFFF;
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #0F172A;
       margin: 0;
     }
     .card-badge {
       margin-left: auto;
-      font-size: 8px;
-      font-weight: 700;
-      padding: 1.5px 5px;
+      font-size: 7.5px;
+      font-weight: 800;
+      padding: 1.5px 5.5px;
       border-radius: 4px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .badge-green { background: rgba(34, 197, 94, 0.15); color: #4ADE80; border: 0.5px solid rgba(34, 197, 94, 0.3); }
-    .badge-blue { background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 0.5px solid rgba(56, 189, 248, 0.3); }
-    .badge-purple { background: rgba(91, 77, 255, 0.15); color: #A5B4FC; border: 0.5px solid rgba(91, 77, 255, 0.3); }
-    .badge-amber { background: rgba(245, 158, 11, 0.15); color: #FCD34D; border: 0.5px solid rgba(245, 158, 11, 0.3); }
+    .badge-green { background: #DCFCE7; color: #15803D; border: 0.5px solid #86EFAC; }
+    .badge-blue { background: #E0F2FE; color: #0369A1; border: 0.5px solid #7DD3FC; }
+    .badge-purple { background: #EEF0FF; color: #4338CA; border: 0.5px solid #C7D2FE; }
+    .badge-amber { background: #FEF3C7; color: #B45309; border: 0.5px solid #FDE68A; }
 
     .card-text {
-      font-size: 9.5px;
-      color: #94A3B8;
-      line-height: 1.45;
+      font-size: 9px;
+      color: #475569;
+      line-height: 1.42;
       margin: 0;
+      font-weight: 500;
     }
     .card-tags {
       display: flex;
-      gap: 4px;
-      margin-top: 2mm;
+      gap: 3.5px;
+      margin-top: 1.8mm;
       flex-wrap: wrap;
     }
     .tech-pill {
-      font-size: 7.5px;
-      background: rgba(255, 255, 255, 0.05);
-      color: #CBD5E1;
-      padding: 1.5px 5px;
-      border-radius: 3px;
-      border: 0.5px solid rgba(255, 255, 255, 0.1);
+      font-size: 7px;
+      background: #F1F5F9;
+      color: #334155;
+      padding: 1.5px 5.5px;
+      border-radius: 4px;
+      border: 0.5px solid #CBD5E1;
       font-family: monospace;
+      font-weight: 600;
     }
 
-    /* Key Spec Stat Box */
     .spec-box {
       margin-top: 1mm;
-      background: rgba(15, 23, 42, 0.6);
-      border-radius: 7px;
-      padding: 2.5mm;
+      background: #FFFFFF;
+      border-radius: 8px;
+      padding: 2.2mm;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 2mm;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
     }
     .spec-item {
       text-align: center;
     }
     .spec-val {
       font-size: 13px;
-      font-weight: 800;
-      color: #38BDF8;
+      font-weight: 900;
+      color: #5B4DFF;
       letter-spacing: -0.3px;
     }
     .spec-lbl {
-      font-size: 7.5px;
+      font-size: 7px;
       color: #64748B;
       text-transform: uppercase;
-      font-weight: 600;
+      font-weight: 700;
       margin-top: 1px;
     }
 
     /* =====================================================================
-       PAGE 1: COVER SPECIFICS
+       PAGE 1: COVER SPECIFICS (LIGHT & ELEGANT)
        ===================================================================== */
     .cover-container {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       height: 100%;
-      padding: 5mm 0;
+      padding: 2mm 0;
     }
     .cover-header {
       display: flex;
@@ -476,1068 +483,947 @@
       align-items: center;
     }
     .cover-badge-top {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 800;
-      color: #38BDF8;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 4px 12px;
+      color: #5B4DFF;
+      background: #EEF0FF;
+      border: 1px solid rgba(91, 77, 255, 0.25);
+      padding: 3.5px 12px;
       border-radius: 20px;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       text-transform: uppercase;
-    }
-    .cover-version {
-      font-size: 10px;
-      color: #94A3B8;
-      font-weight: 600;
     }
     .cover-hero {
       text-align: center;
-      margin-top: 5mm;
+      margin-top: 1mm;
     }
     .logo-hero-wrapper {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 32mm;
-      height: 32mm;
-      border-radius: 8mm;
+      width: 26mm;
+      height: 26mm;
+      border-radius: 7mm;
       background: linear-gradient(135deg, #5B4DFF 0%, #38BDF8 100%);
-      box-shadow: 0 15px 40px rgba(91, 77, 255, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-      margin-bottom: 5mm;
+      box-shadow: 0 12px 30px rgba(91, 77, 255, 0.35);
+      margin-bottom: 3mm;
       position: relative;
     }
     .logo-hero-icon {
-      font-size: 18mm;
+      font-size: 14mm;
       line-height: 1;
     }
     .cover-title {
-      font-size: 40px;
+      font-size: 34px;
       font-weight: 900;
-      letter-spacing: -1.5px;
-      margin: 0 0 3mm 0;
-      background: linear-gradient(135deg, #FFFFFF 30%, #38BDF8 80%, #5B4DFF 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      letter-spacing: -1.2px;
+      margin: 0 0 2mm 0;
+      color: #0F172A;
       line-height: 1.1;
     }
+    .cover-title span {
+      background: linear-gradient(135deg, #5B4DFF, #0284C7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
     .cover-subtitle {
-      font-size: 14px;
-      color: #CBD5E1;
-      max-width: 140mm;
-      margin: 0 auto 3mm auto;
-      line-height: 1.5;
+      font-size: 12.8px;
+      color: #475569;
+      max-width: 145mm;
+      margin: 0 auto 2.5mm auto;
+      line-height: 1.45;
       font-weight: 500;
     }
     .cover-slogan {
-      font-size: 12px;
-      color: #F59E0B;
-      font-weight: 700;
+      font-size: 11px;
+      color: #D97706;
+      font-weight: 800;
       letter-spacing: 0.5px;
-      margin-bottom: 6mm;
+      margin-bottom: 3.5mm;
     }
 
-    /* Cover Visual: Double Mockup Showcase */
     .cover-mockups-row {
       display: flex;
       justify-content: center;
-      gap: 7mm;
+      gap: 6mm;
       align-items: center;
-      margin-bottom: 6mm;
+      margin-bottom: 3.5mm;
     }
     .cover-mockup-mini {
-      width: 48mm;
-      height: 98mm;
-      background: #000;
+      width: 52mm;
+      height: 106mm;
+      background: #E5E7EB;
       border-radius: 12mm;
-      padding: 2mm;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 25px rgba(91, 77, 255, 0.3);
-      border: 1px solid #374151;
+      padding: 2.2mm;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12), 0 0 0 1px #CBD5E1;
       display: flex;
       flex-direction: column;
     }
     .cover-mockup-screen {
       width: 100%;
       height: 100%;
-      background: #0F172A;
+      background: #F8FAFC;
       border-radius: 10mm;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      padding: 2.5mm;
+      justify-content: space-between;
+      padding: 2.2mm;
       position: relative;
+      border: 1px solid #E2E8F0;
+      font-size: 7px;
     }
 
-    /* Feature Pills Grid on Cover */
     .cover-pills-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 3mm;
-      margin-bottom: 5mm;
+      gap: 2.5mm;
+      margin-bottom: 3mm;
     }
     .cover-pill {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 8px;
-      padding: 2.5mm;
+      padding: 2.2mm 2mm;
       text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
     }
     .cover-pill-icon {
-      font-size: 13px;
-      margin-bottom: 1mm;
+      font-size: 12px;
+      margin-bottom: 0.8mm;
     }
     .cover-pill-title {
-      font-size: 10px;
+      font-size: 9.2px;
       font-weight: 800;
-      color: #FFFFFF;
+      color: #0F172A;
     }
     .cover-pill-desc {
-      font-size: 7.5px;
-      color: #94A3B8;
+      font-size: 7px;
+      color: #64748B;
       margin-top: 1px;
+      font-weight: 500;
     }
 
     .cover-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: 3.5mm;
-      font-size: 9.5px;
+      border-top: 1.5px solid #E2E8F0;
+      padding-top: 2.8mm;
+      font-size: 8.8px;
       color: #64748B;
+      font-weight: 600;
     }
     .cover-footer strong {
-      color: #E2E8F0;
+      color: #0F172A;
     }
 
     /* =====================================================================
-       SPECIFIC SCREEN ELEMENTS (PAGE 2: HOME)
+       SPECIFIC SCREEN ELEMENTS (PAGE 2: HOME SCREEN)
        ===================================================================== */
-    .home-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2.5mm;
+    .home-app-title-box {
+      text-align: center;
+      padding: 0.8mm 0;
     }
-    .home-user-info {
+    .home-app-title {
+      font-size: 7.2px;
+      font-weight: 900;
+      color: #0F172A;
+      letter-spacing: 0.8px;
+    }
+    .user-stats-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 3mm;
+      padding: 2mm 2.2mm;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+    .profile-left-col {
+      width: 34%;
+      text-align: center;
+    }
+    .avatar-circle-box {
+      width: 9mm;
+      height: 9mm;
+      border-radius: 50%;
+      background: #EEF0FF;
+      border: 1.8px solid #5B4DFF;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      margin-bottom: 0.8mm;
+    }
+    .user-name-text {
+      font-size: 7.8px;
+      font-weight: 800;
+      color: #0F172A;
+      line-height: 1.1;
+    }
+    .welcome-sub-text {
+      font-size: 5.6px;
+      color: #64748B;
+      margin-top: 0.5px;
+    }
+    .vertical-sep {
+      width: 1px;
+      height: 14mm;
+      background: #E2E8F0;
+      margin: 0 2mm;
+    }
+    .stats-right-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.8mm;
+    }
+    .streak-mini-row {
       display: flex;
       align-items: center;
       gap: 1.5mm;
     }
-    .home-avatar {
+    .streak-mini-title {
+      font-size: 6.8px;
+      font-weight: 700;
+      color: #334155;
+    }
+    .keep-badge {
+      background: #FEF3C7;
+      color: #D97706;
+      font-size: 5.2px;
+      font-weight: 800;
+      padding: 0.4px 1.4mm;
+      border-radius: 1mm;
+    }
+    .streak-count-text {
+      font-size: 8px;
+      font-weight: 900;
+      color: #0F172A;
+    }
+    .goal-mini-row {
+      display: flex;
+      align-items: center;
+      gap: 1.5mm;
+    }
+    .goal-circle-svg {
       width: 7mm;
       height: 7mm;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #5B4DFF, #38BDF8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-    }
-    .home-greeting {
-      font-size: 8px;
-      font-weight: 800;
-      color: #FFFFFF;
-      line-height: 1.1;
-    }
-    .home-sub {
-      font-size: 6px;
-      color: #94A3B8;
-    }
-    .streak-badge {
-      display: flex;
-      align-items: center;
-      gap: 1mm;
-      background: rgba(249, 115, 22, 0.15);
-      border: 0.5px solid rgba(249, 115, 22, 0.4);
-      padding: 1mm 2mm;
-      border-radius: 3mm;
-      color: #FB923C;
-      font-weight: 800;
-      font-size: 7px;
-    }
-
-    /* Circular Goal Widget */
-    .goal-widget {
-      background: linear-gradient(135deg, rgba(91, 77, 255, 0.18), rgba(56, 189, 248, 0.08));
-      border: 1px solid rgba(91, 77, 255, 0.35);
-      border-radius: 3mm;
-      padding: 2.5mm 3mm;
-      display: flex;
-      align-items: center;
-      gap: 3mm;
-    }
-    .goal-circle {
-      position: relative;
-      width: 13mm;
-      height: 13mm;
       flex-shrink: 0;
     }
-    .goal-circle svg {
+    .goal-circle-svg svg {
       width: 100%;
       height: 100%;
       transform: rotate(-90deg);
     }
-    .goal-circle-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 6.5px;
-      font-weight: 900;
-      color: #FFFFFF;
-      text-align: center;
-    }
-    .goal-info h4 {
-      margin: 0 0 1px 0;
-      font-size: 8px;
-      font-weight: 800;
-      color: #FFFFFF;
-    }
-    .goal-info p {
+    .goal-text-box h5 {
       margin: 0;
-      font-size: 6.5px;
-      color: #94A3B8;
-      line-height: 1.2;
+      font-size: 6.8px;
+      font-weight: 800;
+      color: #334155;
     }
-    .goal-progress-pill {
-      display: inline-block;
-      margin-top: 1mm;
-      background: rgba(34, 197, 94, 0.2);
-      color: #4ADE80;
-      font-size: 6px;
+    .goal-text-box p {
+      margin: 0;
+      font-size: 5.6px;
+      color: #5B4DFF;
       font-weight: 700;
-      padding: 0.5px 2mm;
-      border-radius: 2mm;
     }
 
-    /* 6 Books Grid in Mobile */
-    .books-section-title {
-      font-size: 7.5px;
+    .books-grid-title {
+      font-size: 7px;
       font-weight: 800;
-      color: #CBD5E1;
-      margin-top: 1mm;
+      color: #475569;
       display: flex;
       justify-content: space-between;
+      margin-top: 0.5mm;
     }
-    .books-grid {
+    .home-books-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1.5mm;
     }
-    .book-card-item {
-      background: rgba(255, 255, 255, 0.04);
-      border: 0.5px solid rgba(255, 255, 255, 0.08);
+    .home-book-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 2.5mm;
       padding: 1.8mm 2mm;
-      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 18mm;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
     }
-    .book-card-item.active-book {
-      border: 0.8px solid #5B4DFF;
-      background: rgba(91, 77, 255, 0.12);
+    .home-book-card.active {
+      border: 1.5px solid #5B4DFF;
+      box-shadow: 0 2px 6px rgba(91, 77, 255, 0.12);
     }
-    .book-card-header {
+    .book-card-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1mm;
     }
-    .book-badge {
-      font-size: 5.5px;
+    .book-card-title {
+      font-size: 7.2px;
       font-weight: 800;
-      padding: 0.5px 1.5mm;
-      border-radius: 1.5mm;
+      color: #0F172A;
+      line-height: 1.1;
+    }
+    .book-card-level {
+      font-size: 5.6px;
+      color: #64748B;
+      margin-top: 0.5px;
+    }
+    .book-card-badge {
+      font-size: 5px;
+      font-weight: 800;
+      padding: 0.4px 1.4mm;
+      border-radius: 1mm;
       text-transform: uppercase;
     }
-    .b-free { background: rgba(34, 197, 94, 0.2); color: #4ADE80; }
-    .b-vip { background: rgba(245, 158, 11, 0.2); color: #FBBF24; }
-    .book-name {
-      font-size: 7.5px;
-      font-weight: 800;
-      color: #FFFFFF;
-      margin: 0;
-    }
-    .book-level {
-      font-size: 6px;
-      color: #94A3B8;
-      margin: 0.5px 0 1.2px 0;
-    }
-    .book-bar {
+    .badge-bepul { background: #DCFCE7; color: #16A34A; }
+    .badge-vip { background: #FEF3C7; color: #D97706; }
+    .book-card-bar {
       height: 1mm;
-      background: rgba(255, 255, 255, 0.1);
+      background: #E2E8F0;
       border-radius: 0.5mm;
       overflow: hidden;
+      margin-top: 1mm;
     }
-    .book-bar-fill {
+    .book-card-fill {
       height: 100%;
-      background: linear-gradient(90deg, #5B4DFF, #38BDF8);
+      background: #5B4DFF;
       border-radius: 0.5mm;
     }
 
-    /* =====================================================================
-       PAGE 3: LEARN SCREEN SPECIFICS
-       ===================================================================== */
-    .learn-header {
+    .home-recent-banner {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 2mm;
+      padding: 1.6mm 2.2mm;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(255, 255, 255, 0.04);
-      padding: 1.5mm 2.5mm;
+    }
+
+    /* =====================================================================
+       PAGE 3: LEARN SCREEN (DARSLAR VA UNITLAR)
+       ===================================================================== */
+    .learn-top-title-box {
+      text-align: center;
+      padding: 0.5mm 0;
+    }
+    .learn-top-title {
+      font-size: 9px;
+      font-weight: 900;
+      color: #0F172A;
+      margin: 0;
+    }
+    .learn-top-sub {
+      font-size: 5.8px;
+      color: #64748B;
+      margin: 0.5px 0 0 0;
+    }
+    .learn-tabs-scroll {
+      display: flex;
+      gap: 1.2mm;
+      overflow: hidden;
+      padding: 0.5mm 0;
+    }
+    .learn-tab-btn {
+      flex: 1;
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 2mm;
+      padding: 1.4mm 1mm;
+      text-align: center;
     }
-    .learn-title-sm {
-      font-size: 7.5px;
+    .learn-tab-btn.active {
+      border: 1.5px solid #5B4DFF;
+      background: #EEF0FF;
+    }
+    .learn-tab-name {
+      font-size: 6.8px;
       font-weight: 800;
-      color: #FFFFFF;
+      color: #0F172A;
     }
-    .learn-count-pill {
-      font-size: 6px;
-      background: rgba(56, 189, 248, 0.2);
-      color: #38BDF8;
-      padding: 0.5px 1.5mm;
-      border-radius: 1mm;
+    .learn-tab-btn.active .learn-tab-name {
+      color: #5B4DFF;
+    }
+    .learn-tab-progress {
+      font-size: 5.2px;
+      color: #64748B;
+      margin-top: 0.4px;
+      font-weight: 600;
+    }
+    .learn-tab-btn.active .learn-tab-progress {
+      color: #5B4DFF;
       font-weight: 700;
     }
-    .word-main-card {
-      background: linear-gradient(180deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95));
-      border: 1px solid rgba(91, 77, 255, 0.3);
+
+    .learn-units-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5mm;
+    }
+    .unit-card-item {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 2.2mm;
+      padding: 1.8mm 1.5mm;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 17mm;
+    }
+    .unit-card-item.current {
+      border: 1.5px solid #5B4DFF;
+      box-shadow: 0 2px 6px rgba(91, 77, 255, 0.15);
+      background: #FFFFFF;
+    }
+    .unit-card-item.completed {
+      background: #FAFCFA;
+      border-color: #DCFCE7;
+    }
+    .unit-card-item.locked {
+      background: #F1F5F9;
+      opacity: 0.75;
+    }
+    .unit-num-text {
+      font-size: 7.2px;
+      font-weight: 800;
+      color: #0F172A;
+    }
+    .unit-sub-badge {
+      font-size: 5.2px;
+      padding: 0.4px 1.2mm;
+      border-radius: 1mm;
+      font-weight: 700;
+      margin-top: 0.8mm;
+      display: inline-block;
+    }
+    .badge-unit-done { background: #DCFCE7; color: #16A34A; }
+    .badge-unit-active { background: #5B4DFF; color: #FFFFFF; }
+    .badge-unit-locked { background: #E2E8F0; color: #64748B; }
+
+    /* =====================================================================
+       PAGE 4: FLASHCARDS & CINEMA CLIPS
+       ===================================================================== */
+    .flashcard-main-box {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 3mm;
       padding: 2.5mm 3mm;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
     }
-    .word-head-flex {
+    .fc-header-row {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
+      margin-bottom: 0.8mm;
     }
-    .word-term {
-      font-size: 14px;
+    .fc-word {
+      font-size: 15px;
       font-weight: 900;
-      color: #FFFFFF;
-      letter-spacing: -0.3px;
+      color: #0F172A;
     }
-    .word-pos {
-      font-size: 6px;
-      background: rgba(91, 77, 255, 0.25);
-      color: #A5B4FC;
-      padding: 0.5px 1.5mm;
-      border-radius: 1mm;
+    .fc-speaker-btn {
+      width: 6mm;
+      height: 6mm;
+      border-radius: 50%;
+      background: #EEF0FF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7px;
+    }
+    .fc-phonetic-row {
+      display: flex;
+      align-items: center;
+      gap: 1.5mm;
+      margin-bottom: 1.5mm;
+    }
+    .fc-ipa {
+      font-size: 7.8px;
+      color: #64748B;
+      font-family: monospace;
+    }
+    .fc-pos-pill {
+      background: #F1F5F9;
+      color: #475569;
+      font-size: 5.5px;
       font-weight: 700;
+      padding: 0.4px 1.4mm;
+      border-radius: 1mm;
       text-transform: uppercase;
     }
-    .word-ipa {
-      font-size: 7.5px;
-      color: #38BDF8;
-      font-family: "Lucida Sans", "Lucida Grande", monospace;
-      margin: 0.5mm 0 1.5mm 0;
+    .fc-trans-box {
+      background: #DCFCE7;
+      border-left: 2px solid #22C55E;
+      padding: 1.2mm 2mm;
+      border-radius: 0 1.5mm 1.5mm 0;
+      margin-bottom: 1.5mm;
     }
-    .audio-btn {
+    .fc-trans-uz {
+      font-size: 8.5px;
+      font-weight: 800;
+      color: #15803D;
+    }
+    .fc-def-text {
+      font-size: 6.5px;
+      color: #334155;
+      line-height: 1.35;
+      margin-bottom: 1.5mm;
+    }
+    .fc-example-box {
+      background: #F8FAFC;
+      border: 1px dashed #CBD5E1;
+      border-radius: 1.5mm;
+      padding: 1.2mm 2mm;
+      font-size: 6.5px;
+      color: #334155;
+      margin-bottom: 2mm;
+    }
+    .fc-example-box strong {
+      color: #5B4DFF;
+      font-weight: 900;
+    }
+    .fc-movie-trigger-btn {
+      background: linear-gradient(135deg, #0F172A, #1E293B);
+      color: #FFFFFF;
+      border-radius: 2mm;
+      padding: 1.6mm 0;
+      text-align: center;
+      font-size: 6.8px;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 1.5mm;
-      background: linear-gradient(135deg, #5B4DFF, #4338CA);
-      color: #FFFFFF;
-      border-radius: 2mm;
-      padding: 1.2mm 0;
-      font-size: 6.5px;
-      font-weight: 700;
-      margin-bottom: 2mm;
-      box-shadow: 0 2px 8px rgba(91, 77, 255, 0.4);
-    }
-    .soundwave {
-      display: flex;
-      align-items: center;
-      gap: 0.5mm;
-      height: 2mm;
-    }
-    .sw-bar {
-      width: 0.4mm;
-      background: #FFFFFF;
-      border-radius: 0.2mm;
-    }
-    .translation-box {
-      background: rgba(34, 197, 94, 0.1);
-      border-left: 2px solid #22C55E;
-      padding: 1mm 2mm;
-      border-radius: 0 1.5mm 1.5mm 0;
-      margin-bottom: 2mm;
-    }
-    .trans-lbl {
-      font-size: 5.5px;
-      color: #4ADE80;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-    .trans-val {
-      font-size: 8.5px;
-      font-weight: 800;
-      color: #FFFFFF;
-    }
-    .def-block {
-      margin-bottom: 1.5mm;
-      font-size: 6.5px;
-      line-height: 1.35;
-    }
-    .def-en {
-      color: #E2E8F0;
-      font-weight: 600;
-    }
-    .def-uz {
-      color: #94A3B8;
-      font-style: italic;
-    }
-    .sr-buttons-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1mm;
-      margin-top: 2mm;
-    }
-    .sr-btn {
-      padding: 1.5mm 0;
-      border-radius: 1.5mm;
-      text-align: center;
-      font-size: 6px;
-      font-weight: 800;
-    }
-    .sr-hard { background: rgba(239, 68, 68, 0.2); color: #FCA5A5; border: 0.5px solid rgba(239, 68, 68, 0.4); }
-    .sr-review { background: rgba(14, 165, 233, 0.2); color: #7DD3FC; border: 0.5px solid rgba(14, 165, 233, 0.4); }
-    .sr-master { background: rgba(34, 197, 94, 0.25); color: #86EFAC; border: 0.5px solid rgba(34, 197, 94, 0.5); }
-
-    /* Next words queue */
-    .next-queue-title {
-      font-size: 6.5px;
-      font-weight: 700;
-      color: #64748B;
-      text-transform: uppercase;
-      margin-top: 1mm;
-    }
-    .word-mini-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(255, 255, 255, 0.03);
-      padding: 1mm 2mm;
-      border-radius: 1.5mm;
-      font-size: 6.5px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
     }
 
-    /* =====================================================================
-       PAGE 4: FLASHCARDS & CINEMA CLIPS SPECIFICS
-       ===================================================================== */
-    .flashcard-3d-box {
-      background: linear-gradient(135deg, #1E1B4B, #0F172A);
-      border: 1px solid rgba(91, 77, 255, 0.4);
-      border-radius: 3mm;
-      padding: 3mm;
-      text-align: center;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-      position: relative;
-    }
-    .flashcard-badge {
-      display: inline-block;
-      font-size: 5.5px;
-      color: #A5B4FC;
-      background: rgba(91, 77, 255, 0.25);
-      padding: 0.5px 2mm;
-      border-radius: 1mm;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-    .flash-word {
-      font-size: 15px;
-      font-weight: 900;
-      color: #FFFFFF;
-      margin: 1mm 0 0.5mm 0;
-    }
-    .flash-ipa {
-      font-size: 7px;
-      color: #38BDF8;
-      font-family: monospace;
-      margin-bottom: 1.5mm;
-    }
-    /* Cinema Modal Overlay (Inside Phone Mockup) */
-    .cinema-modal-overlay {
-      background: #030712;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      border-radius: 3mm;
+    /* Cinema Modal Overlay (Real App Movie Player) */
+    .movie-modal-card {
+      background: #0F172A;
+      border-radius: 2.5mm;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(56, 189, 248, 0.2);
+      border: 1px solid #334155;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
     }
-    .cinema-modal-header {
-      background: rgba(30, 41, 59, 0.9);
-      padding: 1.2mm 2.5mm;
+    .mm-header {
+      background: #1E293B;
+      padding: 1.2mm 2.2mm;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
-    }
-    .cinema-tag {
-      font-size: 6.5px;
+      font-size: 6.2px;
       font-weight: 800;
-      color: #F59E0B;
-      display: flex;
-      align-items: center;
-      gap: 1mm;
+      color: #F8FAFC;
     }
-    .cinema-close {
-      font-size: 7px;
-      color: #94A3B8;
-    }
-    .movie-player-frame {
-      height: 25mm;
-      background: radial-gradient(circle at center, #1E293B 0%, #020617 100%);
+    .mm-video-screen {
+      height: 28mm;
+      background: radial-gradient(circle at center, #334155 0%, #0F172A 100%);
       position: relative;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      padding: 2mm;
-      overflow: hidden;
+      padding: 1.8mm;
     }
-    .movie-player-frame::before {
-      content: "🎬 HARRY POTTER & THE PRISONER OF AZKABAN";
+    .mm-play-circle {
       position: absolute;
-      top: 1.5mm;
-      left: 2mm;
-      font-size: 5px;
-      color: rgba(255, 255, 255, 0.6);
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-    .movie-center-play {
-      position: absolute;
-      top: 45%;
+      top: 40%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 8mm;
       height: 8mm;
-      background: rgba(91, 77, 255, 0.85);
+      background: #5B4DFF;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      color: #FFF;
       font-size: 8px;
-      color: #fff;
-      box-shadow: 0 0 12px rgba(91, 77, 255, 0.7);
+      box-shadow: 0 0 10px rgba(91, 77, 255, 0.6);
     }
-    .movie-subtitles-box {
-      background: rgba(0, 0, 0, 0.75);
-      border-radius: 1.5mm;
-      padding: 1mm 2mm;
+    .mm-subtitles-card {
+      background: rgba(0, 0, 0, 0.85);
+      border-radius: 1.2mm;
+      padding: 1mm 1.6mm;
       text-align: center;
-      backdrop-filter: blur(4px);
     }
-    .movie-sub-en {
+    .mm-sub-en {
       font-size: 6.5px;
       color: #FFFFFF;
       font-weight: 700;
-      line-height: 1.2;
     }
-    .movie-sub-en span {
+    .mm-sub-en span {
       color: #38BDF8;
-      background: rgba(56, 189, 248, 0.25);
-      padding: 0.2mm 1mm;
-      border-radius: 0.5mm;
+      font-weight: 900;
     }
-    .movie-sub-uz {
-      font-size: 5.5px;
+    .mm-sub-uz {
+      font-size: 5.6px;
       color: #FDE047;
-      margin-top: 0.5mm;
-    }
-    .cinema-controls {
-      padding: 1.5mm 2.5mm;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #0B1120;
-    }
-    .cinema-ctrl-btn {
-      font-size: 6px;
-      font-weight: 700;
-      color: #94A3B8;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 0.8mm 1.8mm;
-      border-radius: 1mm;
-      border: 0.5px solid rgba(255, 255, 255, 0.1);
-    }
-    .cinema-ctrl-btn.active {
-      color: #38BDF8;
-      border-color: #38BDF8;
+      margin-top: 0.4px;
     }
 
+    /* SRS Buttons row (3 colors) */
+    .srs-buttons-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5mm;
+    }
+    .srs-btn-item {
+      padding: 1.8mm 0;
+      border-radius: 2mm;
+      text-align: center;
+      font-size: 6.5px;
+      font-weight: 800;
+      border: 1px solid transparent;
+    }
+    .srs-btn-hard { background: #FEE2E2; color: #DC2626; border-color: #FCA5A5; }
+    .srs-btn-review { background: #E0F2FE; color: #0284C7; border-color: #BAE6FD; }
+    .srs-btn-master { background: #DCFCE7; color: #16A34A; border-color: #86EFAC; }
+
     /* =====================================================================
-       PAGE 5: QUIZ SCREEN SPECIFICS
+       PAGE 5: QUIZ SCREEN (TEST VA IMTIHON)
        ===================================================================== */
-    .quiz-top-info {
+    .quiz-unit-badge-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-    }
-    .quiz-timer-pill {
-      display: flex;
-      align-items: center;
-      gap: 1mm;
-      background: rgba(245, 158, 11, 0.15);
-      color: #FBBF24;
-      border: 0.5px solid rgba(245, 158, 11, 0.4);
-      padding: 0.8mm 2mm;
-      border-radius: 3mm;
-      font-size: 6.5px;
-      font-weight: 800;
-    }
-    .quiz-combo-pill {
-      background: rgba(249, 115, 22, 0.2);
-      color: #FB923C;
-      font-size: 6.5px;
-      font-weight: 800;
-      padding: 0.8mm 2mm;
-      border-radius: 3mm;
-      border: 0.5px solid rgba(249, 115, 22, 0.4);
-    }
-    .quiz-question-card {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
-      border: 1px solid rgba(91, 77, 255, 0.3);
-      border-radius: 3mm;
-      padding: 2.5mm 3mm;
-      text-align: center;
-    }
-    .q-number {
-      font-size: 6px;
-      color: #94A3B8;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-    .q-text {
-      font-size: 11px;
-      font-weight: 800;
-      color: #FFFFFF;
-      margin: 1mm 0 1.5mm 0;
-    }
-    .q-sub {
-      font-size: 6.5px;
-      color: #38BDF8;
-      font-style: italic;
-    }
-    .quiz-options-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1.2mm;
-    }
-    .quiz-opt {
-      background: rgba(255, 255, 255, 0.04);
-      border: 0.5px solid rgba(255, 255, 255, 0.1);
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      padding: 1.2mm 2.2mm;
       border-radius: 2mm;
-      padding: 1.6mm 2.5mm;
+    }
+    .quiz-q-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
+      border-radius: 3mm;
+      padding: 3mm 2.5mm;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+    .quiz-q-word {
+      font-size: 16px;
+      font-weight: 900;
+      color: #5B4DFF;
+      margin: 1mm 0 0.5mm 0;
+    }
+    .quiz-opt-card {
+      background: #FFFFFF;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 2.2mm;
+      padding: 2mm 2.5mm;
       display: flex;
       align-items: center;
       gap: 2mm;
-      font-size: 6.5px;
+      font-size: 7px;
+      font-weight: 700;
+      color: #334155;
     }
-    .quiz-opt.correct {
-      background: rgba(34, 197, 94, 0.2);
-      border: 1px solid #22C55E;
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+    .quiz-opt-card.correct {
+      background: #DCFCE7;
+      border-color: #22C55E;
+      color: #15803D;
     }
-    .opt-letter {
-      width: 3.5mm;
-      height: 3.5mm;
-      border-radius: 1mm;
-      background: rgba(255, 255, 255, 0.1);
+    .quiz-opt-letter {
+      width: 4.2mm;
+      height: 4.2mm;
+      border-radius: 1.2mm;
+      background: #F1F5F9;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
-      font-size: 6px;
-      color: #FFFFFF;
+      font-size: 6.5px;
+      font-weight: 900;
+      color: #475569;
     }
-    .quiz-opt.correct .opt-letter {
+    .quiz-opt-card.correct .quiz-opt-letter {
       background: #22C55E;
       color: #FFFFFF;
     }
-    .opt-text {
-      font-weight: 700;
-      color: #E2E8F0;
-    }
-    .quiz-feedback-toast {
-      background: rgba(34, 197, 94, 0.15);
-      border: 0.5px solid rgba(34, 197, 94, 0.4);
-      border-radius: 1.5mm;
-      padding: 1.2mm 2mm;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 6.5px;
-      color: #86EFAC;
-      font-weight: 700;
+    .quiz-next-btn {
+      background: #5B4DFF;
+      color: #FFFFFF;
+      border-radius: 2mm;
+      padding: 1.8mm 0;
+      text-align: center;
+      font-size: 7px;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(91, 77, 255, 0.3);
     }
 
     /* =====================================================================
-       PAGE 6: PROFILE & SECURITY SCREEN SPECIFICS
+       PAGE 6: PROFILE SCREEN & 6-MONTH PASSWORD MODAL
        ===================================================================== */
-    .profile-card-top {
-      background: linear-gradient(135deg, rgba(91, 77, 255, 0.15), rgba(15, 23, 42, 0.8));
-      border: 1px solid rgba(91, 77, 255, 0.3);
+    .profile-main-card {
+      background: #FFFFFF;
+      border: 1px solid #E2E8F0;
       border-radius: 3mm;
-      padding: 2.5mm;
-      display: flex;
-      align-items: center;
-      gap: 2.5mm;
+      padding: 2.2mm;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     }
-    .profile-avatar-big {
-      width: 9mm;
-      height: 9mm;
+    .p-avatar-circle {
+      width: 10mm;
+      height: 10mm;
       border-radius: 50%;
-      background: linear-gradient(135deg, #5B4DFF, #38BDF8);
-      display: flex;
+      background: #EEF0FF;
+      border: 2px solid #5B4DFF;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       font-size: 13px;
-      border: 1.5px solid #FFFFFF;
-      box-shadow: 0 2px 10px rgba(91, 77, 255, 0.5);
+      margin-bottom: 1mm;
     }
-    .p-name {
+    .p-title-name {
       font-size: 8.5px;
-      font-weight: 800;
-      color: #FFFFFF;
+      font-weight: 900;
+      color: #0F172A;
       margin: 0;
     }
-    .p-handle {
-      font-size: 6.5px;
-      color: #94A3B8;
-      margin: 0.5px 0 1mm 0;
+    .p-sub-handle {
+      font-size: 6px;
+      color: #64748B;
+      margin: 0.5px 0 1.2mm 0;
     }
-    .p-badge {
-      display: inline-block;
-      font-size: 5.5px;
-      background: rgba(245, 158, 11, 0.2);
-      color: #FBBF24;
-      padding: 0.5px 1.5mm;
-      border-radius: 1mm;
-      font-weight: 800;
-    }
-
-    /* 6 Month Security Warning Banner */
-    .security-banner {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.1));
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      border-radius: 2.5mm;
-      padding: 2mm 2.5mm;
-      display: flex;
-      gap: 2mm;
-      align-items: flex-start;
-    }
-    .sec-icon {
-      font-size: 11px;
-      line-height: 1;
-    }
-    .sec-title {
-      font-size: 7px;
-      font-weight: 800;
-      color: #F87171;
-      margin: 0 0 0.5mm 0;
-    }
-    .sec-desc {
-      font-size: 5.8px;
-      color: #CBD5E1;
-      margin: 0;
-      line-height: 1.25;
-    }
-
-    /* Change Password Modal Inside Screen */
-    .pwd-modal-box {
-      background: #090E1A;
-      border: 1px solid rgba(91, 77, 255, 0.4);
-      border-radius: 2.5mm;
-      padding: 2.2mm 2.8mm;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-    }
-    .pwd-modal-title {
-      font-size: 7px;
-      font-weight: 800;
-      color: #FFFFFF;
-      margin: 0 0 1.5mm 0;
-      display: flex;
-      align-items: center;
+    .p-stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 1mm;
+      margin-top: 1.5mm;
     }
-    .pwd-input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 1.2mm;
-      margin-bottom: 2mm;
-    }
-    .pwd-input-fake {
-      background: rgba(255, 255, 255, 0.05);
-      border: 0.5px solid rgba(255, 255, 255, 0.15);
+    .p-stat-box {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
       border-radius: 1.5mm;
-      padding: 1.2mm 2mm;
+      padding: 1.2mm 0.5mm;
+      text-align: center;
+    }
+    .p-stat-num {
+      font-size: 7.5px;
+      font-weight: 900;
+      color: #0F172A;
+    }
+    .p-stat-label {
+      font-size: 5px;
+      color: #64748B;
+      font-weight: 600;
+    }
+
+    /* 6-Month Security Banner */
+    .p-security-alert-box {
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      border-radius: 2mm;
+      padding: 1.6mm 2mm;
+      display: flex;
+      gap: 1.8mm;
+      align-items: center;
+    }
+
+    /* Change Password Modal (Open State inside screen) */
+    .p-password-modal-card {
+      background: #FFFFFF;
+      border: 1.5px solid #5B4DFF;
+      border-radius: 2.8mm;
+      padding: 2.4mm 2.8mm;
+      box-shadow: 0 4px 15px rgba(91, 77, 255, 0.12);
+    }
+    .p-modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 6px;
-      color: #94A3B8;
+      margin-bottom: 1.5mm;
     }
-    .pwd-dots {
-      letter-spacing: 1px;
-      color: #E2E8F0;
-      font-weight: 800;
+    .p-input-field {
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      border-radius: 1.6mm;
+      padding: 1.4mm 2mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 6.2px;
+      color: #64748B;
+      margin-bottom: 1.2mm;
     }
-    .pwd-btn-save {
-      background: linear-gradient(135deg, #5B4DFF, #38BDF8);
+    .p-save-btn {
+      background: #5B4DFF;
       color: #FFFFFF;
+      border-radius: 1.8mm;
+      padding: 1.6mm 0;
       text-align: center;
-      padding: 1.4mm 0;
-      border-radius: 1.5mm;
-      font-size: 6.5px;
+      font-size: 6.8px;
       font-weight: 800;
-      box-shadow: 0 2px 8px rgba(91, 77, 255, 0.4);
+      box-shadow: 0 2px 6px rgba(91, 77, 255, 0.3);
     }
 
     /* =====================================================================
-       PAGE 7: DESKTOP ADMIN PANEL SPECIFICS
+       PAGE 7: WEB ADMIN PANEL (LIGHT BROWSER MOCKUP)
        ===================================================================== */
-    .admin-desktop-wrapper {
-      background: #020617;
-      border-radius: 4mm;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(91, 77, 255, 0.2);
+    .admin-browser-window {
+      background: #FFFFFF;
+      border-radius: 10px;
+      border: 1px solid #CBD5E1;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      height: 122mm;
+      height: 145mm;
     }
-    .browser-titlebar {
-      height: 7mm;
-      background: #0F172A;
+    .admin-browser-bar {
+      height: 7.5mm;
+      background: #F1F5F9;
       display: flex;
       align-items: center;
       padding: 0 3mm;
       gap: 2mm;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid #E2E8F0;
+      flex-shrink: 0;
     }
-    .window-dots {
-      display: flex;
-      gap: 1.5mm;
-    }
-    .dot {
-      width: 2.2mm;
-      height: 2.2mm;
+    .admin-dot {
+      width: 2.4mm;
+      height: 2.4mm;
       border-radius: 50%;
     }
-    .dot-red { background: #EF4444; }
-    .dot-yellow { background: #F59E0B; }
-    .dot-green { background: #22C55E; }
-    .browser-url-bar {
+    .admin-dot-red { background: #EF4444; }
+    .admin-dot-yellow { background: #F59E0B; }
+    .admin-dot-green { background: #22C55E; }
+    .admin-url-input {
       flex: 1;
-      height: 4.5mm;
-      background: #020617;
+      height: 4.8mm;
+      background: #FFFFFF;
       border-radius: 1.2mm;
       display: flex;
       align-items: center;
       padding: 0 3mm;
-      font-size: 7px;
-      color: #94A3B8;
+      font-size: 7.2px;
+      color: #334155;
       font-family: monospace;
-      border: 0.5px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid #CBD5E1;
       gap: 2mm;
     }
-    .url-lock {
-      color: #22C55E;
-      font-size: 7px;
-    }
 
-    /* Admin Workspace */
-    .admin-workspace {
+    .admin-app-layout {
       flex: 1;
       display: grid;
       grid-template-columns: 36mm 1fr;
       overflow: hidden;
     }
-    .admin-sidebar {
-      background: #090E1A;
-      border-right: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 3mm 2.5mm;
+    .admin-app-sidebar {
+      background: #F8FAFC;
+      border-right: 1px solid #E2E8F0;
+      padding: 3mm 2.2mm;
       display: flex;
       flex-direction: column;
       gap: 1.5mm;
     }
-    .admin-side-brand {
-      font-size: 9px;
-      font-weight: 800;
-      color: #FFFFFF;
-      margin-bottom: 2mm;
-      display: flex;
-      align-items: center;
-      gap: 1.5mm;
-    }
-    .admin-menu-item {
+    .admin-side-item {
       display: flex;
       align-items: center;
       gap: 2mm;
-      padding: 1.6mm 2.5mm;
+      padding: 1.6mm 2mm;
       border-radius: 1.5mm;
       font-size: 7.5px;
-      color: #94A3B8;
-      font-weight: 600;
+      color: #475569;
+      font-weight: 700;
     }
-    .admin-menu-item.active {
-      background: rgba(91, 77, 255, 0.2);
-      color: #38BDF8;
-      border: 0.5px solid rgba(91, 77, 255, 0.4);
+    .admin-side-item.active {
+      background: #EEF0FF;
+      color: #5B4DFF;
+      border: 1px solid rgba(91, 77, 255, 0.3);
     }
-    .admin-content-main {
-      padding: 3mm 4mm;
+    .admin-main-view {
+      background: #FFFFFF;
+      padding: 3.5mm 4mm;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 2.5mm;
-      background: #0B1120;
+      gap: 2.8mm;
     }
 
-    /* Admin Top KPI Cards */
-    .admin-kpi-grid {
+    .admin-kpis-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 2mm;
+      gap: 2.2mm;
     }
-    .kpi-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 0.5px solid rgba(255, 255, 255, 0.08);
+    .admin-kpi-card {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
       border-radius: 2mm;
-      padding: 1.8mm 2.5mm;
+      padding: 2mm 2.5mm;
     }
-    .kpi-label {
-      font-size: 6px;
+    .admin-kpi-title {
+      font-size: 6.2px;
       color: #64748B;
       text-transform: uppercase;
       font-weight: 700;
     }
-    .kpi-val {
-      font-size: 11px;
+    .admin-kpi-number {
+      font-size: 12px;
       font-weight: 900;
-      color: #FFFFFF;
+      color: #0F172A;
       margin-top: 0.5mm;
     }
-    .kpi-diff {
-      font-size: 5.5px;
-      color: #4ADE80;
+    .admin-kpi-diff {
+      font-size: 5.8px;
+      color: #16A34A;
       font-weight: 700;
     }
 
-    /* Admin Users Table */
-    .admin-table-box {
-      background: rgba(255, 255, 255, 0.02);
-      border: 0.5px solid rgba(255, 255, 255, 0.08);
+    .admin-flags-bar {
+      background: #EEF0FF;
+      border: 1px solid rgba(91, 77, 255, 0.25);
       border-radius: 2mm;
-      overflow: hidden;
-    }
-    .table-title-row {
-      padding: 1.5mm 3mm;
-      background: rgba(255, 255, 255, 0.04);
+      padding: 2mm 3mm;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 7.5px;
-      font-weight: 800;
-      color: #FFFFFF;
     }
-    .admin-table {
+
+    .admin-users-table-card {
+      border: 1px solid #E2E8F0;
+      border-radius: 2mm;
+      overflow: hidden;
+    }
+    .admin-users-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 6.8px;
     }
-    .admin-table th {
+    .admin-users-table th {
       text-align: left;
-      padding: 1.2mm 2.5mm;
-      background: rgba(0, 0, 0, 0.3);
-      color: #64748B;
-      font-weight: 700;
+      padding: 1.4mm 2.2mm;
+      background: #F8FAFC;
+      color: #475569;
+      font-weight: 800;
       text-transform: uppercase;
       font-size: 5.8px;
-      border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid #E2E8F0;
     }
-    .admin-table td {
-      padding: 1.4mm 2.5mm;
-      border-bottom: 0.5px solid rgba(255, 255, 255, 0.04);
-      color: #CBD5E1;
+    .admin-users-table td {
+      padding: 1.5mm 2.2mm;
+      border-bottom: 1px solid #F1F5F9;
+      color: #334155;
+      font-weight: 600;
     }
-    .status-pill {
-      font-size: 5.5px;
-      font-weight: 800;
-      padding: 0.4px 1.5mm;
-      border-radius: 1mm;
-      display: inline-block;
-    }
-    .sp-active { background: rgba(34, 197, 94, 0.2); color: #4ADE80; }
-    .sp-blocked { background: rgba(239, 68, 68, 0.2); color: #F87171; }
-    .action-btn-sm {
-      font-size: 5.5px;
-      font-weight: 700;
-      padding: 0.5px 1.5mm;
-      border-radius: 1mm;
-      background: rgba(91, 77, 255, 0.2);
-      color: #A5B4FC;
+    .pill-active-user { background: #DCFCE7; color: #16A34A; padding: 0.5px 1.6mm; border-radius: 1mm; font-weight: 800; }
+    .pill-blocked-user { background: #FEE2E2; color: #DC2626; padding: 0.5px 1.6mm; border-radius: 1mm; font-weight: 800; }
+    .btn-admin-action {
+      background: #EEF0FF;
+      color: #5B4DFF;
       border: 0.5px solid rgba(91, 77, 255, 0.4);
-    }
-
-    /* Feature Flags Strip */
-    .flags-strip {
-      background: rgba(15, 23, 42, 0.8);
-      border: 0.5px solid rgba(91, 77, 255, 0.3);
-      border-radius: 2mm;
-      padding: 1.8mm 3mm;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .flag-group {
-      display: flex;
-      align-items: center;
-      gap: 4mm;
-    }
-    .flag-item {
-      display: flex;
-      align-items: center;
-      gap: 1.5mm;
-      font-size: 7px;
+      padding: 0.6px 1.8mm;
+      border-radius: 1mm;
+      font-size: 5.5px;
       font-weight: 700;
-      color: #E2E8F0;
-    }
-    .toggle-ui {
-      width: 5mm;
-      height: 2.8mm;
-      border-radius: 1.5mm;
-      position: relative;
-    }
-    .toggle-off {
-      background: #374151;
-    }
-    .toggle-off::after {
-      content: "";
-      position: absolute;
-      width: 2.2mm;
-      height: 2.2mm;
-      border-radius: 50%;
-      background: #9CA3AF;
-      top: 0.3mm;
-      left: 0.3mm;
-    }
-    .toggle-on {
-      background: #22C55E;
-    }
-    .toggle-on::after {
-      content: "";
-      position: absolute;
-      width: 2.2mm;
-      height: 2.2mm;
-      border-radius: 50%;
-      background: #FFFFFF;
-      top: 0.3mm;
-      right: 0.3mm;
     }
 
-    /* Page 7 Bottom Grid */
-    .page7-bottom-grid {
+    .page7-bottom-cards {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 3mm;
@@ -1548,7 +1434,7 @@
 <body>
 
   <!-- ===================================================================
-       PAGE 1: COVER (MUQOVA)
+       PAGE 1: COVER (MUQOVA) - LIGHT THEME
        =================================================================== -->
   <div class="page" id="page1">
     <div class="cover-container">
@@ -1568,7 +1454,7 @@
         <div class="logo-hero-wrapper">
           <div class="logo-hero-icon">📖</div>
         </div>
-        <h1 class="cover-title">Ingly Mobil Ilovasi</h1>
+        <h1 class="cover-title">Ingly <span>Mobil Ilovasi</span></h1>
         <p class="cover-subtitle">
           Paul Nation metodikasi asosidagi <strong>4000 Essential English Words</strong> to'plamini kino parchalari, interaktiv testlar va aqlli oraliq takrorlash orqali mukammal o'rganish platformasi.
         </p>
@@ -1577,39 +1463,85 @@
         </div>
       </div>
 
-      <!-- Visual Showcase: 2 Angled/Mini Mockups -->
+      <!-- Visual Showcase: 2 Light-Themed Phone Mockups -->
       <div class="cover-mockups-row">
         <!-- Mockup 1: Home Screen Preview -->
         <div class="cover-mockup-mini">
           <div class="cover-mockup-screen">
-            <div style="font-size:6px; font-weight:800; color:#38BDF8; margin-bottom:1mm;">🔥 7 KUNLIK STREAK</div>
-            <div style="font-size:8px; font-weight:900; color:#fff; margin-bottom:1.5mm;">Bosh Sahifa</div>
-            <div style="background:rgba(91,77,255,0.25); border-radius:2mm; padding:2mm; text-align:center; margin-bottom:1.5mm;">
-              <div style="font-size:10px; font-weight:900; color:#4ADE80;">80%</div>
-              <div style="font-size:5px; color:#94A3B8;">Bugungi maqsad: 16/20</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:5.5px; font-weight:900; color:#0F172A;">4000 ESSENTIAL WORDS</span>
+              <span style="font-size:5.5px; color:#64748B;">9:41</span>
             </div>
+            <!-- Profile Card -->
+            <div style="background:#FFF; border:1px solid #E2E8F0; border-radius:2mm; padding:1.4mm; display:flex; align-items:center; gap:1.5mm;">
+              <div style="width:6mm; height:6mm; border-radius:50%; background:#EEF0FF; border:1px solid #5B4DFF; display:flex; align-items:center; justify-content:center; font-size:7px;">👨‍🎓</div>
+              <div>
+                <div style="font-size:6.5px; font-weight:800; color:#0F172A;">Jasur Rahimov</div>
+                <div style="font-size:5px; color:#64748B;">🔥 7 kun streak</div>
+              </div>
+            </div>
+            <!-- Goal Circle -->
+            <div style="background:#EEF0FF; border:1px solid rgba(91,77,255,0.25); border-radius:1.8mm; padding:1.4mm; text-align:center;">
+              <div style="font-size:9.5px; font-weight:900; color:#5B4DFF;">80%</div>
+              <div style="font-size:5px; color:#334155; font-weight:700;">Kunlik maqsad: 16 / 20 so'z</div>
+            </div>
+            <!-- 4 Books Grid -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1mm;">
-              <div style="background:rgba(255,255,255,0.06); padding:1.2mm; border-radius:1.5mm; font-size:5px; font-weight:700;">Book 1 <span style="color:#4ADE80;">A1</span></div>
-              <div style="background:rgba(255,255,255,0.06); padding:1.2mm; border-radius:1.5mm; font-size:5px; font-weight:700;">Book 2 <span style="color:#4ADE80;">A2</span></div>
-              <div style="background:rgba(255,255,255,0.06); padding:1.2mm; border-radius:1.5mm; font-size:5px; font-weight:700;">Book 3 <span style="color:#FBBF24;">VIP</span></div>
-              <div style="background:rgba(255,255,255,0.06); padding:1.2mm; border-radius:1.5mm; font-size:5px; font-weight:700;">Book 4 <span style="color:#FBBF24;">VIP</span></div>
+              <div style="background:#FFF; border:1px solid #5B4DFF; padding:1.2mm; border-radius:1.5mm;">
+                <div style="font-size:5.2px; font-weight:800; color:#5B4DFF;">Book 1 📕</div>
+                <div style="font-size:4.5px; color:#16A34A; font-weight:700;">BEPUL • 75%</div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E2E8F0; padding:1.2mm; border-radius:1.5mm;">
+                <div style="font-size:5.2px; font-weight:800; color:#0F172A;">Book 2 🎓</div>
+                <div style="font-size:4.5px; color:#16A34A; font-weight:700;">BEPUL • 25%</div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E2E8F0; padding:1.2mm; border-radius:1.5mm;">
+                <div style="font-size:5.2px; font-weight:800; color:#0F172A;">Book 3 📘</div>
+                <div style="font-size:4.5px; color:#D97706; font-weight:700;">🔒 VIP</div>
+              </div>
+              <div style="background:#FFF; border:1px solid #E2E8F0; padding:1.2mm; border-radius:1.5mm;">
+                <div style="font-size:5.2px; font-weight:800; color:#0F172A;">Book 4 📙</div>
+                <div style="font-size:4.5px; color:#D97706; font-weight:700;">🔒 VIP</div>
+              </div>
+            </div>
+            <!-- Bottom Nav -->
+            <div style="background:#FFF; border-top:1px solid #E2E8F0; padding:1mm 0; display:flex; justify-content:space-around; font-size:6px;">
+              <span>🏠</span><span>📖</span><span>🎴</span><span>🏆</span><span>👤</span>
             </div>
           </div>
         </div>
 
-        <!-- Mockup 2: Cinema & Flashcard Preview -->
-        <div class="cover-mockup-mini" style="box-shadow: 0 15px 35px rgba(0,0,0,0.7), 0 0 25px rgba(56, 189, 248, 0.35);">
-          <div class="cover-mockup-screen" style="background:#030712;">
-            <div style="font-size:6px; font-weight:800; color:#F59E0B; margin-bottom:1mm;">🎬 KINODAN LAVHA</div>
-            <div style="background:#1E293B; height:18mm; border-radius:1.5mm; position:relative; display:flex; align-items:flex-end; padding:1.5mm; margin-bottom:1.5mm;">
-              <div style="background:rgba(0,0,0,0.8); padding:0.5mm 1mm; border-radius:0.8mm; font-size:4.8px; color:#fff; width:100%;">
-                Harry Potter: "Approach with respect!"
+        <!-- Mockup 2: Flashcard Screen Preview -->
+        <div class="cover-mockup-mini">
+          <div class="cover-mockup-screen">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:5.5px; font-weight:800; color:#0F172A;">Book 1 • Unit 1</span>
+              <span style="font-size:5.2px; color:#5B4DFF; font-weight:700;">1 / 20</span>
+            </div>
+            <!-- Main Word Card -->
+            <div style="background:#FFF; border:1px solid #E2E8F0; border-radius:2mm; padding:1.8mm;">
+              <div style="font-size:9px; font-weight:900; color:#0F172A;">Afraid [🔊]</div>
+              <div style="font-size:5.5px; color:#64748B; font-family:monospace;">/əˈfreɪd/ • ADJECTIVE</div>
+              <div style="background:#DCFCE7; border-left:1.5px solid #22C55E; padding:0.8mm 1.2mm; border-radius:0 1mm 1mm 0; font-size:6px; font-weight:800; color:#15803D; margin:1mm 0;">
+                Qo'rqqan, cho'chigan
+              </div>
+              <div style="font-size:5px; color:#475569; line-height:1.2;">
+                When someone is afraid, they feel fear.
               </div>
             </div>
-            <div style="font-size:9px; font-weight:900; color:#fff;">Approach</div>
-            <div style="font-size:5.5px; color:#38BDF8;">/əˈprəʊtʃ/ • Yaqinlashmoq</div>
-            <div style="display:flex; gap:1mm; margin-top:1.5mm;">
-              <div style="flex:1; background:rgba(34,197,94,0.3); color:#86EFAC; font-size:5px; text-align:center; padding:1mm; border-radius:1mm; font-weight:800;">YODLANDI</div>
+            <!-- Movie button -->
+            <div style="background:#0F172A; color:#FFF; border-radius:1.5mm; padding:1.2mm; text-align:center; font-size:5.2px; font-weight:800;">
+              🎬 Kinodan parcha (Harry Potter)
+            </div>
+            <!-- SRS Buttons -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.8mm;">
+              <div style="background:#FEE2E2; color:#DC2626; font-size:4.8px; text-align:center; padding:1mm; border-radius:1mm; font-weight:800;">QIYIN</div>
+              <div style="background:#E0F2FE; color:#0284C7; font-size:4.8px; text-align:center; padding:1mm; border-radius:1mm; font-weight:800;">TAKROR</div>
+              <div style="background:#DCFCE7; color:#16A34A; font-size:4.8px; text-align:center; padding:1mm; border-radius:1mm; font-weight:800;">YODLANDI</div>
+            </div>
+            <!-- Bottom Nav -->
+            <div style="background:#FFF; border-top:1px solid #E2E8F0; padding:1mm 0; display:flex; justify-content:space-around; font-size:6px;">
+              <span>🏠</span><span>📖</span><span>🎴</span><span>🏆</span><span>👤</span>
             </div>
           </div>
         </div>
@@ -1642,7 +1574,7 @@
       <!-- Cover Bottom Meta -->
       <div class="cover-footer">
         <div>Muallif & Buyurtmachi: <strong>inglyJon</strong></div>
-        <div>Texnologiyalar: <strong>React Native • React.js • Supabase SQL • OPUS Audio</strong></div>
+        <div>Texnologiyalar: <strong>React Native • React.js • TailwindCSS • Supabase SQL</strong></div>
         <div>Holat: <strong>v1.0 Rasmiy Taqdimot</strong></div>
       </div>
 
@@ -1650,7 +1582,7 @@
   </div>
 
   <!-- ===================================================================
-       PAGE 2: BOSH SAHIFA (HOME SCREEN)
+       PAGE 2: BOSH SAHIFA (HOME SCREEN) - LIGHT THEME
        =================================================================== -->
   <div class="page" id="page2">
     <!-- Header -->
@@ -1669,156 +1601,225 @@
     <!-- Title Section -->
     <div class="title-section">
       <div class="section-eyebrow">ASOSIY DASHBOARD VA MOTIVATSIYA TIZIMI</div>
-      <h2 class="page-main-title">Bosh Sahifa (Home Screen)</h2>
+      <h2 class="page-main-title">Bosh Sahifa (HomeScreen.js)</h2>
       <p class="page-main-desc">
         Kundalik olovcha (streak), doirasimon kunlik maqsad progressi va 6 ta kitob (Book 1 - Book 6) darajalari ierarxiyasi.
       </p>
     </div>
 
-    <!-- Content 2 Columns: Phone Left, Specs Right -->
+    <!-- Content 2 Columns -->
     <div class="content-grid">
       
       <!-- Phone Mockup Left -->
       <div class="phone-mockup-wrapper">
         <div class="iphone-case">
           <div class="iphone-screen">
-            <!-- Status Bar & Dynamic Island -->
+            <!-- Status Bar -->
             <div class="status-bar">
               <span>9:41</span>
-              <div class="dynamic-island">
-                <div class="island-camera"></div>
-              </div>
+              <div class="dynamic-island"><div class="island-camera"></div></div>
               <span>5G 􀛨 100%</span>
             </div>
 
-            <!-- Screen Body -->
+            <!-- Screen Body (Soft Slate White #F8FAFC) -->
             <div class="screen-content">
-              <!-- User Greeting & Streak -->
-              <div class="home-header-row">
-                <div class="home-user-info">
-                  <div class="home-avatar">👨‍🎓</div>
-                  <div>
-                    <div class="home-greeting">Salom, Jasur! 👋</div>
-                    <div class="home-sub">Bugun o'rganishga tayyormisiz?</div>
+              <!-- 1. Header Title -->
+              <div class="home-app-title-box">
+                <span class="home-app-title">4000 ESSENTIAL ENGLISH WORDS</span>
+              </div>
+
+              <!-- 2. User Stats Container (#FFFFFF Card) -->
+              <div class="user-stats-card">
+                <!-- Left: Profile -->
+                <div class="profile-left-col">
+                  <div class="avatar-circle-box">👨‍🎓</div>
+                  <div class="user-name-text">Jasur</div>
+                  <div class="welcome-sub-text">Yana xush kelibsiz!</div>
+                </div>
+
+                <!-- Vertical Divider -->
+                <div class="vertical-sep"></div>
+
+                <!-- Right: Daily Streak & Daily Goal -->
+                <div class="stats-right-col">
+                  <!-- Streak -->
+                  <div class="streak-mini-row">
+                    <span style="font-size:12px;">🔥</span>
+                    <div>
+                      <div style="display:flex; align-items:center; gap:3px;">
+                        <span class="streak-mini-title">Daily Streak</span>
+                        <span class="keep-badge">Keep it up!</span>
+                      </div>
+                      <div class="streak-count-text">7 Days</div>
+                      <div style="font-size:5px; color:#94A3B8;">Ketma-ket 7 kun</div>
+                    </div>
+                  </div>
+
+                  <!-- Goal -->
+                  <div class="goal-mini-row">
+                    <div class="goal-circle-svg">
+                      <svg viewBox="0 0 36 36">
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E0F2FE" stroke-width="4.5" />
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#5B4DFF" stroke-width="4.5" stroke-dasharray="80, 100" stroke-linecap="round" />
+                      </svg>
+                    </div>
+                    <div class="goal-text-box">
+                      <h5>Daily Goal: 80%</h5>
+                      <p>(16/20 Words)</p>
+                      <div style="font-size:5px; color:#94A3B8;">Bugungi darslarni bajaring</div>
+                    </div>
                   </div>
                 </div>
-                <div class="streak-badge">
-                  <span>🔥</span>
-                  <span>7 KUN</span>
-                </div>
               </div>
 
-              <!-- Circular Goal Widget -->
-              <div class="goal-widget">
-                <div class="goal-circle">
-                  <svg viewBox="0 0 36 36">
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3.5" />
-                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="url(#goalGrad)" stroke-width="3.5" stroke-dasharray="80, 100" stroke-linecap="round" />
-                    <defs>
-                      <linearGradient id="goalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#5B4DFF" />
-                        <stop offset="100%" stop-color="#38BDF8" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  <div class="goal-circle-text">80%</div>
-                </div>
-                <div class="goal-info">
-                  <h4>Kunlik maqsad: 16 / 20 so'z</h4>
-                  <p>Ajoyib ketmoqdasiz! Maqsadga yetish uchun yana 4 ta so'z qoldi.</p>
-                  <span class="goal-progress-pill">🎯 +4 ta so'z qoldi</span>
-                </div>
-              </div>
-
-              <!-- 6 Books Section -->
-              <div class="books-section-title">
+              <!-- 3. Books Section Title -->
+              <div class="books-grid-title">
                 <span>KITOB VA DARAJALAR (PAUL NATION)</span>
-                <span style="color:#38BDF8; font-size:6.5px;">Hammasi (6)</span>
+                <span style="color:#5B4DFF; font-size:6px; font-weight:800;">6 ta Kitob</span>
               </div>
 
-              <!-- Grid of 6 Books -->
-              <div class="books-grid">
+              <!-- 4. Grid of 6 Books -->
+              <div class="home-books-grid">
                 <!-- Book 1 -->
-                <div class="book-card-item active-book">
-                  <div class="book-card-header">
-                    <span style="font-size:7px; font-weight:800; color:#818CF8;">BOOK 1</span>
-                    <span class="book-badge b-free">BEPUL</span>
+                <div class="home-book-card active">
+                  <div class="book-card-top">
+                    <div>
+                      <div class="book-card-title">Book 1 - Elementary</div>
+                      <div class="book-card-level">A1 - A2 • 30 Unit</div>
+                    </div>
+                    <span style="font-size:11px;">📕</span>
                   </div>
-                  <div class="book-name">Essential Words 1</div>
-                  <div class="book-level">Boshlang'ich (A1-A2) • 30 Unit</div>
-                  <div class="book-bar"><div class="book-bar-fill" style="width:75%;"></div></div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span class="book-card-badge badge-bepul">BEPUL</span>
+                      <span style="font-size:5.5px; font-weight:800; color:#5B4DFF;">75%</span>
+                    </div>
+                    <div class="book-card-bar"><div class="book-card-fill" style="width:75%;"></div></div>
+                  </div>
                 </div>
+
                 <!-- Book 2 -->
-                <div class="book-card-item">
-                  <div class="book-card-header">
-                    <span style="font-size:7px; font-weight:800; color:#CBD5E1;">BOOK 2</span>
-                    <span class="book-badge b-free">BEPUL</span>
+                <div class="home-book-card">
+                  <div class="book-card-top">
+                    <div>
+                      <div class="book-card-title">Book 2 - Pre-Int</div>
+                      <div class="book-card-level">A2 - B1 • 30 Unit</div>
+                    </div>
+                    <span style="font-size:11px;">🎓</span>
                   </div>
-                  <div class="book-name">Essential Words 2</div>
-                  <div class="book-level">Pre-Intermediate (A2) • 30 Unit</div>
-                  <div class="book-bar"><div class="book-bar-fill" style="width:25%;"></div></div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span class="book-card-badge badge-bepul">BEPUL</span>
+                      <span style="font-size:5.5px; font-weight:800; color:#64748B;">25%</span>
+                    </div>
+                    <div class="book-card-bar"><div class="book-card-fill" style="width:25%;"></div></div>
+                  </div>
                 </div>
+
                 <!-- Book 3 -->
-                <div class="book-card-item">
-                  <div class="book-card-header">
-                    <span style="font-size:7px; font-weight:800; color:#CBD5E1;">BOOK 3</span>
-                    <span class="book-badge b-vip">🔒 VIP</span>
+                <div class="home-book-card">
+                  <div class="book-card-top">
+                    <div>
+                      <div class="book-card-title">Book 3 - Intermediate</div>
+                      <div class="book-card-level">B1 • 30 Unit</div>
+                    </div>
+                    <span style="font-size:11px;">📘</span>
                   </div>
-                  <div class="book-name">Essential Words 3</div>
-                  <div class="book-level">Intermediate (B1) • 30 Unit</div>
-                  <div class="book-bar"><div class="book-bar-fill" style="width:0%;"></div></div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span class="book-card-badge badge-vip">🔒 VIP</span>
+                      <span style="font-size:5.5px; font-weight:800; color:#94A3B8;">0%</span>
+                    </div>
+                    <div class="book-card-bar"><div class="book-card-fill" style="width:0%;"></div></div>
+                  </div>
                 </div>
+
                 <!-- Book 4 -->
-                <div class="book-card-item">
-                  <div class="book-card-header">
-                    <span style="font-size:7px; font-weight:800; color:#CBD5E1;">BOOK 4</span>
-                    <span class="book-badge b-vip">🔒 VIP</span>
+                <div class="home-book-card">
+                  <div class="book-card-top">
+                    <div>
+                      <div class="book-card-title">Book 4 - Upper-Int</div>
+                      <div class="book-card-level">B2 • 30 Unit</div>
+                    </div>
+                    <span style="font-size:11px;">📙</span>
                   </div>
-                  <div class="book-name">Essential Words 4</div>
-                  <div class="book-level">Upper-Inter (B2) • 30 Unit</div>
-                  <div class="book-bar"><div class="book-bar-fill" style="width:0%;"></div></div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span class="book-card-badge badge-vip">🔒 VIP</span>
+                      <span style="font-size:5.5px; font-weight:800; color:#94A3B8;">0%</span>
+                    </div>
+                    <div class="book-card-bar"><div class="book-card-fill" style="width:0%;"></div></div>
+                  </div>
                 </div>
+
                 <!-- Book 5 -->
-                <div class="book-card-item">
-                  <div class="book-card-header">
-                    <span style="font-size:7px; font-weight:800; color:#CBD5E1;">BOOK 5</span>
-                    <span class="book-badge b-vip">🔒 VIP</span>
+                <div class="home-book-card">
+                  <div class="book-card-top">
+                    <div>
+                      <div class="book-card-title">Book 5 - Advanced</div>
+                      <div class="book-card-level">C1 • 30 Unit</div>
+                    </div>
+                    <span style="font-size:11px;">📓</span>
                   </div>
-                  <div class="book-name">Essential Words 5</div>
-                  <div class="book-level">Advanced (C1) • 30 Unit</div>
-                  <div class="book-bar"><div class="book-bar-fill" style="width:0%;"></div></div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span class="book-card-badge badge-vip">🔒 VIP</span>
+                      <span style="font-size:5.5px; font-weight:800; color:#94A3B8;">0%</span>
+                    </div>
+                    <div class="book-card-bar"><div class="book-card-fill" style="width:0%;"></div></div>
+                  </div>
                 </div>
+
                 <!-- Book 6 -->
-                <div class="book-card-item">
-                  <div class="book-card-header">
-                    <span style="font-size:7px; font-weight:800; color:#CBD5E1;">BOOK 6</span>
-                    <span class="book-badge b-vip">🔒 VIP</span>
+                <div class="home-book-card">
+                  <div class="book-card-top">
+                    <div>
+                      <div class="book-card-title">Book 6 - Mastery</div>
+                      <div class="book-card-level">C1 - C2 • 30 Unit</div>
+                    </div>
+                    <span style="font-size:11px;">🏆</span>
                   </div>
-                  <div class="book-name">Essential Words 6</div>
-                  <div class="book-level">Mastery (C1+) • 30 Unit</div>
-                  <div class="book-bar"><div class="book-bar-fill" style="width:0%;"></div></div>
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span class="book-card-badge badge-vip">🔒 VIP</span>
+                      <span style="font-size:5.5px; font-weight:800; color:#94A3B8;">0%</span>
+                    </div>
+                    <div class="book-card-bar"><div class="book-card-fill" style="width:0%;"></div></div>
+                  </div>
                 </div>
               </div>
 
+              <!-- 5. Recent Activity Banner -->
+              <div class="home-recent-banner">
+                <div>
+                  <div style="font-size:6.2px; font-weight:800; color:#0F172A;">So'nggi dars: Book 1, Unit 3</div>
+                  <div style="font-size:5.2px; color:#64748B;">16/20 so'z yodlandi • Testga tayyor</div>
+                </div>
+                <div style="background:#5B4DFF; color:#FFF; font-size:5.5px; font-weight:800; padding:1mm 2mm; border-radius:1.2mm;">Davom etish ➔</div>
+              </div>
             </div>
 
-            <!-- Bottom Navigation -->
+            <!-- Bottom Navigation Bar (5 Real Tabs) -->
             <div class="bottom-nav">
               <div class="nav-item active">
-                <span>🏠</span>
-                <span>Asosiy</span>
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
               </div>
               <div class="nav-item">
-                <span>📖</span>
-                <span>Darslar</span>
+                <span class="nav-icon">📖</span>
+                <span>Learn</span>
               </div>
               <div class="nav-item">
-                <span>⚡</span>
-                <span>Testlar</span>
+                <span class="nav-icon">🎴</span>
+                <span>Flashcards</span>
               </div>
               <div class="nav-item">
-                <span>👤</span>
-                <span>Profil</span>
+                <span class="nav-icon">🏆</span>
+                <span>Quiz</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">👤</span>
+                <span>Profile</span>
               </div>
               <div class="home-indicator"></div>
             </div>
@@ -1837,38 +1838,38 @@
             <span class="card-badge badge-amber">Motivatsiya</span>
           </div>
           <p class="card-text">
-            Foydalanuvchi har kuni kamida belgilangan kunlik maqsadini bajarganda olovcha faol saqlanadi. Vaqt mintaqasi (Timezone-Aware) bo'yicha kechki 20:00 da olovcha o'chib qolmasligi uchun do'stona eslatmalar yuboriladi.
+            Foydalanuvchi har kuni belgilangan kunlik maqsadini (masalan: 20 ta so'z) bajarganda olovcha faol saqlanadi. Vaqt mintaqasi (Timezone-Aware) bo'yicha mahalliy vaqt bilan eslatmalar yuboriladi.
           </p>
           <div class="card-tags">
             <span class="tech-pill">Timezone: Asia/Tashkent</span>
-            <span class="tech-pill">Streak Freeze</span>
+            <span class="tech-pill">Daily Streak Engine</span>
             <span class="tech-pill">Anti-Loss Alerts</span>
           </div>
         </div>
 
         <div class="feature-card">
           <div class="card-top">
-            <div class="card-icon icon-sky">🎯</div>
+            <div class="card-icon icon-indigo">🎯</div>
             <h3 class="card-title">Moslashuvchan Kunlik Maqsad (Goal Ring)</h3>
-            <span class="card-badge badge-blue">Optimistic UI</span>
+            <span class="card-badge badge-purple">Optimistic UI</span>
           </div>
           <p class="card-text">
-            O'quvchi o'zining bo'sh vaqtiga qarab kuniga 10, 20 yoki 30 ta so'z yodlashni tanlaydi. Radial SVG indikator har bir so'z o'rganilishi bilanoq bir zumda (zero-latency) animatsiya bilan to'lib boradi.
+            O'quvchi o'z imkoniyatiga qarab kuniga 10, 20 yoki 30 ta so'z rejasini tanlaydi. Radial SVG indikator har bir so'z o'rganilishi bilanoq bir zumda (zero-latency) to'lib boradi.
           </p>
           <div class="card-tags">
-            <span class="tech-pill">Dynamic SVG Ring</span>
-            <span class="tech-pill">10-20-30 Words Preset</span>
+            <span class="tech-pill">CircularProgress.js</span>
+            <span class="tech-pill">10-20-30 Presets</span>
           </div>
         </div>
 
         <div class="feature-card">
           <div class="card-top">
-            <div class="card-icon icon-indigo">📚</div>
-            <h3 class="card-title">6 Kitobli CEFR Bosqichlari</h3>
-            <span class="card-badge badge-purple">Paul Nation</span>
+            <div class="card-icon icon-sky">📚</div>
+            <h3 class="card-title">6 Kitobli CEFR Bosqichlari (Paul Nation)</h3>
+            <span class="card-badge badge-blue">Paul Nation</span>
           </div>
           <p class="card-text">
-            4000 ta eng kerakli so'zlar 6 ta kitobga ajratilgan. Har bir kitobda 30 tadan unit, har bir unitda 20 tadan so'z mavjud. Boshlang'ich Book 1 va Book 2 barcha foydalanuvchilar uchun mutlaqo bepul taqdim etiladi.
+            4000 ta so'z 6 ta kitobga ajratilgan. Har bir kitobda 30 tadan unit, har bir unitda 20 tadan so'z mavjud. Book 1 va Book 2 bepul taqdim etiladi. Book 3-6 esa VIP boshqaruvida.
           </p>
           <div class="card-tags">
             <span class="tech-pill">Book 1-6</span>
@@ -1881,13 +1882,13 @@
           <div class="card-top">
             <div class="card-icon icon-emerald">⚡</div>
             <h3 class="card-title">Offline-First Arxitekturasi</h3>
-            <span class="card-badge badge-green">Zero Delay</span>
+            <span class="card-badge badge-green">Smart Cache</span>
           </div>
           <p class="card-text">
-            Barcha so'zlar va progress mahalliy SQLite/MMKV bazasida keshlanadi. Metroda yoki internetsiz joyda ham ilova soniya ulushida ochiladi va internet paydo bo'lganda serverga avtomatik batch sinxronlanadi.
+            Barcha so'zlar va progress mahalliy keshda saqlanadi. Internetsiz joyda ham ilova darhol ochiladi va internet paydo bo'lganda serverga avtomatik sinxronlanadi.
           </p>
           <div class="card-tags">
-            <span class="tech-pill">MMKV Cache</span>
+            <span class="tech-pill">Local Cache</span>
             <span class="tech-pill">Sync Queue</span>
             <span class="tech-pill">Last-Write-Wins</span>
           </div>
@@ -1924,7 +1925,7 @@
   </div>
 
   <!-- ===================================================================
-       PAGE 3: LEARN SCREEN (SO'ZLAR VA DARSLAR)
+       PAGE 3: DARSLAR & UNITLAR (LEARNSCREEN.JS) - LIGHT THEME
        =================================================================== -->
   <div class="page" id="page3">
     <!-- Header -->
@@ -1935,17 +1936,17 @@
         <span class="brand-tag">Ta'lim Metodikasi</span>
       </div>
       <div class="page-meta-badge">
-        <span>SO'Z O'RGANISH</span>
+        <span>DARSLAR & UNITLAR</span>
         <span class="page-num-pill">03 / 07</span>
       </div>
     </div>
 
     <!-- Title Section -->
     <div class="title-section">
-      <div class="section-eyebrow">CHUQUR O'RGANISH VA TALAFUZ STANDARTLARI</div>
-      <h2 class="page-main-title">So'zlar va Darslar (Learn Screen)</h2>
+      <div class="section-eyebrow">BOSHQICHMA-BOSQICH DARSLAR VA UNITLAR XARITASI</div>
+      <h2 class="page-main-title">Darslar va Unitlar (LearnScreen.js)</h2>
       <p class="page-main-desc">
-        Xalqaro IPA transkripsiyasi, aniq o'zbekcha tarjima, inglizcha va o'zbekcha ta'riflar hamda 3 bosqichli oraliq takrorlash (Spaced Repetition).
+        Gorizontal Book 1-6 tablari, 180 ta unit kartochkalari, o'rganish foizlari va bosqichma-bosqich ochiladigan qulf (Mastery Gate) tizimi.
       </p>
     </div>
 
@@ -1965,86 +1966,114 @@
 
             <!-- Screen Body -->
             <div class="screen-content">
-              <!-- Header info -->
-              <div class="learn-header">
+              <!-- Header -->
+              <div class="learn-top-title-box">
+                <h3 class="learn-top-title">Darslar va Unitlar</h3>
+                <p class="learn-top-sub">4000 Essential English Words - 6 ta kitob va 180 ta unit</p>
+              </div>
+
+              <!-- Horizontal Book Tabs -->
+              <div class="learn-tabs-scroll">
+                <div class="learn-tab-btn active">
+                  <div class="learn-tab-name">Book 1</div>
+                  <div class="learn-tab-progress">75% o'rganildi</div>
+                </div>
+                <div class="learn-tab-btn">
+                  <div class="learn-tab-name">Book 2</div>
+                  <div class="learn-tab-progress">25% o'rganildi</div>
+                </div>
+                <div class="learn-tab-btn">
+                  <div class="learn-tab-name">Book 3 🔒</div>
+                  <div class="learn-tab-progress">B1 Daraja</div>
+                </div>
+                <div class="learn-tab-btn">
+                  <div class="learn-tab-name">Book 4 🔒</div>
+                  <div class="learn-tab-progress">B2 Daraja</div>
+                </div>
+              </div>
+
+              <!-- Book 1 Units Grid (30 units preview) -->
+              <div class="books-grid-title">
+                <span>BOOK 1 UNITLARI (30 TA UNIT)</span>
+                <span style="color:#16A34A; font-weight:800; font-size:6px;">22/30 Tugatildi</span>
+              </div>
+
+              <div class="learn-units-grid">
+                <!-- Unit 1 -->
+                <div class="unit-card-item completed">
+                  <div class="unit-num-text">Unit 1</div>
+                  <div style="font-size:10px;">📕</div>
+                  <span class="unit-sub-badge badge-unit-done">✓ Tugatilgan</span>
+                </div>
+                <!-- Unit 2 -->
+                <div class="unit-card-item completed">
+                  <div class="unit-num-text">Unit 2</div>
+                  <div style="font-size:10px;">📕</div>
+                  <span class="unit-sub-badge badge-unit-done">✓ Tugatilgan</span>
+                </div>
+                <!-- Unit 3: Current -->
+                <div class="unit-card-item current">
+                  <div class="unit-num-text" style="color:#5B4DFF;">Unit 3</div>
+                  <div style="font-size:10px;">🎯</div>
+                  <span class="unit-sub-badge badge-unit-active">● Hozirgi unit</span>
+                </div>
+                <!-- Unit 4: Locked -->
+                <div class="unit-card-item locked">
+                  <div class="unit-num-text" style="color:#64748B;">Unit 4</div>
+                  <div style="font-size:10px;">🔒</div>
+                  <span class="unit-sub-badge badge-unit-locked">Qulflangan</span>
+                </div>
+                <!-- Unit 5: Locked -->
+                <div class="unit-card-item locked">
+                  <div class="unit-num-text" style="color:#64748B;">Unit 5</div>
+                  <div style="font-size:10px;">🔒</div>
+                  <span class="unit-sub-badge badge-unit-locked">Qulflangan</span>
+                </div>
+                <!-- Unit 6: Locked -->
+                <div class="unit-card-item locked">
+                  <div class="unit-num-text" style="color:#64748B;">Unit 6</div>
+                  <div style="font-size:10px;">🔒</div>
+                  <span class="unit-sub-badge badge-unit-locked">Qulflangan</span>
+                </div>
+              </div>
+
+              <!-- Unit Stats Card -->
+              <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:2.2mm; padding:1.8mm 2mm; display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                  <div class="learn-title-sm">Book 1 • Unit 1</div>
-                  <div style="font-size:6px; color:#94A3B8;">Boshlang'ich daraja</div>
+                  <div style="font-size:6.5px; font-weight:800; color:#0F172A;">Unit 3: 20 ta yangi so'z</div>
+                  <div style="font-size:5.2px; color:#64748B;">Flashkartalarni boshlash uchun bosing</div>
                 </div>
-                <div class="learn-count-pill">So'z 1 / 20</div>
+                <div style="background:#5B4DFF; color:#FFF; font-size:5.5px; font-weight:800; padding:1.2mm 2.2mm; border-radius:1.2mm;">Boshlash ➔</div>
               </div>
 
-              <!-- Main Word Card -->
-              <div class="word-main-card">
-                <div class="word-head-flex">
-                  <div class="word-term">Afraid</div>
-                  <span class="word-pos">Adjective</span>
-                </div>
-                <div class="word-ipa">/əˈfreɪd/</div>
-
-                <!-- Audio Play Button with soundwave -->
-                <div class="audio-btn">
-                  <span>🔊</span>
-                  <span>Talaffuzni eshitish</span>
-                  <div class="soundwave">
-                    <div class="sw-bar" style="height:1.2mm;"></div>
-                    <div class="sw-bar" style="height:2mm;"></div>
-                    <div class="sw-bar" style="height:1mm;"></div>
-                    <div class="sw-bar" style="height:1.8mm;"></div>
-                  </div>
-                </div>
-
-                <!-- Uzbek Translation -->
-                <div class="translation-box">
-                  <div class="trans-lbl">O'zbekcha tarjimasi</div>
-                  <div class="trans-val">Qo'rqqan, cho'chigan</div>
-                </div>
-
-                <!-- Definition -->
-                <div class="def-block">
-                  <div class="def-en">Definition: When someone is afraid, they feel fear.</div>
-                  <div class="def-uz">Ta'rif: Biror kimsa qo'rqqanda, u xavf yoki vahimani his qiladi.</div>
-                </div>
-
-                <!-- Example Sentence -->
-                <div class="def-block" style="margin-bottom:2mm;">
-                  <div class="def-en">Example: The woman was afraid of what she saw.</div>
-                  <div class="def-uz">Misol: Ayol ko'rgan narsasidan qo'rqib ketdi.</div>
-                </div>
-
-                <!-- Spaced Repetition Buttons -->
-                <div class="sr-buttons-row">
-                  <div class="sr-btn sr-hard">🔴 Qiyin</div>
-                  <div class="sr-btn sr-review">🔵 Takrorlash</div>
-                  <div class="sr-btn sr-master">🟢 Yodlandi</div>
-                </div>
-              </div>
-
-              <!-- Next Words Preview List -->
-              <div class="next-queue-title">Unitdagi keyingi so'zlar:</div>
-              <div class="word-mini-row">
-                <span style="font-weight:700; color:#fff;">2. Agree</span>
-                <span style="color:#94A3B8;">/əˈɡriː/</span>
-                <span style="color:#38BDF8;">Rozi bo'lmoq</span>
-              </div>
-              <div class="word-mini-row">
-                <span style="font-weight:700; color:#fff;">3. Angry</span>
-                <span style="color:#94A3B8;">/ˈæŋ.ɡri/</span>
-                <span style="color:#38BDF8;">Jahldor, darg'azab</span>
-              </div>
-              <div class="word-mini-row">
-                <span style="font-weight:700; color:#fff;">4. Arrive</span>
-                <span style="color:#94A3B8;">/əˈraɪv/</span>
-                <span style="color:#38BDF8;">Yetib kelmoq</span>
+              <!-- Bottom Note -->
+              <div style="background:#F1F5F9; border-radius:1.8mm; padding:1.2mm 2mm; font-size:5.5px; color:#475569; text-align:center;">
+                💡 Har bir unit 20 ta so'zdan iborat. Unit testi muvaffaqiyatli topshirilgach keyingi unit ochiladi.
               </div>
             </div>
 
-            <!-- Bottom Nav -->
+            <!-- Bottom Nav (Learn active) -->
             <div class="bottom-nav">
-              <div class="nav-item"><span>🏠</span><span>Asosiy</span></div>
-              <div class="nav-item active"><span>📖</span><span>Darslar</span></div>
-              <div class="nav-item"><span>⚡</span><span>Testlar</span></div>
-              <div class="nav-item"><span>👤</span><span>Profil</span></div>
+              <div class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+              </div>
+              <div class="nav-item active">
+                <span class="nav-icon">📖</span>
+                <span>Learn</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🎴</span>
+                <span>Flashcards</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🏆</span>
+                <span>Quiz</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">👤</span>
+                <span>Profile</span>
+              </div>
               <div class="home-indicator"></div>
             </div>
 
@@ -2057,67 +2086,62 @@
         
         <div class="feature-card highlight">
           <div class="card-top">
-            <div class="card-icon icon-indigo">🎧</div>
-            <h3 class="card-title">Gibrid Ovoz Arxitekturasi (TTS + OPUS)</h3>
-            <span class="card-badge badge-purple">Trafik 0 MB</span>
+            <div class="card-icon icon-indigo">📚</div>
+            <h3 class="card-title">180 Ta Bosqichma-Bosqich Unitlar Tizimi</h3>
+            <span class="card-badge badge-purple">Metodika</span>
           </div>
           <p class="card-text">
-            Standart rejimda qurilmaning o'z Text-to-Speech (Apple / Google TTS) tizimidan foydalaniladi — bu esa internet sarflamasdan va serverga yuklama tushirmasdan bir zumda tiniq talaffuz beradi. Studiya diktor audiolari esa zamonaviy 24-32 kbps OPUS formatida siqilgan (MP3 dan 5 barobar yengil).
+            O'quvchi tartibsiz emas, tizimli ravishda har bir unitdagi 20 ta yangi so'zni o'rganadi. Gorizontal Book tablari orqali boshqa kitoblarga o'tish juda oson va intuitiv.
           </p>
           <div class="card-tags">
-            <span class="tech-pill">On-Device TTS</span>
-            <span class="tech-pill">OPUS 24kbps</span>
-            <span class="tech-pill">Zero Server Cost</span>
+            <span class="tech-pill">6 Books Hierarchy</span>
+            <span class="tech-pill">180 Sequential Units</span>
+            <span class="tech-pill">20 Words/Unit</span>
           </div>
         </div>
 
         <div class="feature-card">
           <div class="card-top">
-            <div class="card-icon icon-emerald">🔁</div>
-            <h3 class="card-title">3 Darajali Oraliq Takrorlash (SRS)</h3>
-            <span class="card-badge badge-green">Ebbinghaus</span>
+            <div class="card-icon icon-emerald">🔒</div>
+            <h3 class="card-title">Dinamik Qulf Mexanizmi (Mastery Gates)</h3>
+            <span class="card-badge badge-green">Pedagogik Qoida</span>
           </div>
           <p class="card-text">
-            Har bir so'z o'rganilganda 3 ta tanlov beriladi:
-            <br>• <strong>Qiyin (Qizil):</strong> Algoritm so'zni bugunning o'zida qayta mashq qildiradi.
-            <br>• <strong>Takrorlash (Moviy):</strong> Ertangi kun takrorlash rejasiga kiritiladi.
-            <br>• <strong>Yodlandi (Yashil):</strong> Uzoq muddatli xotira rejimiga o'tkaziladi.
+            Foydalanuvchi joriy unitdagi so'zlarni o'zlashtirmasdan va testdan o'tmasdan turib keyingi unitlarga o'tolmaydi. Bu orqali bilimlar mustahkam va uzluksiz bo'lishi ta'minlanadi.
           </p>
           <div class="card-tags">
-            <span class="tech-pill">Spaced Repetition</span>
-            <span class="tech-pill">Memory Curve</span>
-            <span class="tech-pill">Smart Interval</span>
+            <span class="tech-pill">Progress Lock</span>
+            <span class="tech-pill">Prerequisite Tests</span>
           </div>
         </div>
 
         <div class="feature-card">
           <div class="card-top">
-            <div class="card-icon icon-sky">🇺🇿</div>
-            <h3 class="card-title">Mukammal O'zbek Tili Moslashuvi</h3>
-            <span class="card-badge badge-blue">Adabiy Tarjima</span>
+            <div class="card-icon icon-sky">⚡</div>
+            <h3 class="card-title">Oflayn Unit Yuklanishi (Zero Lag)</h3>
+            <span class="card-badge badge-blue">Tezkor</span>
           </div>
           <p class="card-text">
-            Oddiy lug'atlardan farqli ravishda, har bir so'zning faqat tarjimasi emas, balki inglizcha ta'rifi va misol keltirilgan gapi ham adabiy o'zbek tiliga tushunarli qilib tarjima qilingan. Bu esa so'zning asl ma'nosini chuqur his qilishga yordam beradi.
+            Barcha 30 ta unit ma'lumotlari mahalliy keshda turgani sababli unitlar orasida o'tish soniya ulushida amalga oshadi, foydalanuvchini hech qachon kuttirmaydi.
           </p>
           <div class="card-tags">
-            <span class="tech-pill">Full Uzbek Locales</span>
-            <span class="tech-pill">Context Examples</span>
+            <span class="tech-pill">Instant Tab Switch</span>
+            <span class="tech-pill">Zero Latency</span>
           </div>
         </div>
 
         <div class="feature-card">
           <div class="card-top">
-            <div class="card-icon icon-amber">⚡</div>
-            <h3 class="card-title">MMKV & WatermelonDB Smart Kesh</h3>
-            <span class="card-badge badge-amber">Tezlik 25ms</span>
+            <div class="card-icon icon-amber">📊</div>
+            <h3 class="card-title">Vizual Foiz va Status Indikatorlari</h3>
+            <span class="card-badge badge-amber">Statistika</span>
           </div>
           <p class="card-text">
-            Barcha 4000 ta so'z ilova o'rnatilgandayoq lokal xotirada saqlanadi. So'zlar orasida o'tishda hech qanday "Loading..." aylanasi chiqmaydi va batareya quvvati tejaladi.
+            Har bir kitob tabida va unit kartasida yashil tasdiq belgisi (✓) hamda foiz ko'rsatkichlari aks etadi, bu o'quvchiga o'z yutuqlarini doimiy ko'rib turish imkonini beradi.
           </p>
           <div class="card-tags">
-            <span class="tech-pill">Instant Render</span>
-            <span class="tech-pill">Local SQLite</span>
-            <span class="tech-pill">Zero Lag</span>
+            <span class="tech-pill">Visual Progress</span>
+            <span class="tech-pill">Completion Badges</span>
           </div>
         </div>
 
@@ -2129,14 +2153,14 @@
     <div class="page-footer">
       <div class="footer-left">
         <div class="footer-dot"></div>
-        <span>Ingly Mobil Tizimi • So'z O'rganish va IPA Fonetikasi</span>
+        <span>Ingly Mobil Tizimi • Darslar va Unitlar Ierarxiyasi</span>
       </div>
       <div>Sahifa 3 / 7</div>
     </div>
   </div>
 
   <!-- ===================================================================
-       PAGE 4: FLASHCARDS & CINEMA CLIPS (KINO PARCHALARI)
+       PAGE 4: FLASHKARTALAR & KINODAN PARCHA (FLASHCARDSCREEN.JS)
        =================================================================== -->
   <div class="page" id="page4">
     <!-- Header -->
@@ -2147,7 +2171,7 @@
         <span class="brand-tag">Vizual va Hissiy Xotira</span>
       </div>
       <div class="page-meta-badge">
-        <span>FLASHKARTALAR & KINOLAR</span>
+        <span>FLASHKARTALAR & KINO</span>
         <span class="page-num-pill">04 / 07</span>
       </div>
     </div>
@@ -2155,9 +2179,9 @@
     <!-- Title Section -->
     <div class="title-section">
       <div class="section-eyebrow">EMOTSIONAL XOTIRA VA REAL HAYOTIY KONTEKST</div>
-      <h2 class="page-main-title">Flashkartalar & Kino Kliplar (Cinema Clips)</h2>
+      <h2 class="page-main-title">Flashkartalar & Kinodan Parcha (FlashcardScreen.js)</h2>
       <p class="page-main-desc">
-        3D kartochkalar, interaktiv imo-ishoralar (swipe) va Gollivud durdonalaridan (Harry Potter, Marvel) so'z ishlatilgan 3-5 soniyalik eksklyuziv lavhalar.
+        Oq kartochka, so'z, transkripsiya, o'zbekcha tarjima, misol gap, "🎬 Kinodan parcha" tugmasi, Gollivud video pleyeri va 3 ta SRS tugmasi.
       </p>
     </div>
 
@@ -2177,65 +2201,98 @@
 
             <!-- Screen Body -->
             <div class="screen-content">
-              <!-- Top bar -->
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:7px; font-weight:800; color:#fff;">Flashkarta 8 / 20</span>
-                <span style="font-size:6px; color:#F59E0B; background:rgba(245,158,11,0.2); padding:0.5px 2mm; border-radius:1mm; font-weight:800;">🎬 Kino Mavjud</span>
+              <!-- Top Unit & Progress Bar -->
+              <div style="background:#FFFFFF; border:1px solid #E2E8F0; padding:1.2mm 2.2mm; border-radius:1.8mm; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:6.5px; font-weight:800; color:#0F172A;">Book 1 • Unit 1</span>
+                <span style="font-size:6.2px; font-weight:800; color:#5B4DFF;">So'z: 1 / 20 (5%)</span>
               </div>
 
-              <!-- 3D Flashcard Back View -->
-              <div class="flashcard-3d-box">
-                <span class="flashcard-badge">VERB (FE'L)</span>
-                <div class="flash-word">Approach</div>
-                <div class="flash-ipa">/əˈprəʊtʃ/</div>
-                <div style="font-size:7.5px; font-weight:800; color:#4ADE80;">Yurib yaqinlashmoq, yondashmoq</div>
-              </div>
-
-              <!-- Cinema Modal Dialog Overlay -->
-              <div class="cinema-modal-overlay">
-                <div class="cinema-modal-header">
-                  <div class="cinema-tag">
-                    <span>🎬</span>
-                    <span>Kinodan parcha (Hollywood)</span>
-                  </div>
-                  <span class="cinema-close">✕</span>
+              <!-- Main White Flashcard Container -->
+              <div class="flashcard-main-box">
+                <!-- Word Heading & Speaker -->
+                <div class="fc-header-row">
+                  <span class="fc-word">Afraid</span>
+                  <div class="fc-speaker-btn">🔊</div>
                 </div>
 
-                <!-- Video player simulation -->
-                <div class="movie-player-frame">
-                  <div class="movie-center-play">▶</div>
-                  <div class="movie-subtitles-box">
-                    <div class="movie-sub-en">
-                      Harry, you must <span>approach</span> the Hippogriff with respect!
+                <!-- Phonetic and POS badge -->
+                <div class="fc-phonetic-row">
+                  <span class="fc-ipa">/əˈfreɪd/</span>
+                  <span class="fc-pos-pill">ADJECTIVE</span>
+                </div>
+
+                <!-- Uzbek Translation Row -->
+                <div class="fc-trans-box">
+                  <div style="font-size:5px; color:#16A34A; text-transform:uppercase; font-weight:700;">O'zbekcha ma'nosi:</div>
+                  <div class="fc-trans-uz">Qo'rqqan, cho'chigan</div>
+                </div>
+
+                <!-- Definition -->
+                <div class="fc-def-text">
+                  <strong>Definition:</strong> When someone is afraid, they feel fear.
+                </div>
+
+                <!-- Example Sentence -->
+                <div class="fc-example-box">
+                  <strong>Misol:</strong> The woman was <strong>afraid</strong> of what she saw.
+                </div>
+
+                <!-- Movie Button Trigger -->
+                <div class="fc-movie-trigger-btn">
+                  <span>🎬</span>
+                  <span>Kinodan parcha (Harry Potter)</span>
+                </div>
+              </div>
+
+              <!-- Cinema Modal Overlay (Simulated Open State) -->
+              <div class="movie-modal-card">
+                <div class="mm-header">
+                  <span>🎬 Harry Potter & The Prisoner of Azkaban</span>
+                  <span style="color:#38BDF8;">4K HDR</span>
+                </div>
+                <div class="mm-video-screen">
+                  <div class="mm-play-circle">▶</div>
+                  <div class="mm-subtitles-card">
+                    <div class="mm-sub-en">
+                      "Harry, you must <span>approach</span> the Hippogriff with respect!"
                     </div>
-                    <div class="movie-sub-uz">
-                      Harri, sen Gipogrifga ehtirom bilan yaqinlashishing kerak!
+                    <div class="mm-sub-uz">
+                      "Harri, sen Gipogrifga ehtirom bilan yaqinlashishing kerak!"
                     </div>
                   </div>
                 </div>
-
-                <!-- Cinema Player Controls -->
-                <div class="cinema-controls">
-                  <span class="cinema-ctrl-btn active">↺ Qayta eshitish</span>
-                  <span class="cinema-ctrl-btn">0.75x Sekin</span>
-                  <span class="cinema-ctrl-btn">Keyingi lavha ❯</span>
-                </div>
               </div>
 
-              <!-- Bottom Gesture Hint -->
-              <div style="display:flex; justify-content:space-between; font-size:6px; color:#94A3B8; padding:0 2mm;">
-                <span>👈 Chapga surish: Qiyin</span>
-                <span>O'ngga surish: Yodlandi 👉</span>
+              <!-- SRS Action Buttons Row (Qiyin, Takrorlash, Yodlandi) -->
+              <div class="srs-buttons-row">
+                <div class="srs-btn-item srs-btn-hard">🔴 Qiyin (20%)</div>
+                <div class="srs-btn-item srs-btn-review">🔵 Takrorlash (35%)</div>
+                <div class="srs-btn-item srs-btn-master">🟢 Yodlandi (45%)</div>
               </div>
-
             </div>
 
-            <!-- Bottom Nav -->
+            <!-- Bottom Nav (Flashcards active) -->
             <div class="bottom-nav">
-              <div class="nav-item"><span>🏠</span><span>Asosiy</span></div>
-              <div class="nav-item active"><span>📖</span><span>Darslar</span></div>
-              <div class="nav-item"><span>⚡</span><span>Testlar</span></div>
-              <div class="nav-item"><span>👤</span><span>Profil</span></div>
+              <div class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">📖</span>
+                <span>Learn</span>
+              </div>
+              <div class="nav-item active">
+                <span class="nav-icon">🎴</span>
+                <span>Flashcards</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🏆</span>
+                <span>Quiz</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">👤</span>
+                <span>Profile</span>
+              </div>
               <div class="home-indicator"></div>
             </div>
 
@@ -2265,47 +2322,51 @@
         <div class="feature-card">
           <div class="card-top">
             <div class="card-icon icon-sky">🎞️</div>
-            <h3 class="card-title">3-5 Soniyalik Mikro-Kliplar</h3>
-            <span class="card-badge badge-blue">Tezkor Yuklanish</span>
+            <h3 class="card-title">3-5 Soniyalik Mikro-Kliplar & Subtitr</h3>
+            <span class="card-badge badge-blue">Tezkor</span>
           </div>
           <p class="card-text">
-            Ilovani og'irlashtirmaslik uchun butun kino emas, aynan kerakli so'z ishlatilgan 3-5 soniyalik qisqa lavha namoyish etiladi. Video MP4/WebM formatida o'ta yuqori siqilgan bo'lib, mobil internetda bir zumda ochiladi.
+            Ilovani og'irlashtirmaslik uchun butun kino emas, aynan kerakli so'z ishlatilgan 3-5 soniyalik qisqa lavha sinxron inglizcha va o'zbekcha subtitrlar bilan namoyish etiladi.
           </p>
           <div class="card-tags">
-            <span class="tech-pill">Micro-Clips</span>
-            <span class="tech-pill">H.264/WebM</span>
-            <span class="tech-pill">Subtitle Sync</span>
+            <span class="tech-pill">Dual Subtitles</span>
+            <span class="tech-pill">Optimized MP4</span>
+            <span class="tech-pill">Audio Wave</span>
           </div>
         </div>
 
         <div class="feature-card">
           <div class="card-top">
-            <div class="card-icon icon-indigo">🔄</div>
-            <h3 class="card-title">3D Interaktiv Flip Animatsiyasi</h3>
-            <span class="card-badge badge-purple">Gesture Controls</span>
+            <div class="card-icon icon-emerald">🔁</div>
+            <h3 class="card-title">3 Darajali Oraliq Takrorlash (SRS)</h3>
+            <span class="card-badge badge-green">Ebbinghaus</span>
           </div>
           <p class="card-text">
-            Kartochka bitta teginishda 3D fazoda aylanadi (front/back). Chapga surish (Swipe Left) so'zni "Qiyin" deb belgilaydi, o'ngga surish (Swipe Right) esa "Yodlandi" qilib keyingi so'zga silliq o'tkazadi.
+            Har bir so'z o'rganilganda 3 ta tugma beriladi:
+            <br>• <strong>Qiyin (Qizil):</strong> Oraliq qisqartirilib, tez-tez takrorlanadi.
+            <br>• <strong>Takrorlash (Moviy):</strong> Ertangi kun rejasiga kiritiladi.
+            <br>• <strong>Yodlandi (Yashil):</strong> Keyingi oraliq 4 kunga cho'ziladi.
           </p>
           <div class="card-tags">
-            <span class="tech-pill">3D Transform</span>
-            <span class="tech-pill">Smooth Swipe</span>
-            <span class="tech-pill">Haptic Feedback</span>
+            <span class="tech-pill">Hard (1 day)</span>
+            <span class="tech-pill">Review (2 days)</span>
+            <span class="tech-pill">Mastered (4 days)</span>
           </div>
         </div>
 
         <div class="feature-card">
           <div class="card-top">
-            <div class="card-icon icon-emerald">🛡️</div>
-            <h3 class="card-title">Fallback & Xavfsiz Video Rejimi</h3>
-            <span class="card-badge badge-green">QA Tasdiqlangan</span>
+            <div class="card-icon icon-indigo">🎧</div>
+            <h3 class="card-title">Gibrid Ovoz Arxitekturasi (TTS + OPUS)</h3>
+            <span class="card-badge badge-purple">Trafik 0 MB</span>
           </div>
           <p class="card-text">
-            Agar foydalanuvchida internet o'chib qolsa yoki serverda video klip vaqtincha mavjud bo'lmasa, ilova xatolik bermasdan avtomatik ravishda statik rasm va TTS ovoz rejimiga silliq o'tadi.
+            Standart rejimda qurilmaning ichki Text-to-Speech (Apple / Google TTS) tizimidan foydalaniladi — bu esa internet sarflamasdan bir zumda tiniq talaffuz beradi.
           </p>
           <div class="card-tags">
-            <span class="tech-pill">Graceful Fallback</span>
-            <span class="tech-pill">Offline Media Cache</span>
+            <span class="tech-pill">On-Device TTS</span>
+            <span class="tech-pill">OPUS 24kbps</span>
+            <span class="tech-pill">Zero Server Load</span>
           </div>
         </div>
 
@@ -2317,14 +2378,14 @@
     <div class="page-footer">
       <div class="footer-left">
         <div class="footer-dot"></div>
-        <span>Ingly Mobil Tizimi • 3D Flashkartalar va Gollivud Kinolari</span>
+        <span>Ingly Mobil Tizimi • Flashkartalar va Gollivud Kinolari</span>
       </div>
       <div>Sahifa 4 / 7</div>
     </div>
   </div>
 
   <!-- ===================================================================
-       PAGE 5: QUIZ SCREEN (TEST VA IMTIHON)
+       PAGE 5: TEST & QUIZ (QUIZSCREEN.JS) - LIGHT THEME
        =================================================================== -->
   <div class="page" id="page5">
     <!-- Header -->
@@ -2335,17 +2396,17 @@
         <span class="brand-tag">Bilimni Tekshirish</span>
       </div>
       <div class="page-meta-badge">
-        <span>TEST & IMTIHON</span>
+        <span>TEST & QUIZ</span>
         <span class="page-num-pill">05 / 07</span>
       </div>
     </div>
 
     <!-- Title Section -->
     <div class="title-section">
-      <div class="section-eyebrow">GAMIFIKATSIYA VA MOSLASHUVCHAN TESTLAR</div>
-      <h2 class="page-main-title">Test va Imtihon (Quiz & Exam)</h2>
+      <div class="section-eyebrow">GAMIFIKATSIYA VA BILIMNI TEKSHIRISH</div>
+      <h2 class="page-main-title">Test va Imtihon (QuizScreen.js)</h2>
       <p class="page-main-desc">
-        4 variantli klassik test, savollar taymeri, ballar hisoblagichi, XP multiplikatori va xatolar ustida avtomatik ishlash tizimi.
+        "Book 1 • Unit 1 Test", savol 7/20, ⏳ 12s taymer, 4 ta oq variant (to'g'ri variant yashil ramkada ✅) va ballar hisoblagichi.
       </p>
     </div>
 
@@ -2365,63 +2426,85 @@
 
             <!-- Screen Body -->
             <div class="screen-content">
-              <!-- Top bar with timer & combo -->
-              <div class="quiz-top-info">
-                <span class="quiz-timer-pill">⏱️ 14s qoldi</span>
-                <span style="font-size:6.5px; font-weight:800; color:#fff;">Savol 7 / 20</span>
-                <span class="quiz-combo-pill">🔥 5x Combo</span>
+              <!-- Unit Nav Bar -->
+              <div class="quiz-unit-badge-row">
+                <span style="font-size:6.8px; font-weight:800; color:#0F172A;">Book 1 • Unit 1 Test</span>
+                <span style="font-size:6.2px; font-weight:800; color:#5B4DFF; background:#EEF0FF; padding:0.6px 1.8mm; border-radius:1mm;">Ball: 6 / 20</span>
               </div>
 
-              <!-- Question Card -->
-              <div class="quiz-question-card">
-                <span class="q-number">INGLIZCHA SO'ZNI TOPING</span>
-                <div class="q-text">"Comprehend"</div>
-                <div class="q-sub">/ˌkɑːm.prɪˈhend/ • Ushbu so'zning o'zbekcha ma'nosi qaysi?</div>
+              <!-- Top Timer & Progress -->
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:6.5px; font-weight:800; color:#D97706; background:#FEF3C7; padding:0.6px 2mm; border-radius:2mm;">⏳ 12s qoldi</span>
+                <span style="font-size:6.8px; font-weight:800; color:#334155;">Savol: 7 / 20</span>
+                <span style="font-size:6.5px; font-weight:800; color:#16A34A; background:#DCFCE7; padding:0.6px 2mm; border-radius:2mm;">🔥 6x Combo</span>
               </div>
 
-              <!-- 4 Options -->
-              <div class="quiz-options-list">
-                <!-- Option A: Correct -->
-                <div class="quiz-opt correct">
-                  <div class="opt-letter">A</div>
-                  <div class="opt-text">Tushunmoq, mohiyatini anglamoq</div>
-                  <span style="margin-left:auto; color:#22C55E; font-weight:900;">✓</span>
+              <!-- Progress bar fill -->
+              <div style="width:100%; height:1.4mm; background:#E2E8F0; border-radius:1mm; overflow:hidden;">
+                <div style="width:35%; height:100%; background:#5B4DFF;"></div>
+              </div>
+
+              <!-- Question Card (#FFFFFF) -->
+              <div class="quiz-q-card">
+                <div style="font-size:5.8px; font-weight:700; color:#94A3B8; text-transform:uppercase;">INGLIZCHA SO'ZNING O'ZBEKCHA TARJIMASI:</div>
+                <div class="quiz-q-word">Comprehend</div>
+                <div style="font-size:6.8px; color:#64748B; font-family:monospace;">/ˌkɑːm.prɪˈhend/ • VERB</div>
+              </div>
+
+              <!-- 4 Options (Light Cards) -->
+              <div style="display:flex; flex-direction:column; gap:1.4mm;">
+                <!-- Option A: Correct (Green Highlighted) -->
+                <div class="quiz-opt-card correct">
+                  <div class="quiz-opt-letter">A</div>
+                  <div style="flex:1;">Tushunmoq, mohiyatini anglamoq</div>
+                  <span style="font-size:8px; font-weight:900;">✓</span>
                 </div>
+
                 <!-- Option B -->
-                <div class="quiz-opt">
-                  <div class="opt-letter">B</div>
-                  <div class="opt-text">Qat'iyan rad etmoq, qaytarmoq</div>
+                <div class="quiz-opt-card">
+                  <div class="quiz-opt-letter">B</div>
+                  <div style="flex:1;">Qat'iyan rad etmoq, qaytarmoq</div>
                 </div>
+
                 <!-- Option C -->
-                <div class="quiz-opt">
-                  <div class="opt-letter">C</div>
-                  <div class="opt-text">Hayratda qoldirmoq, lol qilmoq</div>
+                <div class="quiz-opt-card">
+                  <div class="quiz-opt-letter">C</div>
+                  <div style="flex:1;">Hayratda qoldirmoq, lol qilmoq</div>
                 </div>
+
                 <!-- Option D -->
-                <div class="quiz-opt">
-                  <div class="opt-letter">D</div>
-                  <div class="opt-text">Ijobiy baholamoq, maqullamoq</div>
+                <div class="quiz-opt-card">
+                  <div class="quiz-opt-letter">D</div>
+                  <div style="flex:1;">Ijobiy baholamoq, maqullamoq</div>
                 </div>
               </div>
 
-              <!-- Feedback Toast -->
-              <div class="quiz-feedback-toast">
-                <span>🎉 Barakalla! To'g'ri javob</span>
-                <span>+50 XP (5x Combo)</span>
-              </div>
-
-              <!-- Progress bar -->
-              <div style="background:rgba(255,255,255,0.06); height:1.2mm; border-radius:1mm; overflow:hidden;">
-                <div style="width:35%; height:100%; background:linear-gradient(90deg,#5B4DFF,#38BDF8);"></div>
-              </div>
+              <!-- Next Question Button -->
+              <div class="quiz-next-btn">Keyingi Savol ➔</div>
             </div>
 
-            <!-- Bottom Nav -->
+            <!-- Bottom Nav (Quiz active) -->
             <div class="bottom-nav">
-              <div class="nav-item"><span>🏠</span><span>Asosiy</span></div>
-              <div class="nav-item"><span>📖</span><span>Darslar</span></div>
-              <div class="nav-item active"><span>⚡</span><span>Testlar</span></div>
-              <div class="nav-item"><span>👤</span><span>Profil</span></div>
+              <div class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">📖</span>
+                <span>Learn</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🎴</span>
+                <span>Flashcards</span>
+              </div>
+              <div class="nav-item active">
+                <span class="nav-icon">🏆</span>
+                <span>Quiz</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">👤</span>
+                <span>Profile</span>
+              </div>
               <div class="home-indicator"></div>
             </div>
 
@@ -2459,7 +2542,7 @@
             <span class="card-badge badge-amber">Gamifikatsiya</span>
           </div>
           <p class="card-text">
-            Ketma-ket to'g'ri berilgan har bir javob combo ko'paytirgichini oshiradi (2x, 3x, 5x). O'quvchi ko'proq ball yig'ib haftalik va umumiy reytingda (Leaderboard) boshqa o'quvchilardan o'zib ketishga intiladi.
+            Ketma-ket to'g'ri berilgan har bir javob combo ko'paytirgichini oshiradi (2x, 3x, 6x). O'quvchi ko'proq ball yig'ib reytingda boshqa o'quvchilardan o'zib ketishga intiladi.
           </p>
           <div class="card-tags">
             <span class="tech-pill">Combo Multiplier</span>
@@ -2475,7 +2558,7 @@
             <span class="card-badge badge-blue">Aqlli Tahlil</span>
           </div>
           <p class="card-text">
-            O'quvchi test davomida qaysi so'zda adashsa, tizim uni eslab qoladi va dars oxirida o'sha xato qilingan so'zlarni qaytadan takrorlashga majburiy qo'yadi. Natijada xatolar bir umrga to'g'rilanadi.
+            O'quvchi test davomida qaysi so'zda adashsa, tizim uni eslab qoladi va dars oxirida o'sha xato qilingan so'zlarni qaytadan takrorlashga majburiy qo'yadi.
           </p>
           <div class="card-tags">
             <span class="tech-pill">Zero Blind Spots</span>
@@ -2513,7 +2596,7 @@
   </div>
 
   <!-- ===================================================================
-       PAGE 6: PROFILE & SECURITY (PROFIL VA XAVFSIZLIK)
+       PAGE 6: SHAXSIY PROFIL & XAVFSIZLIK (PROFILESCREEN.JS)
        =================================================================== -->
   <div class="page" id="page6">
     <!-- Header -->
@@ -2532,9 +2615,9 @@
     <!-- Title Section -->
     <div class="title-section">
       <div class="section-eyebrow">SHAXSIY SOZLAMALAR VA BANK STANDARTIDAGI HIMOYASI</div>
-      <h2 class="page-main-title">Profil & Xavfsizlik (Profile & Security)</h2>
+      <h2 class="page-main-title">Shaxsiy Profil & Xavfsizlik (ProfileScreen.js)</h2>
       <p class="page-main-desc">
-        Avatar tanlash, kunlik maqsad sozlamalari, har 6 oyda parolni majburiy yangilash eslatmasi va eski parolni kiritib yangilash modali.
+        Avatar tanlash, kunlik maqsad sozlamalari, 6 oylik xavfsizlik eslatmasi va eski parolni kiritish orqali yangilash modali.
       </p>
     </div>
 
@@ -2554,76 +2637,114 @@
 
             <!-- Screen Body -->
             <div class="screen-content">
-              <!-- Profile Top Card -->
-              <div class="profile-card-top">
-                <div class="profile-avatar-big">👨‍🎓</div>
-                <div>
-                  <div class="p-name">Jasur Rahimov</div>
-                  <div class="p-handle">@jasur_dev • +998 90 123-45-67</div>
-                  <span class="p-badge">⭐️ VIP A'zo</span>
-                </div>
-              </div>
+              <!-- Profile Header Card -->
+              <div class="profile-main-card">
+                <div class="p-avatar-circle">👨‍🎓</div>
+                <h4 class="p-title-name">Jasur Rahimov</h4>
+                <div class="p-sub-handle">@jasur_dev • +998 90 123 45 67</div>
 
-              <!-- Avatar Selection Grid -->
-              <div>
-                <div style="font-size:6.5px; font-weight:800; color:#CBD5E1; margin-bottom:1mm;">AVATARNI TANLANG</div>
-                <div style="display:flex; justify-content:space-between; font-size:10px; background:rgba(255,255,255,0.04); padding:1.2mm; border-radius:1.5mm;">
-                  <span style="background:rgba(91,77,255,0.4); border-radius:1mm; padding:0.5mm 1mm;">👨‍🎓</span>
-                  <span>👩‍🎓</span>
-                  <span>🦁</span>
-                  <span>🦊</span>
-                  <span>🚀</span>
-                  <span>⚡️</span>
-                  <span>👑</span>
-                  <span>🎯</span>
+                <!-- Badges -->
+                <div style="display:flex; justify-content:center; gap:1.5mm;">
+                  <span style="background:#FFEDD5; color:#C2410C; font-size:5.5px; font-weight:800; padding:0.5px 1.8mm; border-radius:1mm;">🔥 7 kunlik streak</span>
+                  <span style="background:#EEF0FF; color:#5B4DFF; font-size:5.5px; font-weight:800; padding:0.5px 1.8mm; border-radius:1mm;">🔑 Parol</span>
                 </div>
-              </div>
 
-              <!-- 6 Oylik Xavfsizlik Eslatmasi (Alert Banner) -->
-              <div class="security-banner">
-                <span class="sec-icon">🛡️</span>
-                <div>
-                  <div class="sec-title">Xavfsizlik eslatmasi (6 oy)</div>
-                  <div class="sec-desc">
-                    Siz parolingizni 6 oydan buyon yangilamadingiz. Hisobingiz xavfsizligini ta'minlash uchun yangi parol o'rnatish tavsiya etiladi.
+                <!-- Stats Grid -->
+                <div class="p-stats-row">
+                  <div class="p-stat-box">
+                    <div class="p-stat-num">1,420</div>
+                    <div class="p-stat-label">Yodlangan</div>
+                  </div>
+                  <div class="p-stat-box">
+                    <div class="p-stat-num" style="color:#0284C7;">320</div>
+                    <div class="p-stat-label">Takrorlash</div>
+                  </div>
+                  <div class="p-stat-box">
+                    <div class="p-stat-num" style="color:#DC2626;">45</div>
+                    <div class="p-stat-label">Qiyin</div>
+                  </div>
+                  <div class="p-stat-box">
+                    <div class="p-stat-num" style="color:#16A34A;">94%</div>
+                    <div class="p-stat-label">Aniqlik</div>
                   </div>
                 </div>
               </div>
 
-              <!-- Change Password Modal Inside Screen -->
-              <div class="pwd-modal-box">
-                <div class="pwd-modal-title">
-                  <span>🔑</span>
-                  <span>Parolni yangilash modali</span>
+              <!-- Daily Goal Selector Card -->
+              <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:2.5mm; padding:1.6mm 2mm;">
+                <div style="font-size:6.2px; font-weight:800; color:#0F172A; margin-bottom:1mm;">KUNLIK MAQSAD (DAILY GOAL)</div>
+                <div style="display:flex; gap:1.2mm;">
+                  <span style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; padding:1mm 0; border-radius:1.2mm; text-align:center; font-size:5.8px; color:#64748B;">10 ta</span>
+                  <span style="flex:1; background:#5B4DFF; color:#FFF; padding:1mm 0; border-radius:1.2mm; text-align:center; font-size:5.8px; font-weight:800;">20 ta (Faol)</span>
+                  <span style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; padding:1mm 0; border-radius:1.2mm; text-align:center; font-size:5.8px; color:#64748B;">30 ta</span>
+                  <span style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; padding:1mm 0; border-radius:1.2mm; text-align:center; font-size:5.8px; color:#64748B;">50 ta</span>
                 </div>
-                <div class="pwd-input-group">
-                  <div class="pwd-input-fake">
-                    <span>Eski parol:</span>
-                    <span class="pwd-dots">••••••••</span>
-                    <span>👁️</span>
-                  </div>
-                  <div class="pwd-input-fake">
-                    <span>Yangi parol:</span>
-                    <span class="pwd-dots">••••••••••••</span>
-                    <span>👁️</span>
-                  </div>
-                  <div class="pwd-input-fake">
-                    <span>Tasdiqlash:</span>
-                    <span class="pwd-dots">••••••••••••</span>
-                    <span>👁️</span>
-                  </div>
-                </div>
-                <div class="pwd-btn-save">Parolni saqlash 🔑</div>
               </div>
 
+              <!-- 6-Month Security Alert Banner -->
+              <div class="p-security-alert-box">
+                <span style="font-size:12px;">🛡️</span>
+                <div style="flex:1;">
+                  <div style="font-size:6.5px; font-weight:800; color:#B45309;">Parolni o'zgartirish tavsiya etiladi</div>
+                  <div style="font-size:5.4px; color:#92400E; line-height:1.2;">6 oydan beri yangilanmadi. Hisobingiz xavfsizligi uchun yangilang.</div>
+                </div>
+                <span style="font-size:7px; color:#B45309; font-weight:800;">6 oy bo'ldi ⚠️</span>
+              </div>
+
+              <!-- Change Password Modal (Open State inside screen) -->
+              <div class="p-password-modal-card">
+                <div class="p-modal-header">
+                  <div style="display:flex; align-items:center; gap:3px;">
+                    <span style="font-size:9px;">🔑</span>
+                    <span style="font-size:7.2px; font-weight:900; color:#0F172A;">Parolni O'zgartirish</span>
+                  </div>
+                  <span style="font-size:7px; color:#94A3B8;">✕</span>
+                </div>
+
+                <!-- 3 Password Inputs -->
+                <div class="p-input-field">
+                  <span>Joriy (eski) parol:</span>
+                  <span style="letter-spacing:1.5px; font-weight:900; color:#0F172A;">••••••••</span>
+                  <span>👁️</span>
+                </div>
+                <div class="p-input-field">
+                  <span>Yangi parol:</span>
+                  <span style="letter-spacing:1.5px; font-weight:900; color:#0F172A;">••••••••••••</span>
+                  <span>👁️</span>
+                </div>
+                <div class="p-input-field">
+                  <span>Tasdiqlash:</span>
+                  <span style="letter-spacing:1.5px; font-weight:900; color:#0F172A;">••••••••••••</span>
+                  <span>👁️</span>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="p-save-btn">Saqlash ✓</div>
+              </div>
             </div>
 
-            <!-- Bottom Nav -->
+            <!-- Bottom Nav (Profile active) -->
             <div class="bottom-nav">
-              <div class="nav-item"><span>🏠</span><span>Asosiy</span></div>
-              <div class="nav-item"><span>📖</span><span>Darslar</span></div>
-              <div class="nav-item"><span>⚡</span><span>Testlar</span></div>
-              <div class="nav-item active"><span>👤</span><span>Profil</span></div>
+              <div class="nav-item">
+                <span class="nav-icon">🏠</span>
+                <span>Home</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">📖</span>
+                <span>Learn</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🎴</span>
+                <span>Flashcards</span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-icon">🏆</span>
+                <span>Quiz</span>
+              </div>
+              <div class="nav-item active">
+                <span class="nav-icon">👤</span>
+                <span>Profile</span>
+              </div>
               <div class="home-indicator"></div>
             </div>
 
@@ -2641,11 +2762,11 @@
             <span class="card-badge badge-amber">Fintech Standarti</span>
           </div>
           <p class="card-text">
-            Kiberxavfsizlik qoidalariga binoan, tizim oxirgi parol yangilangan sanani kuzatib boradi (`passwordUpdatedAt`). Agar 180 kundan oshsa, foydalanuvchiga yumshoq eslatma (Notification Banner) ko'rsatiladi va parolni yangilash tavsiya qilinadi.
+            Kiberxavfsizlik qoidalariga binoan, tizim oxirgi parol yangilangan sanani kuzatib boradi (`passwordUpdatedAt`). Agar 180 kundan oshsa, foydalanuvchiga "6 oydan oshdi ⚠️" ogohlantirish banneri ko'rsatiladi.
           </p>
           <div class="card-tags">
             <span class="tech-pill">180 Days Rotation</span>
-            <span class="tech-pill">LastPasswordReminder</span>
+            <span class="tech-pill">isPasswordExpired</span>
             <span class="tech-pill">Bcrypt Hash</span>
           </div>
         </div>
@@ -2657,7 +2778,7 @@
             <span class="card-badge badge-purple">Zero Account Takeover</span>
           </div>
           <p class="card-text">
-            Birov telefonni vaqtincha olib qo'yganda ham hisobni o'g'irlab ketolmaydi! Yangi parol qo'yish uchun avval <strong>joriy (eski) parol</strong> kiritilishi va serverda tekshirilishi shart. Yangi parol kamida 6 belgidan iborat bo'lishi qat'iy nazorat qilinadi.
+            Birov telefonni olib qo'yganda ham hisobni o'g'irlab ketolmaydi! Yangi parol qo'yish uchun avval <strong>joriy (eski) parol</strong> kiritilishi va serverda tekshirilishi shart. Yangi parol kamida 6 belgidan iborat bo'lishi qat'iy nazorat qilinadi.
           </p>
           <div class="card-tags">
             <span class="tech-pill">Old Password Verification</span>
@@ -2672,7 +2793,7 @@
             <span class="card-badge badge-blue">QA Tasdiqlangan</span>
           </div>
           <p class="card-text">
-            "Hisobdan chiqish" tugmasi bosilganda barcha kesh to'liq o'chiriladi: `USER_PROFILE`, `WORD_PROGRESS`, `USER_STREAKS` va `SYNC_QUEUE` xotiradan tozalanadi. Boshqa odam kirganda eski progress aralashib ketish ehtimoli 0 ga teng.
+            "Hisobdan chiqish" tugmasi bosilganda barcha kesh to'liq o'chiriladi: `USER_PROFILE`, `WORD_PROGRESS`, `USER_STREAKS` va `SYNC_QUEUE` xotiradan tozalanadi. Boshqa odam kirganda eski progress aralashib ketmaydi.
           </p>
           <div class="card-tags">
             <span class="tech-pill">Full Cache Purge</span>
@@ -2711,7 +2832,7 @@
   </div>
 
   <!-- ===================================================================
-       PAGE 7: WEB ADMIN PANEL (BOSHQUARUV PANELI)
+       PAGE 7: WEB ADMIN PANEL (LIGHT BROWSER MOCKUP)
        =================================================================== -->
   <div class="page" id="page7">
     <!-- Header -->
@@ -2732,142 +2853,157 @@
       <div class="section-eyebrow">MARKAZIY BOSHQARUV VA MONETIZATSIYA BOSHQARUVI</div>
       <h2 class="page-main-title">Web Admin Panel (React.js + Tailwind)</h2>
       <p class="page-main-desc">
-        Real-time foydalanuvchilar jadvali, parollarni boshqarish, so'zlar bazasi (CRUD) va ilovani yangilamasdan sozlanadigan Feature Flags (AdMob va VIP).
+        Real-time foydalanuvchilar jadvali, maskalangan xavfsiz parollar, so'zlar bazasi (CRUD) va ilovani yangilamasdan sozlanadigan Feature Flags (AdMob va VIP).
       </p>
     </div>
 
-    <!-- Desktop Browser Mockup -->
-    <div class="admin-desktop-wrapper">
-      <!-- Browser Titlebar -->
-      <div class="browser-titlebar">
-        <div class="window-dots">
-          <div class="dot dot-red"></div>
-          <div class="dot dot-yellow"></div>
-          <div class="dot dot-green"></div>
+    <!-- Desktop Browser Mockup (Light Theme) -->
+    <div class="admin-browser-window">
+      <!-- Titlebar -->
+      <div class="admin-browser-bar">
+        <div style="display:flex; gap:1.5mm;">
+          <div class="admin-dot admin-dot-red"></div>
+          <div class="admin-dot admin-dot-yellow"></div>
+          <div class="admin-dot admin-dot-green"></div>
         </div>
-        <div class="browser-url-bar">
-          <span class="url-lock">🔒</span>
-          <span>https://admin.ingly.uz/dashboard</span>
-          <span style="margin-left:auto; color:#22C55E;">● Supabase Connected</span>
+        <div class="admin-url-input">
+          <span style="color:#16A34A;">🔒</span>
+          <span>https://admin.ingly.uz/users</span>
+          <span style="margin-left:auto; color:#16A34A; font-weight:700;">● Supabase Connected</span>
         </div>
       </div>
 
-      <!-- Admin Workspace -->
-      <div class="admin-workspace">
-        
+      <!-- Admin App Layout -->
+      <div class="admin-app-layout">
         <!-- Sidebar -->
-        <div class="admin-sidebar">
-          <div class="admin-side-brand">
-            <span style="color:#5B4DFF; font-size:12px;">⚡</span>
-            <span>Ingly Control</span>
+        <div class="admin-app-sidebar">
+          <div style="display:flex; align-items:center; gap:2mm; margin-bottom:2mm;">
+            <div style="width:6mm; height:6mm; border-radius:1.5mm; background:linear-gradient(135deg,#5B4DFF,#38BDF8); display:flex; align-items:center; justify-content:center; color:#FFF; font-weight:900; font-size:6.5px;">I</div>
+            <span style="font-size:8.5px; font-weight:900; color:#0F172A;">Ingly Admin</span>
           </div>
-          <div class="admin-menu-item active">📊 Dashboard</div>
-          <div class="admin-menu-item">👥 Foydalanuvchilar</div>
-          <div class="admin-menu-item">📖 So'zlar Bazasi</div>
-          <div class="admin-menu-item">💰 Monetizatsiya</div>
-          <div class="admin-menu-item">🔔 Push Xabarlar</div>
-          <div class="admin-menu-item">🛡️ Audit Loglar</div>
-          <div style="margin-top:auto; font-size:6px; color:#64748B;">Admin: SuperAdmin Jasur</div>
+
+          <div class="admin-side-item">📊 Dashboard</div>
+          <div class="admin-side-item active">👥 Foydalanuvchilar</div>
+          <div class="admin-side-item">📖 So'zlar Bazasi</div>
+          <div class="admin-side-item">💰 Monetizatsiya</div>
+          <div class="admin-side-item">🔔 Push Xabarlar</div>
+          <div class="admin-side-item">🛡️ Audit Loglar</div>
+
+          <div style="margin-top:auto; font-size:6px; color:#64748B; background:#FFF; border:1px solid #E2E8F0; padding:1.5mm; border-radius:1.5mm;">
+            SuperAdmin: <strong>Jasur</strong><br>
+            Roli: To'liq vakolat
+          </div>
         </div>
 
-        <!-- Main Dashboard View -->
-        <div class="admin-content-main">
-          
+        <!-- Main Workspace View -->
+        <div class="admin-main-view">
           <!-- 4 KPI Cards -->
-          <div class="admin-kpi-grid">
-            <div class="kpi-card">
-              <div class="kpi-label">Jami O'quvchilar</div>
-              <div class="kpi-val">24,850</div>
-              <div class="kpi-diff">▲ +12% bu hafta</div>
+          <div class="admin-kpis-grid">
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-title">Jami O'quvchilar</div>
+              <div class="admin-kpi-number">24,850</div>
+              <div class="admin-kpi-diff">▲ +12% bu hafta</div>
             </div>
-            <div class="kpi-card">
-              <div class="kpi-label">Faol O'quvchilar (DAU)</div>
-              <div class="kpi-val">8,420</div>
-              <div class="kpi-diff">▲ +8% faollik</div>
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-title">Faol O'quvchilar (DAU)</div>
+              <div class="admin-kpi-number">8,420</div>
+              <div class="admin-kpi-diff">▲ +8% faollik</div>
             </div>
-            <div class="kpi-card">
-              <div class="kpi-label">Yodlangan So'zlar</div>
-              <div class="kpi-val">342,100 ta</div>
-              <div class="kpi-diff">▲ +15k bugun</div>
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-title">Yodlangan So'zlar</div>
+              <div class="admin-kpi-number">342,100 ta</div>
+              <div class="admin-kpi-diff">▲ +15k bugun</div>
             </div>
-            <div class="kpi-card">
-              <div class="kpi-label">Server Reaksiyasi</div>
-              <div class="kpi-val">24 ms</div>
-              <div class="kpi-diff" style="color:#38BDF8;">● Supabase RLS</div>
+            <div class="admin-kpi-card">
+              <div class="admin-kpi-title">Server Reaksiyasi</div>
+              <div class="admin-kpi-number">24 ms</div>
+              <div class="admin-kpi-diff" style="color:#5B4DFF;">● Supabase RLS</div>
             </div>
           </div>
 
-          <!-- Feature Flags Strip -->
-          <div class="flags-strip">
-            <span style="font-size:7px; font-weight:800; color:#fff;">FEATURE FLAGS (ZAMONAVIY BOSHQARUV):</span>
-            <div class="flag-group">
-              <div class="flag-item">
+          <!-- Feature Flags Bar -->
+          <div class="admin-flags-bar">
+            <span style="font-size:7px; font-weight:800; color:#0F172A;">FEATURE FLAGS (ZAMONAVIY BOSHQARUV):</span>
+            <div style="display:flex; gap:4mm;">
+              <div style="display:flex; align-items:center; gap:1.5mm; font-size:6.8px; font-weight:700; color:#334155;">
                 <span>Google AdMob:</span>
-                <div class="toggle-ui toggle-off"></div>
-                <span style="color:#94A3B8; font-size:6px;">O'chiq (100% Bepul)</span>
+                <span style="background:#E2E8F0; color:#64748B; padding:0.4px 1.4mm; border-radius:1mm; font-size:5.5px;">O'chiq (100% Bepul)</span>
               </div>
-              <div class="flag-item">
+              <div style="display:flex; align-items:center; gap:1.5mm; font-size:6.8px; font-weight:700; color:#334155;">
                 <span>VIP Pullik Obuna:</span>
-                <div class="toggle-ui toggle-off"></div>
-                <span style="color:#94A3B8; font-size:6px;">O'chiq (Barcha 6 kitob ochiq)</span>
+                <span style="background:#E2E8F0; color:#64748B; padding:0.4px 1.4mm; border-radius:1mm; font-size:5.5px;">O'chiq (Barcha 6 kitob ochiq)</span>
               </div>
-              <div class="flag-item">
+              <div style="display:flex; align-items:center; gap:1.5mm; font-size:6.8px; font-weight:700; color:#334155;">
                 <span>Server TTS:</span>
-                <div class="toggle-ui toggle-on"></div>
-                <span style="color:#4ADE80; font-size:6px;">Faol</span>
+                <span style="background:#DCFCE7; color:#16A34A; padding:0.4px 1.4mm; border-radius:1mm; font-size:5.5px;">● Faol</span>
               </div>
             </div>
           </div>
 
-          <!-- Users Management Table -->
-          <div class="admin-table-box">
-            <div class="table-title-row">
-              <span>FOYDALANUVCHILARNI BOSHQARISH (REAL-TIME USERS)</span>
-              <span style="color:#38BDF8; font-size:6.5px;">+ Yangi foydalanuvchi</span>
-            </div>
-            <table class="admin-table">
+          <!-- Users Table -->
+          <div class="admin-users-table-card">
+            <table class="admin-users-table">
               <thead>
                 <tr>
                   <th>Foydalanuvchi</th>
-                  <th>Telefon</th>
-                  <th>Progress</th>
-                  <th>Status</th>
-                  <th>Xavfsizlik / Amallar</th>
+                  <th>Aloqa & Login</th>
+                  <th>O'rganish Progressi</th>
+                  <th>Parol (Xavfsizlik)</th>
+                  <th>Holat</th>
+                  <th>Boshqaruv (Admin)</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td><strong>Alisher Zokirov</strong> (@alisher)</td>
-                  <td>+998 90 123-45-67</td>
+                  <td><strong>Alisher Zokirov</strong></td>
+                  <td>@alisher • +998 90 123 45 67</td>
                   <td>Book 2 (Unit 14) • 420 so'z</td>
-                  <td><span class="status-pill sp-active">Faol</span></td>
-                  <td><span class="action-btn-sm">🔑 Parolni tiklash</span> <span class="action-btn-sm" style="color:#F87171;">🚫 Bloklash</span></td>
+                  <td><span style="font-family:monospace; color:#64748B;">•••••••• (Himoyalangan)</span></td>
+                  <td><span class="pill-active-user">Faol</span></td>
+                  <td><span class="btn-admin-action">🔑 Parol tiklash</span></td>
                 </tr>
                 <tr>
-                  <td><strong>Malika Karimova</strong> (@malika_k)</td>
-                  <td>+998 93 987-65-43</td>
+                  <td><strong>Malika Karimova</strong></td>
+                  <td>@malika_k • +998 93 987 65 43</td>
                   <td>Book 4 (Unit 5) • 1,280 so'z</td>
-                  <td><span class="status-pill sp-active">Faol</span></td>
-                  <td><span class="action-btn-sm">🔑 Parolni tiklash</span> <span class="action-btn-sm" style="color:#F87171;">🚫 Bloklash</span></td>
+                  <td><span style="font-family:monospace; color:#64748B;">•••••••• (Himoyalangan)</span></td>
+                  <td><span class="pill-active-user">Faol</span></td>
+                  <td><span class="btn-admin-action">🔑 Parol tiklash</span></td>
                 </tr>
                 <tr>
-                  <td><strong>Bekzod Umarov</strong> (@bekzod99)</td>
-                  <td>+998 97 111-22-33</td>
+                  <td><strong>Bekzod Umarov</strong></td>
+                  <td>@bekzod99 • +998 97 111 22 33</td>
                   <td>Book 1 (Unit 2) • 40 so'z</td>
-                  <td><span class="status-pill sp-blocked">Bloklangan</span></td>
-                  <td><span class="action-btn-sm" style="color:#4ADE80;">🔓 Blokdan chiqarish</span></td>
+                  <td><span style="font-family:monospace; color:#64748B;">•••••••• (Himoyalangan)</span></td>
+                  <td><span class="pill-blocked-user">Bloklangan</span></td>
+                  <td><span class="btn-admin-action" style="color:#16A34A; background:#DCFCE7;">🔓 Blokdan chiqarish</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Dilnoza Rahimova</strong></td>
+                  <td>@dilnoza_r • +998 94 445 67 89</td>
+                  <td>Book 3 (Unit 21) • 890 so'z</td>
+                  <td><span style="font-family:monospace; color:#64748B;">•••••••• (Himoyalangan)</span></td>
+                  <td><span class="pill-active-user">Faol</span></td>
+                  <td><span class="btn-admin-action">🔑 Parol tiklash</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Otabek Shodiyev</strong></td>
+                  <td>@otabek_sh • +998 91 555 88 99</td>
+                  <td>Book 5 (Unit 8) • 2,140 so'z</td>
+                  <td><span style="font-family:monospace; color:#64748B;">•••••••• (Himoyalangan)</span></td>
+                  <td><span class="pill-active-user">Faol</span></td>
+                  <td><span class="btn-admin-action">🔑 Parol tiklash</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
 
         </div>
-
       </div>
     </div>
 
     <!-- Bottom 4 Feature Cards Grid for Page 7 -->
-    <div class="page7-bottom-grid">
+    <div class="page7-bottom-cards">
       <div class="feature-card">
         <div class="card-top">
           <div class="card-icon icon-indigo">👥</div>
