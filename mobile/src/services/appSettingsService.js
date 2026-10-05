@@ -152,8 +152,73 @@ export async function initAppSettings() {
   return currentSettings;
 }
 
+/**
+ * Yangi xarid (kirim) tranzaksiyasini Supabase app_settings (transactions_data) ga yozish
+ */
+export async function recordTransaction({
+  type = 'income',
+  userName = 'Foydalanuvchi',
+  username = 'user',
+  itemTitle = 'VIP Obuna',
+  itemType = 'vip',
+  amount = 29000,
+  paymentMethod = 'Click',
+  note = ''
+}) {
+  const newTx = {
+    id: 'tx_' + Date.now(),
+    type,
+    user_name: userName,
+    username,
+    user_avatar: '👤',
+    item_title: itemTitle,
+    item_type: itemType,
+    amount: Number(amount) || 0,
+    payment_method: paymentMethod,
+    status: 'completed',
+    created_at: new Date().toISOString(),
+    note
+  };
+
+  // 1. Mahalliy xotiraga qo'shish
+  try {
+    const localTxs = (await getStorageItem('ingly_transactions', [])) || [];
+    const updatedLocal = [newTx, ...localTxs];
+    await setStorageItem('ingly_transactions', updatedLocal);
+  } catch (e) {}
+
+  // 2. Supabase app_settings dagi transactions_data ga qo'shish
+  if (isSupabaseConfigured()) {
+    try {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('setting_value')
+        .eq('setting_key', 'transactions_data')
+        .maybeSingle();
+
+      let currentList = [];
+      if (data && data.setting_value) {
+        currentList = typeof data.setting_value === 'string' && data.setting_value.startsWith('[')
+          ? JSON.parse(data.setting_value)
+          : (Array.isArray(data.setting_value) ? data.setting_value : []);
+      }
+      const updatedList = [newTx, ...currentList];
+
+      await supabase.from('app_settings').upsert({
+        setting_key: 'transactions_data',
+        setting_value: updatedList,
+        description: 'Ingly ilovasi moliya, kirim va chiqimlar yozuvlari'
+      }, { onConflict: 'setting_key' });
+    } catch (err) {
+      console.warn('recordTransaction Supabase error:', err);
+    }
+  }
+  return newTx;
+}
+
 export default {
   initAppSettings,
   getAppSettings,
   onSettingsChange,
+  recordTransaction,
 };

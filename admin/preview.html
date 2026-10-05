@@ -327,6 +327,102 @@
         const saved = localStorage.getItem('ingly_latest_announcement');
         try { return saved ? JSON.parse(saved) : null; } catch (e) { return null; }
       });
+
+      // Moliya & Kirim-Chiqimlar (Tranzaksiyalar) State
+      const [transactions, setTransactions] = useState(() => {
+        const saved = localStorage.getItem('ingly_transactions');
+        if (saved) {
+          try { return JSON.parse(saved); } catch (e) {}
+        }
+        return [
+          {
+            id: 'tx_101',
+            type: 'income',
+            user_name: 'Dilnoza Rahimova',
+            username: 'dilnoza_r',
+            user_avatar: '👩‍🎓',
+            item_title: 'Ingly VIP Oylik Obuna 👑',
+            item_type: 'vip',
+            amount: 29000,
+            payment_method: 'Click',
+            status: 'completed',
+            created_at: '2026-10-05T01:45:00.000Z',
+            note: 'Click ID: clk_982341'
+          },
+          {
+            id: 'tx_102',
+            type: 'income',
+            user_name: 'Anvar Karimov',
+            username: 'anvar_k',
+            user_avatar: '👨‍🎓',
+            item_title: 'Book 2 - Pre-Intermediate (Kitob xaridi) 📚',
+            item_type: 'book',
+            amount: 19000,
+            payment_method: 'Payme',
+            status: 'completed',
+            created_at: '2026-10-04T19:20:00.000Z',
+            note: 'Payme ID: pm_552190'
+          },
+          {
+            id: 'tx_103',
+            type: 'expense',
+            user_name: 'Supabase Cloud',
+            username: 'system',
+            user_avatar: '⚡',
+            item_title: 'PostgreSQL Bulutli Server & Realtime to\'lovi',
+            item_type: 'server',
+            amount: 120000,
+            payment_method: 'Bank Karta',
+            status: 'completed',
+            created_at: '2026-10-03T10:00:00.000Z',
+            note: 'Oylik bulutli server to\'lovi'
+          },
+          {
+            id: 'tx_104',
+            type: 'income',
+            user_name: 'Madina Umarova',
+            username: 'madina_u',
+            user_avatar: '👩‍💻',
+            item_title: 'Book 3 - Intermediate (Kitob xaridi) 📚',
+            item_type: 'book',
+            amount: 19000,
+            payment_method: 'Uzcard/Humo',
+            status: 'completed',
+            created_at: '2026-10-02T16:10:00.000Z',
+            note: 'Karta: 8600 **** 5678'
+          },
+          {
+            id: 'tx_105',
+            type: 'expense',
+            user_name: 'SMS Xizmati Provider',
+            username: 'system',
+            user_avatar: '📱',
+            item_title: 'Foydalanuvchilar SMS xizmati paketi',
+            item_type: 'sms',
+            amount: 45000,
+            payment_method: 'Click',
+            status: 'completed',
+            created_at: '2026-10-01T12:00:00.000Z',
+            note: '500 ta SMS paketi'
+          }
+        ];
+      });
+
+      const [showTxModal, setShowTxModal] = useState(false);
+      const [txFilterType, setTxFilterType] = useState('all'); // 'all', 'income', 'expense'
+      const [txSearchTerm, setTxSearchTerm] = useState('');
+      const [txForm, setTxForm] = useState({
+        type: 'income',
+        user_name: '',
+        username: '',
+        item_title: 'Ingly VIP Oylik Obuna 👑',
+        item_type: 'vip',
+        amount: 29000,
+        payment_method: 'Click',
+        status: 'completed',
+        note: ''
+      });
+
       const [isSavingPrices, setIsSavingPrices] = useState(false);
       const [selectedMovie, setSelectedMovie] = useState(null);
       const [videoTab, setVideoTab] = useState('youtube'); // 'youtube' yoki 'html5'
@@ -525,6 +621,14 @@
                     const val = String(item.setting_value || '8600 5304 1234 5678');
                     setCardReceiverNumber(val);
                     localStorage.setItem('ingly_card_receiver_number', val);
+                  } else if (item.setting_key === 'transactions_data') {
+                    const parsed = typeof item.setting_value === 'string' && item.setting_value.startsWith('[')
+                      ? JSON.parse(item.setting_value)
+                      : item.setting_value;
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                      setTransactions(parsed);
+                      localStorage.setItem('ingly_transactions', JSON.stringify(parsed));
+                    }
                   }
                 });
                 showToast('Supabase sozlamalari yuklandi!');
@@ -592,6 +696,100 @@
           u.rate = 0.9;
           window.speechSynthesis.speak(u);
         }
+      };
+
+      // Moliya & Tranzaksiyalarni Saqlash
+      const handleSaveTransaction = (e) => {
+        e && e.preventDefault && e.preventDefault();
+        const amountNum = Number(txForm.amount) || 0;
+        if (amountNum <= 0) {
+          showToast('Iltimos, to\'g\'ri summani kiriting!');
+          return;
+        }
+
+        const newTx = {
+          id: 'tx_' + Date.now(),
+          type: txForm.type || 'income',
+          user_name: txForm.user_name.trim() || (txForm.type === 'income' ? 'Foydalanuvchi' : 'Kompaniya'),
+          username: txForm.username.trim() || 'user',
+          user_avatar: txForm.type === 'income' ? '👤' : '📉',
+          item_title: txForm.item_title.trim() || (txForm.type === 'income' ? 'Ingly Xarid' : 'Xarajat'),
+          item_type: txForm.item_type || 'other',
+          amount: amountNum,
+          payment_method: txForm.payment_method || 'Click',
+          status: txForm.status || 'completed',
+          created_at: new Date().toISOString(),
+          note: txForm.note.trim()
+        };
+
+        const updated = [newTx, ...transactions];
+        setTransactions(updated);
+        localStorage.setItem('ingly_transactions', JSON.stringify(updated));
+        setShowTxModal(false);
+        showToast(newTx.type === 'income' ? 'Yangi kirim muvaffaqiyatli qo\'shildi! 💰' : 'Yangi chiqim qayd etildi! 📉');
+
+        if (supabaseClient) {
+          try {
+            supabaseClient.from('app_settings').upsert({
+              setting_key: 'transactions_data',
+              setting_value: updated,
+              description: 'Ingly ilovasi moliya, kirim va chiqimlar yozuvlari'
+            }, { onConflict: 'setting_key' }).then(() => {});
+          } catch (e) {
+            console.warn('Supabase transactions save error:', e);
+          }
+        }
+      };
+
+      // Tranzaksiyani O'chirish
+      const handleDeleteTransaction = (txId) => {
+        if (!confirm('Ushbu tranzaksiya yozuvini o\'chirmoqchimisiz?')) return;
+        const updated = transactions.filter(t => t.id !== txId);
+        setTransactions(updated);
+        localStorage.setItem('ingly_transactions', JSON.stringify(updated));
+        showToast('Tranzaksiya o\'chirildi!');
+
+        if (supabaseClient) {
+          try {
+            supabaseClient.from('app_settings').upsert({
+              setting_key: 'transactions_data',
+              setting_value: updated,
+              description: 'Ingly ilovasi moliya, kirim va chiqimlar yozuvlari'
+            }, { onConflict: 'setting_key' }).then(() => {});
+          } catch (e) {
+            console.warn('Supabase transactions delete error:', e);
+          }
+        }
+      };
+
+      // Moliya hisobotini CSV formatda eksport qilish
+      const handleExportFinancesCSV = () => {
+        if (!transactions.length) {
+          showToast('Eksport qilish uchun tranzaksiyalar mavjud emas!');
+          return;
+        }
+        const headers = ["ID", "Turi", "Foydalanuvchi", "Username", "Mahsulot/Xarajat", "Summa (so'm)", "To'lov Tizimi", "Holat", "Sana", "Izoh"];
+        const rows = transactions.map(t => [
+          t.id,
+          t.type === 'income' ? 'Kirim' : 'Chiqim',
+          `"${(t.user_name || '').replace(/"/g, '""')}"`,
+          `"${(t.username || '').replace(/"/g, '""')}"`,
+          `"${(t.item_title || '').replace(/"/g, '""')}"`,
+          t.amount,
+          t.payment_method,
+          t.status,
+          `"${new Date(t.created_at).toLocaleString('uz-UZ')}"`,
+          `"${(t.note || '').replace(/"/g, '""')}"`
+        ]);
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `ingly_moliya_kirim_chiqim_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Moliya hisoboti Excel/CSV formatida yuklab olindi! 📊');
       };
 
       // Reklama switchi
@@ -1281,7 +1479,8 @@
                   { id: 'dashboard', label: 'Bosh Sahifa', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
                   { id: 'words', label: "So'zlar Bazasi (4000)", icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
                   { id: 'users', label: 'Foydalanuvchilar', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-                  { id: 'monetization', label: 'Monetizatsiya & Reklama', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                  { id: 'finances', label: 'Moliya & Kirim-Chiqim', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                  { id: 'monetization', label: 'Monetizatsiya & Reklama', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
                   { id: 'admins', label: 'Adminlar & Huquqlar', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
                   { id: 'notifications', label: 'Push Xabarnomalar', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' }
                 ].map(item => (
@@ -2109,6 +2308,283 @@
                   </div>
                 </div>
               )}
+
+              {/* 3.1. FINANCES TAB: Moliya, Xaridlar & Kirim-Chiqimlar Boshqaruvi */}
+              {tab === 'finances' && (() => {
+                const totalIncome = transactions
+                  .filter(t => t.type === 'income' && t.status === 'completed')
+                  .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+
+                const totalExpense = transactions
+                  .filter(t => t.type === 'expense' && t.status === 'completed')
+                  .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+
+                const netProfit = totalIncome - totalExpense;
+                const totalSalesCount = transactions.filter(t => t.type === 'income' && t.status === 'completed').length;
+
+                // Filtrlash
+                const filteredTransactions = transactions.filter(t => {
+                  if (txFilterType === 'income' && t.type !== 'income') return false;
+                  if (txFilterType === 'expense' && t.type !== 'expense') return false;
+                  if (txFilterType === 'vip' && t.item_type !== 'vip') return false;
+                  if (txFilterType === 'book' && t.item_type !== 'book') return false;
+
+                  const s = (txSearchTerm || '').trim().toLowerCase();
+                  if (!s) return true;
+                  const uName = (t.user_name || '').toLowerCase();
+                  const uLogin = (t.username || '').toLowerCase();
+                  const itemTitle = (t.item_title || '').toLowerCase();
+                  const pMethod = (t.payment_method || '').toLowerCase();
+                  return uName.includes(s) || uLogin.includes(s) || itemTitle.includes(s) || pMethod.includes(s);
+                });
+
+                return (
+                  <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-8 animate-in fade-in duration-200">
+                    {/* Header: Title & Actions */}
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      <div>
+                        <div class="flex items-center gap-3">
+                          <span class="text-3xl">💰</span>
+                          <div>
+                            <h2 class="text-2xl font-extrabold text-slate-900">Moliya & Kirim-Chiqimlar Boshqaruvi</h2>
+                            <p class="text-sm text-slate-500 mt-0.5">
+                              Foydalanuvchilar qanday obuna yoki kitob sotib oldi, qancha to'lov qildi va operatsion chiqimlar
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center gap-3 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={handleExportFinancesCSV}
+                          class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-2xs"
+                        >
+                          <span>📊</span>
+                          <span>CSV / Excel Eksport</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTxForm({
+                              type: 'income',
+                              user_name: '',
+                              username: '',
+                              item_title: 'Ingly VIP Oylik Obuna 👑',
+                              item_type: 'vip',
+                              amount: 29000,
+                              payment_method: 'Click',
+                              status: 'completed',
+                              note: ''
+                            });
+                            setShowTxModal(true);
+                          }}
+                          class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md cursor-pointer"
+                        >
+                          <span>+ Yangi Kirim / Chiqim Qo'shish</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 4 Ta Asosiy Statistika Kartasi */}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                      {/* 1. Jami Kirim (Tushum) */}
+                      <div class="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-5 rounded-2xl border border-emerald-200/80">
+                        <div class="flex items-center justify-between mb-2">
+                          <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Jami Kirim (Daromad)</span>
+                          <span class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">📈</span>
+                        </div>
+                        <div class="text-2xl font-black text-emerald-700">
+                          +{Number(totalIncome).toLocaleString('uz-UZ')} <span class="text-xs font-bold text-emerald-600">so'm</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-600/90 mt-1 font-medium">Barcha VIP va kitob sotuvlaridan tushum</p>
+                      </div>
+
+                      {/* 2. Jami Chiqim (Xarajatlar) */}
+                      <div class="bg-gradient-to-br from-rose-500/10 to-pink-500/5 p-5 rounded-2xl border border-rose-200/80">
+                        <div class="flex items-center justify-between mb-2">
+                          <span class="text-xs font-bold uppercase tracking-wider text-rose-800">Jami Chiqim (Xarajatlar)</span>
+                          <span class="w-8 h-8 rounded-xl bg-rose-500 text-white flex items-center justify-center font-bold text-sm">📉</span>
+                        </div>
+                        <div class="text-2xl font-black text-rose-700">
+                          -{Number(totalExpense).toLocaleString('uz-UZ')} <span class="text-xs font-bold text-rose-600">so'm</span>
+                        </div>
+                        <p class="text-[11px] text-rose-600/90 mt-1 font-medium">Server, hosting va xizmatlar xarajatlari</p>
+                      </div>
+
+                      {/* 3. Sof Foyda */}
+                      <div class="bg-gradient-to-br from-brand-500/10 to-indigo-500/5 p-5 rounded-2xl border border-brand-200/80">
+                        <div class="flex items-center justify-between mb-2">
+                          <span class="text-xs font-bold uppercase tracking-wider text-brand-800">Sof Foyda (Kirim - Chiqim)</span>
+                          <span class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-sm">💎</span>
+                        </div>
+                        <div class={`text-2xl font-black ${netProfit >= 0 ? 'text-brand-700' : 'text-rose-700'}`}>
+                          {netProfit >= 0 ? '+' : ''}{Number(netProfit).toLocaleString('uz-UZ')} <span class="text-xs font-bold text-brand-600">so'm</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1 font-medium">Sof daromad ko'rsatkichi</p>
+                      </div>
+
+                      {/* 4. Jami Xaridlar Soni */}
+                      <div class="bg-gradient-to-br from-purple-500/10 to-violet-500/5 p-5 rounded-2xl border border-purple-200/80">
+                        <div class="flex items-center justify-between mb-2">
+                          <span class="text-xs font-bold uppercase tracking-wider text-purple-800">Jami Xaridlar Soni</span>
+                          <span class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-sm">🛍️</span>
+                        </div>
+                        <div class="text-2xl font-black text-purple-700">
+                          {totalSalesCount} <span class="text-xs font-bold text-purple-600">ta xarid</span>
+                        </div>
+                        <p class="text-[11px] text-purple-600/90 mt-1 font-medium">Foydalanuvchilar amalga oshirgan xaridlar</p>
+                      </div>
+                    </div>
+
+                    {/* Filter & Search Toolbar */}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-slate-100">
+                      <div class="flex items-center gap-2 overflow-x-auto pb-1">
+                        {[
+                          { id: 'all', label: 'Barchasi', count: transactions.length },
+                          { id: 'income', label: '🟢 Kirimlar', count: transactions.filter(t => t.type === 'income').length },
+                          { id: 'expense', label: '🔴 Chiqimlar', count: transactions.filter(t => t.type === 'expense').length },
+                          { id: 'vip', label: '👑 VIP Obunalar', count: transactions.filter(t => t.item_type === 'vip').length },
+                          { id: 'book', label: '📚 Kitoblar', count: transactions.filter(t => t.item_type === 'book').length }
+                        ].map(f => (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => setTxFilterType(f.id)}
+                            class={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 ${
+                              txFilterType === f.id
+                                ? 'bg-slate-900 text-white shadow-xs'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            }`}
+                          >
+                            <span>{f.label} ({f.count})</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div class="relative w-full sm:w-64">
+                        <input
+                          type="text"
+                          placeholder="Foydalanuvchi yoki mahsulot..."
+                          value={txSearchTerm}
+                          onChange={(e) => setTxSearchTerm(e.target.value)}
+                          class="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-brand-500 shadow-2xs"
+                        />
+                        <span class="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
+                      </div>
+                    </div>
+
+                    {/* Tranzaksiyalar Jadvali */}
+                    <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                      <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                          <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 text-xs uppercase tracking-wider">
+                            <th class="py-3.5 px-4">Foydalanuvchi (Xaridor)</th>
+                            <th class="py-3.5 px-4">Nima Oldi / Xarajat</th>
+                            <th class="py-3.5 px-4">Turi</th>
+                            <th class="py-3.5 px-4">Summa</th>
+                            <th class="py-3.5 px-4">To'lov Tizimi</th>
+                            <th class="py-3.5 px-4">Sana & Vaqt</th>
+                            <th class="py-3.5 px-4">Status</th>
+                            <th class="py-3.5 px-4 text-right">Amallar</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium text-slate-700 text-xs">
+                          {filteredTransactions.length === 0 ? (
+                            <tr>
+                              <td colSpan="8" class="text-center py-8 text-slate-400 font-semibold">
+                                Mos keluvchi tranzaksiyalar topilmadi.
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredTransactions.map(t => (
+                              <tr key={t.id} class="hover:bg-slate-50/80 transition">
+                                {/* Foydalanuvchi */}
+                                <td class="py-3.5 px-4">
+                                  <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm shrink-0">
+                                      {t.user_avatar || (t.type === 'income' ? '👤' : '📉')}
+                                    </div>
+                                    <div>
+                                      <div class="font-extrabold text-slate-900 text-xs">{t.user_name}</div>
+                                      <div class="text-[10px] text-slate-400 font-mono">@{t.username}</div>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                {/* Nima oldi */}
+                                <td class="py-3.5 px-4">
+                                  <div class="font-bold text-slate-800">{t.item_title}</div>
+                                  {t.note ? <div class="text-[10px] text-slate-400 mt-0.5">{t.note}</div> : null}
+                                </td>
+
+                                {/* Turi */}
+                                <td class="py-3.5 px-4">
+                                  <span class={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
+                                    t.type === 'income' 
+                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                                      : 'bg-rose-100 text-rose-800 border border-rose-200'
+                                  }`}>
+                                    {t.type === 'income' ? '🟢 Kirim' : '🔴 Chiqim'}
+                                  </span>
+                                </td>
+
+                                {/* Summa */}
+                                <td class="py-3.5 px-4">
+                                  <span class={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                    {t.type === 'income' ? '+' : '-'}{Number(t.amount).toLocaleString('uz-UZ')} so'm
+                                  </span>
+                                </td>
+
+                                {/* To'lov Tizimi */}
+                                <td class="py-3.5 px-4">
+                                  <span class={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold ${
+                                    t.payment_method === 'Click' 
+                                      ? 'bg-blue-100 text-blue-700' 
+                                      : t.payment_method === 'Payme' 
+                                        ? 'bg-teal-100 text-teal-700' 
+                                        : 'bg-purple-100 text-purple-700'
+                                  }`}>
+                                    {t.payment_method}
+                                  </span>
+                                </td>
+
+                                {/* Sana */}
+                                <td class="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
+                                  {new Date(t.created_at).toLocaleString('uz-UZ', { 
+                                    year: 'numeric', month: '2-digit', day: '2-digit', 
+                                    hour: '2-digit', minute: '2-digit' 
+                                  })}
+                                </td>
+
+                                {/* Status */}
+                                <td class="py-3.5 px-4">
+                                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    ✓ To'landi
+                                  </span>
+                                </td>
+
+                                {/* Amallar */}
+                                <td class="py-3.5 px-4 text-right">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteTransaction(t.id)}
+                                    title="Tranzaksiyani o'chirish"
+                                    class="text-xs font-bold text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                  >
+                                    🗑️ O'chirish
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 4. MONETIZATION TAB (Feature Flags) */}
               {tab === 'monetization' && (
@@ -3177,6 +3653,135 @@
                           <span>Parolni Saqlash</span>
                         </>
                       )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+          {/* Yangi Kirim / Chiqim Qo'shish Modali */}
+          {showTxModal && (
+            <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div class="flex items-center gap-2.5">
+                    <span class="text-2xl">💰</span>
+                    <div>
+                      <h3 class="font-extrabold text-base text-slate-900">Yangi Tranzaksiya Qo'shish</h3>
+                      <p class="text-xs text-slate-400">Kirim (foydalanuvchi xaridi) yoki Chiqim (xarajat) kiritish</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowTxModal(false)} class="text-slate-400 hover:text-slate-600 font-bold p-1 cursor-pointer">✕</button>
+                </div>
+
+                <form onSubmit={handleSaveTransaction} class="space-y-3.5 text-xs">
+                  {/* Tranzaksiya turi */}
+                  <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setTxForm({ ...txForm, type: 'income', item_title: 'Ingly VIP Oylik Obuna 👑', item_type: 'vip', amount: 29000 })}
+                      class={`py-2 text-center rounded-lg font-bold transition cursor-pointer ${txForm.type === 'income' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                      🟢 Kirim (Foydalanuvchi Xaridi)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTxForm({ ...txForm, type: 'expense', user_name: 'Kompaniya / Provider', username: 'system', item_title: 'Server & Hosting to\'lovi', item_type: 'server', amount: 50000 })}
+                      class={`py-2 text-center rounded-lg font-bold transition cursor-pointer ${txForm.type === 'expense' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                      🔴 Chiqim (Xarajat)
+                    </button>
+                  </div>
+
+                  {/* Foydalanuvchi tanlash yoki kiritish */}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">{txForm.type === 'income' ? 'Foydalanuvchi Ismi:' : 'Xarajat Qabul Qiluvchi:'}</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder={txForm.type === 'income' ? "Masalan: Jasur Bekmirzayev" : "Masalan: Supabase Cloud"}
+                        value={txForm.user_name}
+                        onChange={(e) => setTxForm({ ...txForm, user_name: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Username (@login):</label>
+                      <input
+                        type="text"
+                        placeholder="jasur_pro"
+                        value={txForm.username}
+                        onChange={(e) => setTxForm({ ...txForm, username: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Mahsulot / Nima oldi */}
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">{txForm.type === 'income' ? 'Nima Sotib Oldi?' : 'Xarajat Maqsadi:'}</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Masalan: Ingly VIP Oylik Obuna 👑 yoki Book 2 - Pre-Intermediate 📚"
+                      value={txForm.item_title}
+                      onChange={(e) => setTxForm({ ...txForm, item_title: e.target.value })}
+                      class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                    />
+                  </div>
+
+                  {/* Summa va To'lov Tizimi */}
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Summa (so'm):</label>
+                      <input
+                        type="number"
+                        required
+                        value={txForm.amount}
+                        onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-black text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                        placeholder="29000"
+                      />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">To'lov Tizimi:</label>
+                      <select
+                        value={txForm.payment_method}
+                        onChange={(e) => setTxForm({ ...txForm, payment_method: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                      >
+                        <option value="Click">🔵 Click</option>
+                        <option value="Payme">🟢 Payme</option>
+                        <option value="Uzcard/Humo">🟣 Bank Karta (Uzcard/Humo)</option>
+                        <option value="Naqd">💵 Naqd pul</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Izoh */}
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Qo'shimcha Izoh (Ixtiyoriy):</label>
+                    <input
+                      type="text"
+                      placeholder="Chek raqami yoki to'lov tafsiloti..."
+                      value={txForm.note}
+                      onChange={(e) => setTxForm({ ...txForm, note: e.target.value })}
+                      class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
+                    />
+                  </div>
+
+                  <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setShowTxModal(false)}
+                      class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                    >
+                      Bekor qilish
+                    </button>
+                    <button
+                      type="submit"
+                      class="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition cursor-pointer"
+                    >
+                      Saqlash
                     </button>
                   </div>
                 </form>

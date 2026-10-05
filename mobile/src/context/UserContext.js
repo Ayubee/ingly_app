@@ -11,6 +11,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import { getStorageItem, setStorageItem, removeStorageItem, STORAGE_KEYS } from '../services/storage.js';
 import { syncUserWithSupabase, syncAllLocalUsersToSupabase, fetchUserRemoteStatus, verifyUserCredentialsRemote } from '../services/userService.js';
+import { recordTransaction } from '../services/appSettingsService.js';
 import { hashPassword, verifyPassword } from '../utils/crypto.js';
 
 const UserContext = createContext();
@@ -815,6 +816,22 @@ export function UserProvider({ children }) {
       console.warn('VIP obunani Supabase ga saqlashda xato:', e);
     }
 
+    // Admin panel moliya hisobotiga kirim tranzaksiyasini yozish
+    try {
+      await recordTransaction({
+        type: 'income',
+        userName: user.name || 'Foydalanuvchi',
+        username: user.username || 'user',
+        itemTitle: paymentDetails.itemTitle || 'Ingly VIP Oylik Obuna (1 oy)',
+        itemType: 'vip',
+        amount: paymentDetails.price || paymentDetails.amount || 29000,
+        paymentMethod: paymentDetails.method || paymentDetails.paymentMethod || 'Click',
+        note: 'Mobil ilovadan oylik VIP obuna xaridi',
+      });
+    } catch (txErr) {
+      console.warn('VIP tranzaksiya yozishda xato:', txErr);
+    }
+
     return { success: true, expiresAt };
   };
 
@@ -841,6 +858,22 @@ export function UserProvider({ children }) {
     try {
       await syncUserWithSupabase(updated);
     } catch (e) {}
+
+    // Admin panel moliya hisobotiga kirim tranzaksiyasini yozish
+    try {
+      await recordTransaction({
+        type: 'income',
+        userName: user.name || 'Foydalanuvchi',
+        username: user.username || 'user',
+        itemTitle: paymentDetails.itemTitle || `Book ${numId} (To'liq ochish)`,
+        itemType: 'book',
+        amount: paymentDetails.price || paymentDetails.amount || 10000,
+        paymentMethod: paymentDetails.method || paymentDetails.paymentMethod || 'Click',
+        note: `Mobil ilovadan Book ${numId} kitobini xarid qilish`,
+      });
+    } catch (txErr) {
+      console.warn('Kitob tranzaksiya yozishda xato:', txErr);
+    }
 
     return { success: true, bookId: numId };
   };
