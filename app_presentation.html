@@ -2023,7 +2023,7 @@
       </div>
 
       <!-- Feature Badges 5x1 -->
-      <div class="cover-pills-grid">
+      <div class="cover-pills-grid" style="grid-template-columns: repeat(4, 1fr); gap: 2.5mm; margin-bottom: 2.5mm;">
         <div class="cover-pill">
           <div class="cover-pill-icon">📚</div>
           <div class="cover-pill-title">4000 So'z & 6 Kitob</div>
@@ -2035,19 +2035,36 @@
           <div class="cover-pill-desc">Gollivud filmlaridan 3-5s lavhalar</div>
         </div>
         <div class="cover-pill" style="border-color: rgba(91, 77, 255, 0.4); background: #F5F3FF;">
-          <div class="cover-pill-icon">✍️</div>
-          <div class="cover-pill-title" style="color: #5B4DFF;">Shaxsiy Lug'at</div>
-          <div class="cover-pill-desc">Avto-tarjima & Aqlli kartochkalar</div>
+          <div class="cover-pill-icon">🏆</div>
+          <div class="cover-pill-title" style="color: #5B4DFF;">Reyting & 12 Daraja</div>
+          <div class="cover-pill-desc">Leaderboard, XP ballar va shohsupa</div>
         </div>
-        <div class="cover-pill" style="border-color: rgba(0, 115, 255, 0.4); background: #F0F7FF;">
-          <div class="cover-pill-icon">💳</div>
-          <div class="cover-pill-title" style="color: #0056C6;">Click & Payme</div>
-          <div class="cover-pill-desc">🔵 Click Up, 🟢 Payme & Bank karta</div>
+        <div class="cover-pill" style="border-color: rgba(16, 185, 129, 0.4); background: #F0FDF4;">
+          <div class="cover-pill-icon">🌐</div>
+          <div class="cover-pill-title" style="color: #15803D;">3 Ta Til (i18n)</div>
+          <div class="cover-pill-desc">🇺🇿 O'zbek • 🇷🇺 Ruscha • 🇬🇧 Inglizcha</div>
+        </div>
+      </div>
+      <div class="cover-pills-grid" style="grid-template-columns: repeat(4, 1fr); gap: 2.5mm;">
+        <div class="cover-pill" style="border-color: rgba(59, 130, 246, 0.4); background: #EFF6FF;">
+          <div class="cover-pill-icon">📢</div>
+          <div class="cover-pill-title" style="color: #1D4ED8;">Yangiliklar Tizimi</div>
+          <div class="cover-pill-desc">Bir marta ko'rib yopiluvchi smart e'lonlar</div>
+        </div>
+        <div class="cover-pill" style="border-color: rgba(245, 158, 11, 0.4); background: #FFFBEB;">
+          <div class="cover-pill-icon">💵</div>
+          <div class="cover-pill-title" style="color: #B45309;">Moliya Jurnali</div>
+          <div class="cover-pill-desc">Kirim-chiqimlar & Chegirmali narxlar</div>
+        </div>
+        <div class="cover-pill" style="border-color: rgba(168, 85, 247, 0.4); background: #FAF5FF;">
+          <div class="cover-pill-icon">✍️</div>
+          <div class="cover-pill-title" style="color: #7E22CE;">Shaxsiy Lug'at (MyWords)</div>
+          <div class="cover-pill-desc">Avto-tarjima & Xatolarni to'g'irlash</div>
         </div>
         <div class="cover-pill">
           <div class="cover-pill-icon">🛡️</div>
-          <div class="cover-pill-title">Bank Standartidagi Himoya</div>
-          <div class="cover-pill-desc">6 oylik parol va Supabase xavfsizligi</div>
+          <div class="cover-pill-title">Foydalanuvchilar Nazorati</div>
+          <div class="cover-pill-desc">Admin va userlarni qo'shish / o'chirish</div>
         </div>
       </div>
 
@@ -2153,6 +2170,30 @@
               </div>
 
               <!-- 3. Books Section Title -->
+              <!-- 2.1. News Banner (Smart Dismiss) -->
+              <div style="background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border: 1px solid #BFDBFE; border-radius: 2mm; padding: 1.5mm 2.2mm; margin-bottom: 2mm; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 1.5mm;">
+                  <span style="font-size: 8px;">📢</span>
+                  <div>
+                    <div style="font-size: 5.5px; font-weight: 800; color: #1E40AF;">v1.4.0 Yangilik: Leaderboard & 3 ta Til!</div>
+                    <div style="font-size: 4.3px; color: #3B82F6;">Bir marta bosganda yopiladi, yangi yangilik kelsa yana chiqadi</div>
+                  </div>
+                </div>
+                <span style="font-size: 5px; background: #2563EB; color: #FFF; font-weight: 800; padding: 0.5px 1.5mm; border-radius: 1mm;">✕</span>
+              </div>
+
+              <!-- 2.2. Top Leaderboard & Level Snippet -->
+              <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 2mm; padding: 1.5mm 2.2mm; margin-bottom: 2mm; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 1.5mm;">
+                  <span style="font-size: 8px;">🏆</span>
+                  <div>
+                    <div style="font-size: 5.5px; font-weight: 800; color: #0F172A;">Top O'quvchilar Reytingi</div>
+                    <div style="font-size: 4.3px; color: #64748B;">Darajangiz: <strong style="color: #5B4DFF;">Level 4: Scholar 🎓</strong> (640 so'z)</div>
+                  </div>
+                </div>
+                <span style="font-size: 5px; background: #EDE9FE; color: #5B4DFF; font-weight: 800; padding: 0.8px 1.8mm; border-radius: 1mm;">#3 O'rinda</span>
+              </div>
+
               <div class="books-grid-title">
                 <span>KITOB VA DARAJALAR (PAUL NATION)</span>
                 <span style="color:#5B4DFF; font-size:6px; font-weight:800;">6 ta Kitob</span>
@@ -2311,10 +2352,26 @@
       <!-- Feature Details Right -->
       <div class="features-list">
         
+        <div class="feature-card" style="border-left: 3px solid #3B82F6; background: rgba(239, 246, 255, 0.4); margin-bottom: 2mm;">
+          <div class="card-top">
+            <div class="card-icon icon-sky">📢</div>
+            <h3 class="card-title">Aqlli Yangiliklar & E'lonlar Tizimi</h3>
+            <span class="card-badge badge-blue">Yangi v1.4.0</span>
+          </div>
+          <p class="card-text">
+            Ilovaga yangilik qo'shilganda Bosh sahifada do'stona bildirishnoma chiqadi. Foydalanuvchi bir marta bosishi bilan yopiladi va qayta bezovta qilmaydi. Keyinchalik yangi yangilik kiritilsa, tizim uni avtomatik qayta ko'rsatadi.
+          </p>
+          <div class="card-tags">
+            <span class="tech-pill">Smart Dismiss</span>
+            <span class="tech-pill">Version Sync</span>
+            <span class="tech-pill">One-time Banner</span>
+          </div>
+        </div>
+
         <div class="feature-card highlight">
           <div class="card-top">
             <div class="card-icon icon-amber">🔥</div>
-            <h3 class="card-title">Daily Streak (Olovcha) Algoritmi</h3>
+            <h3 class="card-title">Daily Streak & 12 Darajali Reyting</h3>
             <span class="card-badge badge-amber">Motivatsiya</span>
           </div>
           <p class="card-text">
@@ -3162,6 +3219,19 @@
                 </div>
               </div>
 
+              <!-- Language Selector Card (UZ / RU / EN) -->
+              <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:2.5mm; padding:1.6mm 2mm; margin-top:1.5mm;">
+                <div style="font-size:6.2px; font-weight:800; color:#0F172A; margin-bottom:1mm; display:flex; justify-content:space-between; align-items:center;">
+                  <span>🌐 ILOVA TILI (LANGUAGE)</span>
+                  <span style="font-size:5px; color:#5B4DFF; font-weight:800;">3 ta til faol</span>
+                </div>
+                <div style="display:flex; gap:1.2mm;">
+                  <span style="flex:1; background:#5B4DFF; color:#FFF; padding:1mm 0; border-radius:1.2mm; text-align:center; font-size:5.8px; font-weight:800;">🇺🇿 O'zbek</span>
+                  <span style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; padding:1mm 0; border-radius:1.2mm; text-align:center; font-size:5.8px; color:#64748B;">🇷🇺 Русский</span>
+                  <span style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; padding:1mm 0; border-radius:1.2mm; text-align:center; font-size:5.8px; color:#64748B;">🇬🇧 English</span>
+                </div>
+              </div>
+
               <!-- 6-Month Security Alert Banner -->
               <div class="p-security-alert-box">
                 <span style="font-size:12px;">🛡️</span>
@@ -3442,7 +3512,10 @@
                   <td>Book 2 (Unit 14) • 420 so'z</td>
                   <td><span style="font-family:monospace; color:#64748B;">•••••••• (Himoyalangan)</span></td>
                   <td><span class="pill-active-user">Faol</span></td>
-                  <td><span class="btn-admin-action">🔑 Parol tiklash</span></td>
+                  <td>
+                    <span class="btn-admin-action">🔑 Parol</span>
+                    <span class="btn-admin-action" style="background:#FFE4E6; color:#9F1239; border-color:#FECDD3; margin-left:1mm;">🗑️ O'chirish</span>
+                  </td>
                 </tr>
                 <tr>
                   <td><strong>Malika Karimova</strong></td>
@@ -3592,8 +3665,12 @@
 
                 <!-- Price Card -->
                 <div class="pay-price-card">
-                  <div class="pay-price-label">To'lov summasi:</div>
+                  <div>
+                    <div class="pay-price-label">To'lov summasi:</div>
+                    <div style="font-size: 5px; color: #16A34A; font-weight: 800;">🔥 50% Chegirma</div>
+                  </div>
                   <div style="text-align:right;">
+                    <div style="font-size: 5.5px; color: #94A3B8; text-decoration: line-through;">59 000 so'm</div>
                     <span class="pay-price-val">29 000 so'm</span>
                     <span class="pay-price-period">/ oy</span>
                   </div>
