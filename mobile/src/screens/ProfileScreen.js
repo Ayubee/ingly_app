@@ -4,7 +4,7 @@
  * bildirishnomalar va natijalarni 0 dan boshlash.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 import PaymentModal from '../components/PaymentModal.js';
 import { getUserLevelInfo, LEVELS_CONFIG } from '../services/leaderboardService.js';
+import { captureStorageSession, isStorageSessionCurrent } from '../services/storage.js';
 
 const AVAILABLE_AVATARS = ['👨‍🎓', '👩‍🎓', '🦁', '🦊', '🚀', '⚡️', '👑', '🎯', '🦉', '🌟'];
 const REMINDER_TIMES = ['08:00', '13:00', '19:00', '21:00'];
@@ -46,6 +47,8 @@ export default function ProfileScreen({ onNavigate }) {
     isVipActive,
     isBookPurchasedOrFree,
   } = useUser();
+  const account = useRef(captureStorageSession());
+  account.current = captureStorageSession();
 
   // App Settings (Monetizatsiya va Feature Flags)
   const [appSettings, setAppSettings] = useState(getAppSettings());
@@ -71,19 +74,13 @@ export default function ProfileScreen({ onNavigate }) {
   // To'lov muvaffaqiyatli yakunlanganda chaqiriladigan funksiya
   const handlePaymentSuccess = async (details) => {
     setPaymentModal((prev) => ({ ...prev, visible: false }));
-    if (details.itemType === 'vip') {
-      await subscribeVipMonthly(details);
-      Alert.alert(
-        'Tabriklaymiz! 👑',
-        'Ingly VIP oylik obunasi muvaffaqiyatli faollashtirildi! Barcha 6 ta kitob va kinolar ochiq.'
-      );
-    } else if (details.itemType === 'book') {
-      await purchaseBook(details.bookId, details);
-      Alert.alert(
-        'Xarid muvaffaqiyatli! 📚',
-        `${details.itemTitle} muvaffaqiyatli xarid qilindi va hisobingizda ochildi.`
-      );
-    }
+    if (details.mock !== true) return;
+    const result = details.itemType === 'vip'
+      ? await subscribeVipMonthly(details)
+      : await purchaseBook(details.bookId, details);
+    Alert.alert('TEST/MOCK', result?.success
+      ? 'Sinov uchun ochildi. Haqiqiy xarid yoki obuna yaratilmagan.'
+      : (result?.error || 'Sinov yakunlanmadi.'));
   };
 
   // Edit Modal State
@@ -154,11 +151,11 @@ export default function ProfileScreen({ onNavigate }) {
 
   // Parolni o'zgartirishni tasdiqlash va saqlash
   const handleChangePasswordSubmit = async () => {
-    const cleanOld = oldPassword.trim();
-    const cleanNew = newPassword.trim();
-    const cleanConfirm = confirmPassword.trim();
+    const cleanOld = oldPassword;
+    const cleanNew = newPassword;
+    const cleanConfirm = confirmPassword;
 
-    if (user.password && !cleanOld) {
+    if (!cleanOld) {
       Alert.alert('Xatolik', 'Iltimos, avval joriy (eski) parolingizni kiriting!');
       return;
     }
@@ -234,17 +231,22 @@ export default function ProfileScreen({ onNavigate }) {
   };
 
   // Kunlik maqsadni o'zgartirish (0 ga teng bo'lishidan himoyalangan)
+  const savePreference = async (updates) => {
+    const result = await updateProfile(updates);
+    if (result?.success === false) Alert.alert('Saqlash xatosi', result.error);
+  };
   const handleGoalChange = (wordsCount) => {
-    updateProfile({ dailyGoal: Number(wordsCount) || 20 });
+    savePreference({ dailyGoal: Number(wordsCount) || 20 });
   };
 
   // Eslatma vaqtini o'zgartirish
   const handleReminderChange = (time) => {
-    updateProfile({ reminderTime: time });
+    savePreference({ reminderTime: time });
   };
 
   // Progressni tozalash
   const handleResetConfirm = () => {
+    const session = account.current;
     Alert.alert(
       'Natijalarni tozalash',
       'Haqiqatan ham barcha o\'rganilgan so\'zlar va natijalarni 0 ga qaytarmoqchimisiz?',
@@ -253,8 +255,11 @@ export default function ProfileScreen({ onNavigate }) {
         {
           text: 'Ha, tozalansin',
           style: 'destructive',
-          onPress: () => {
-            resetProgress();
+          onPress: async () => {
+            if (!isStorageSessionCurrent(session)) return;
+            try { await resetProgress(); }
+            catch { Alert.alert('Saqlash xatosi', 'Natijalar tozalanmadi.'); return; }
+            if (!isStorageSessionCurrent(session)) return;
             Alert.alert('Tayyor', 'Barcha natijalar 0 ga qaytarildi!');
           },
         },
@@ -264,6 +269,7 @@ export default function ProfileScreen({ onNavigate }) {
 
   // Hisobdan chiqish
   const handleLogoutConfirm = () => {
+    const session = account.current;
     Alert.alert(
       'Hisobdan chiqish',
       'Chiqishni xohlaysizmi? Siz qaytadan profil yaratishingiz yoki kirishingiz mumkin bo\'ladi.',
@@ -272,7 +278,7 @@ export default function ProfileScreen({ onNavigate }) {
         {
           text: 'Chiqish',
           style: 'destructive',
-          onPress: () => logout(),
+          onPress: () => { if (isStorageSessionCurrent(session)) logout().catch(() => Alert.alert('Chiqish xatosi', 'Qayta urinib ko‘ring.')); },
         },
       ]
     );
@@ -504,7 +510,7 @@ export default function ProfileScreen({ onNavigate }) {
             </View>
             <Switch
               value={user.notificationsEnabled}
-              onValueChange={(val) => updateProfile({ notificationsEnabled: val })}
+              onValueChange={(val) => savePreference({ notificationsEnabled: val })}
               trackColor={{ false: '#CBD5E1', true: colors.primary.DEFAULT }}
               thumbColor="#FFFFFF"
             />
@@ -548,7 +554,7 @@ export default function ProfileScreen({ onNavigate }) {
             </View>
             <Switch
               value={user.soundEnabled}
-              onValueChange={(val) => updateProfile({ soundEnabled: val })}
+              onValueChange={(val) => savePreference({ soundEnabled: val })}
               trackColor={{ false: '#CBD5E1', true: colors.primary.DEFAULT }}
               thumbColor="#FFFFFF"
             />
@@ -963,7 +969,7 @@ export default function ProfileScreen({ onNavigate }) {
                     </Text>
 
                     {/* Eski Parol */}
-                    {Boolean(user.password) && (
+                    {user.authMethod !== 'google' && (
                       <View>
                         <Text style={styles.modalLabel}>Joriy (eski) parol: *</Text>
                         <View style={styles.passwordInputContainer}>

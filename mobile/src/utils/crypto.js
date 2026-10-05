@@ -1,11 +1,12 @@
 /**
  * INGLY SECURITY UTILITIES
- * Pure JavaScript cryptographic functions for password hashing, salting,
+ * Legacy generic digest utility. Password/session helpers fail closed.
+ * Retained for compatibility; it must not establish authentication,
  * and secure token generation. FIPS 180-4 compliant SHA-256.
  * Zero native dependencies - 100% compatible with React Native, Web, and Node.js.
  */
 
-export const INGLY_SALT_PREFIX = 'ingly_v1_secure_salt_';
+// Password hashing and custom sessions are retired. Auth belongs to Supabase.
 
 /**
  * Pure JavaScript SHA-256 implementation
@@ -99,15 +100,7 @@ export function sha256(ascii) {
  * @param {string} [customSalt] Optional custom salt
  * @returns {string} 64-character hex hash
  */
-export function hashPassword(password, customSalt = INGLY_SALT_PREFIX) {
-  if (!password) return '';
-  const cleanPass = String(password).trim();
-  // If already a 64-character hex string (e.g. already hashed), return as-is
-  if (/^[a-f0-9]{64}$/i.test(cleanPass)) {
-    return cleanPass.toLowerCase();
-  }
-  return sha256(customSalt + cleanPass);
-}
+export function hashPassword() { throw new Error('Legacy password authentication disabled; use Supabase Auth.'); }
 
 /**
  * Verifies a plaintext password against a stored hash (or legacy plaintext during migration)
@@ -116,40 +109,11 @@ export function hashPassword(password, customSalt = INGLY_SALT_PREFIX) {
  * @param {string} [customSalt] Optional salt prefix
  * @returns {boolean} True if password matches
  */
-export function verifyPassword(plainPassword, storedHash, customSalt = INGLY_SALT_PREFIX) {
-  if (!plainPassword || !storedHash) return false;
-  const cleanPass = String(plainPassword).trim();
-  const cleanHash = String(storedHash).trim();
-
-  // 1. Direct hash verification (standard)
-  const computedHash = hashPassword(cleanPass, customSalt);
-  if (computedHash.toLowerCase() === cleanHash.toLowerCase()) {
-    return true;
-  }
-
-  // 2. Legacy plaintext fallback for backwards compatibility during migration
-  if (cleanPass === cleanHash) {
-    return true;
-  }
-
-  // 3. Fallback without salt prefix in case stored was raw sha256
-  if (sha256(cleanPass).toLowerCase() === cleanHash.toLowerCase()) {
-    return true;
-  }
-
-  return false;
-}
+export function verifyPassword() { return false; }
 
 /**
  * Generates a cryptographically random session token (hex)
  * @param {number} length Byte length
  * @returns {string} Hex token
  */
-export function generateSecureToken(length = 32) {
-  const chars = '0123456789abcdef';
-  let token = '';
-  for (let i = 0; i < length * 2; i++) {
-    token += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return token;
-}
+export function generateSecureToken() { throw new Error('Custom sessions disabled; use Supabase Auth.'); }

@@ -4,7 +4,7 @@
  * 6 ta kitob bo'yicha dinamik statuslar va tezkor o'tishlar.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,7 @@ import PaymentModal from '../components/PaymentModal.js';
 import { useUser } from '../context/UserContext.js';
 import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
-import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../services/storage.js';
+import { getStorageItem, setStorageItem, STORAGE_KEYS, captureStorageSession, isStorageSessionCurrent } from '../services/storage.js';
 import { getUserLevelInfo } from '../services/leaderboardService.js';
 
 const { width } = Dimensions.get('window');
@@ -52,6 +52,8 @@ export default function HomeScreen({ onNavigate }) {
   const { t } = useLanguage();
   const [appSettings, setAppSettings] = useState(getAppSettings());
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState([]);
+  const account = useRef(captureStorageSession());
+  account.current = captureStorageSession();
 
   const [paymentModal, setPaymentModal] = useState({
     visible: false,
@@ -63,13 +65,13 @@ export default function HomeScreen({ onNavigate }) {
 
   const handlePaymentSuccess = async (details) => {
     setPaymentModal((prev) => ({ ...prev, visible: false }));
-    if (details.itemType === 'vip') {
-      await subscribeVipMonthly(details);
-      Alert.alert('Tabriklaymiz! 👑', 'VIP obunangiz faollashtirildi! Barcha kitoblar ochiq.');
-    } else if (details.itemType === 'book') {
-      await purchaseBook(details.bookId, details);
-      Alert.alert('Xarid muvaffaqiyatli! 📚', `${details.itemTitle} ochildi!`);
-    }
+    if (details.mock !== true) return;
+    const result = details.itemType === 'vip'
+      ? await subscribeVipMonthly(details)
+      : await purchaseBook(details.bookId, details);
+    Alert.alert('TEST/MOCK', result?.success
+      ? 'Sinov uchun ochildi. Haqiqiy xarid yoki obuna yaratilmagan.'
+      : (result?.error || 'Sinov yakunlanmadi.'));
   };
 
   useEffect(() => {
@@ -78,11 +80,11 @@ export default function HomeScreen({ onNavigate }) {
     });
 
     // Foydalanuvchi bir marta bosgan/yopgan yangiliklarni o'qish
-    getStorageItem(STORAGE_KEYS.DISMISSED_ANNOUNCEMENTS, []).then((list) => {
-      if (Array.isArray(list)) {
+    getStorageItem(STORAGE_KEYS.DISMISSED_ANNOUNCEMENTS, [], account.current).then((list) => {
+      if (isStorageSessionCurrent(account.current) && Array.isArray(list)) {
         setDismissedAnnouncements(list);
       }
-    });
+    }).catch(() => {});
 
     return () => unsub();
   }, []);
@@ -101,10 +103,12 @@ export default function HomeScreen({ onNavigate }) {
   );
 
   const handleDismissAnnouncement = async (announcement, shouldNavigate = true) => {
+    const session = account.current;
     if (!announcement || !announcement.id) return;
     const updated = [...dismissedAnnouncements, announcement.id];
     setDismissedAnnouncements(updated);
-    await setStorageItem(STORAGE_KEYS.DISMISSED_ANNOUNCEMENTS, updated);
+    await setStorageItem(STORAGE_KEYS.DISMISSED_ANNOUNCEMENTS, updated, session);
+    if (!isStorageSessionCurrent(session)) return;
     if (shouldNavigate && announcement.screen && onNavigate) {
       onNavigate(announcement.screen);
     }

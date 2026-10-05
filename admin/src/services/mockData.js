@@ -31,7 +31,7 @@ export const mockWords = [
     pos: 'adjective',
     uzbek: "Qo'rqqan",
     definition: 'When someone is afraid, they feel fear.',
-    definition_uz: 'Biror kimsa qo\'rqqanda, u xavf yoki vahimani his qiladi.',
+    definition_uz: "Biror kimsa qo'rqqanda, u xavf yoki vahimani his qiladi.",
     example: 'The woman was afraid of what she saw.',
     example_uz: 'Ayol ko\'rgan narsasidan qo\'rqib ketdi.',
     image_url: 'https://images.unsplash.com/photo-1509281373149-e957c6296406?w=400&q=80',

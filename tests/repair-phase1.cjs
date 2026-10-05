@@ -35,7 +35,8 @@ function harness(result) {
   const chain = { insert(p) {state.payload=p;return this;}, delete(){return this;}, eq(){return this;}, select(){return this;}, single(){return Promise.resolve(result);}, then(ok,bad){return Promise.resolve(result).then(ok,bad);} };
   const context = {
     users: state.users, newUserForm:{username:'newuser',password:'abcdef',phone:'',name:'Test',isVip:false},
-    isSavingNewUser:false,supabaseClient:{from:()=>chain},hashPassword:()=> 'test-hash',
+    isSavingNewUser:false,supabaseClient:{from:()=>chain},
+    window:{inglyAuth:{authorize:async()=>({id:'admin'}),manage:async(action,payload)=>{state.payload=[payload];const r=await result;if(r.error)throw new Error(r.error.message);return action==='deleteUser'?(Array.isArray(r.data)?r.data[0]:r.data):r.data;}}},
     setUsers: fn => {state.users=fn(state.users);context.users=state.users;},
     setIsSavingNewUser:()=>{},setShowAddUserModal:()=>{},setNewUserForm:()=>{},
     showToast:x=>state.messages.push(x), alert:x=>state.messages.push(x),confirm:()=>true,Date,console
@@ -47,9 +48,9 @@ function harness(result) {
 (async () => {
   for (const f of ['admin/index.html','admin/preview.html']) {
     let blocked=false;
-    const login={adminLoginInput:'secondary',adminPasswordInput:'configured',hashPassword:()=> 'hash',SUPER_ADMIN_HASH:'other',setAuthError:()=>{blocked=true}};
+    const login={adminLoginInput:'secondary@example.com',adminPasswordInput:'configured',window:{inglyAuth:{login:async()=>{throw new Error('Not authorized')}}},setAdminPasswordInput:()=>{},setAuthError:()=>{blocked=true}};
     vm.createContext(login);
-    vm.runInContext('('+extract(scripts[f],'handleAdminLogin')+')',login)();
+    await vm.runInContext('('+extract(scripts[f],'handleAdminLogin')+')',login)();
     assert(blocked);
   }
   let release;
@@ -75,14 +76,14 @@ function harness(result) {
   const my=read('mobile/src/screens/MyWordsScreen.js');
   assert(!my.includes('recordWordLearned'));assert(!my.includes('initialSamples'));
   let loaded;
-  const c={getCustomWords:async()=>[],setWordsList:x=>loaded=x};vm.createContext(c);
+  const c={account:{current:'account'},getCustomWords:async()=>[],isStorageSessionCurrent:()=>true,setWordsList:x=>loaded=x};vm.createContext(c);
   await vm.runInContext('('+extract(my,'loadWords')+')',c)();assert.equal(loaded.length,0);
   const babel=require('../mobile/node_modules/@babel/core');
   const code=babel.transformSync(read('mobile/src/services/leaderboardService.js'),{babelrc:false,configFile:false,plugins:[require.resolve('../mobile/node_modules/@babel/plugin-transform-modules-commonjs')]}).code;
   const memory=new Map();
-  const board={exports:{},console,Date,Map,Set,Math,require:k=>k.includes('supabaseClient')?{isSupabaseConfigured:()=>false}:{STORAGE_KEYS:{CUSTOM_WORDS:'custom'},getStorageItem:async(k,d)=>k==='custom'?[{learned:true}]:memory.get(k)||d,setStorageItem:async(k,v)=>memory.set(k,v)}};
+  const board={exports:{},console,Date,Map,Set,Math,require:k=>k.includes('supabaseClient')?{isSupabaseConfigured:()=>false}:{getStorageAccountId:()=> 'account',captureStorageSession:()=>({owner:'account',generation:1}),isStorageSessionCurrent:()=>true,STORAGE_KEYS:{CUSTOM_WORDS:'custom'},getStorageItem:async(k,d)=>k==='custom'?[{learned:true}]:memory.get(k)||d,setStorageItem:async(k,v)=>memory.set(k,v)}};
   vm.runInNewContext(code,board);
-  const user={username:'test',totalWordsLearned:5};
+  const user={id:'account',username:'test',totalWordsLearned:5};
   await board.exports.syncUserLeaderboardScore(user);await board.exports.syncUserLeaderboardScore(user);
   const entry=memory.get('ingly_cached_leaderboard')[0];assert.equal(entry.bookWords,5);assert.equal(entry.customWords,1);assert.equal(entry.totalWords,6);assert.equal(user.totalWordsLearned,5);
   let files=[];

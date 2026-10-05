@@ -31,6 +31,8 @@ import {
 import { colors } from '../theme.js';
 import {
   getCustomWords,
+  isStorageSessionCurrent,
+  captureStorageSession,
   addCustomWord,
   setCustomWordLearnedStatus,
   deleteCustomWord,
@@ -42,6 +44,8 @@ import { useLanguage } from '../context/LanguageContext.js';
 
 export default function MyWordsScreen({ onNavigate }) {
   const { t } = useLanguage();
+  const account = useRef(captureStorageSession());
+  account.current = captureStorageSession();
 
   // Holatlar (State)
   const [wordsList, setWordsList] = useState([]);
@@ -68,12 +72,13 @@ export default function MyWordsScreen({ onNavigate }) {
 
   // Dastlabki yuklash
   useEffect(() => {
-    loadWords();
+    loadWords().catch(() => Alert.alert('Local storage', 'Lug‘atni o‘qib bo‘lmadi.'));
   }, []);
 
   const loadWords = async () => {
-    let list = await getCustomWords();
-    setWordsList(list);
+    const session = account.current;
+    let list = await getCustomWords(session);
+    if (isStorageSessionCurrent(session)) setWordsList(list);
   };
 
   const showToast = (msg) => {
@@ -85,6 +90,7 @@ export default function MyWordsScreen({ onNavigate }) {
 
   // Yangi so'z yozilganda tarjima qilish va kartochka yaratish
   const handleAddWord = async () => {
+    const session = account.current;
     const clean = inputText.trim();
     if (!clean) {
       showToast('⚠️ Iltimos, biror so\'z yoki ibora yozing!');
@@ -95,7 +101,7 @@ export default function MyWordsScreen({ onNavigate }) {
     setIsTranslating(true);
 
     try {
-      const res = await translateText(clean);
+      const res = await translateText(clean, session);
       if (!res.success) {
         showToast('⚠️ ' + (res.error || 'Tarjima qilishda xatolik yuz berdi.'));
         setIsTranslating(false);
@@ -115,8 +121,9 @@ export default function MyWordsScreen({ onNavigate }) {
         definition: res.definition || '',
         example: res.example || '',
         learned: false,
-      });
+      }, session);
 
+      if (!isStorageSessionCurrent(session)) return;
       setWordsList(prev => [newCard, ...prev]);
       setInputText('');
 
@@ -145,6 +152,7 @@ export default function MyWordsScreen({ onNavigate }) {
 
   // Kartochka tahrirlanganda saqlash
   const handleSaveEdit = async () => {
+    const session = account.current;
     if (!editingCard) return;
     const cleanOrig = editForm.original.trim();
     const cleanTrans = editForm.translated.trim();
@@ -160,7 +168,8 @@ export default function MyWordsScreen({ onNavigate }) {
         translated: cleanTrans,
         wordUz: cleanOrig,
         wordEn: cleanTrans,
-      });
+      }, session);
+      if (!isStorageSessionCurrent(session)) return;
       setWordsList(updated);
 
       if (activeCard && activeCard.id === editingCard.id) {
@@ -205,12 +214,15 @@ export default function MyWordsScreen({ onNavigate }) {
 
   // "✅ YODLADIM" bosilganda: kartochka yopilib, "Yodlanganlar"ga o'tadi
   const handleMarkLearned = async () => {
+    const session = account.current;
     if (!activeCard) return;
     const cardId = activeCard.id;
     const cardName = activeCard.original || activeCard.translated;
 
     // Holatni yangilash
-    const updated = await setCustomWordLearnedStatus(cardId, true);
+    let updated;
+    try { updated = await setCustomWordLearnedStatus(cardId, true, session); } catch { showToast('Progress saqlanmadi. Qayta urinib ko‘ring.'); return; }
+    if (!isStorageSessionCurrent(session)) return;
     setWordsList(updated);
 
     // Custom mastery is counted from CUSTOM_WORDS by the leaderboard.
@@ -236,12 +248,15 @@ export default function MyWordsScreen({ onNavigate }) {
 
   // "❌ YODLAMADIM" bosilganda: kartochka yopilib, "Yodlanmaganlar"da qoladi
   const handleMarkUnlearned = async () => {
+    const session = account.current;
     if (!activeCard) return;
     const cardId = activeCard.id;
     const cardName = activeCard.original || activeCard.translated;
 
     // Holatni yodlanmagan deb belgilash
-    const updated = await setCustomWordLearnedStatus(cardId, false);
+    let updated;
+    try { updated = await setCustomWordLearnedStatus(cardId, false, session); } catch { showToast('Progress saqlanmadi. Qayta urinib ko‘ring.'); return; }
+    if (!isStorageSessionCurrent(session)) return;
     setWordsList(updated);
 
     // Modalni yopish
@@ -263,6 +278,7 @@ export default function MyWordsScreen({ onNavigate }) {
 
   // Kartochkani o'chirish
   const handleDeleteCard = (card) => {
+    const session = account.current;
     Alert.alert(
       'Kartochkani o\'chirish',
       `"${card.original}" (${card.translated}) kartochkasini o'chirmoqchimisiz?`,
@@ -272,7 +288,10 @@ export default function MyWordsScreen({ onNavigate }) {
           text: 'O\'chirish',
           style: 'destructive',
           onPress: async () => {
-            const updated = await deleteCustomWord(card.id);
+            let updated;
+            try { updated = await deleteCustomWord(card.id, session); }
+            catch { showToast('Kartochka o‘chirilmadi.'); return; }
+            if (!isStorageSessionCurrent(session)) return;
             setWordsList(updated);
             if (activeCard && activeCard.id === card.id) {
               setActiveCard(null);

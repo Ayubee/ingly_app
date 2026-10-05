@@ -15,6 +15,8 @@
  */
 
 import allWordsData from '../data/all_words.json';
+import { getStorageItem, setStorageItem, captureStorageSession, isStorageSessionCurrent } from './storage.js';
+const CACHE_KEY = '@ingly_translation_cache';
 
 /**
  * Matnni tozalash va apostroflarni standartlashtirish
@@ -102,7 +104,7 @@ async function fetchGoogle(word, sl, tl) {
  * Asosiy aqlli tarjima funksiyasi
  * @param {string} text Tarjima qilinadigan so'z yoki ibora
  */
-export async function translateText(text) {
+async function translateUncached(text) {
   if (!text || !text.trim()) {
     return { success: false, error: 'Iltimos, so\'z yoki ibora kiriting!' };
   }
@@ -186,7 +188,11 @@ export async function translateText(text) {
   // 3. Fallback: MyMemory API (Zaxira)
   try {
     const mmUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(rawClean)}&langpair=en|uz`;
-    const mmRes = await fetch(mmUrl);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4500);
+    let mmRes;
+    try { mmRes = await fetch(mmUrl, { signal: controller.signal }); }
+    finally { clearTimeout(timeout); }
     if (mmRes.ok) {
       const mmData = await mmRes.json();
       if (mmData && mmData.responseData && mmData.responseData.translatedText) {
@@ -212,6 +218,22 @@ export async function translateText(text) {
     success: false,
     error: 'Internetga ulanib bo\'lmadi yoki so\'z tarjima qilinmadi. Iltimos, internetingizni tekshiring.'
   };
+}
+
+export async function translateText(text, session = captureStorageSession()) {
+  const local = searchInLocalDictionary(text);
+  if (local) return { success: true, ...local, isLocal: true };
+  const query = normalizeText(text);
+  let cached = [];
+  try { cached = await getStorageItem(CACHE_KEY, [], session); } catch {}
+  if (!Array.isArray(cached)) cached = [];
+  const hit = cached.find(item => item.query === query);
+  if (hit) return { ...hit.result, isCached: true };
+  const result = await translateUncached(text);
+  if (result.success && isStorageSessionCurrent(session)) {
+    await setStorageItem(CACHE_KEY, [{ query, result }, ...cached.filter(item => item.query !== query)].slice(0, 80), session);
+  }
+  return result;
 }
 
 export default {

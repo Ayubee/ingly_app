@@ -5,7 +5,7 @@
  * Book 1 Unit 1 faol (boshlang'ich), qolganlari bosqichma-bosqich ochiladi.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -21,12 +21,15 @@ import { useUser } from '../context/UserContext.js';
 import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 import PaymentModal from '../components/PaymentModal.js';
+import { captureStorageSession, isStorageSessionCurrent } from '../services/storage.js';
 
 export default function LearnScreen({ onNavigate }) {
   const { user, setActiveLesson, subscribeVipMonthly, purchaseBook, isVipActive } = useUser();
   const { t } = useLanguage();
   const [selectedBook, setSelectedBook] = useState(user?.activeBook || 1);
   const [appSettings, setAppSettings] = useState(getAppSettings());
+  const account = useRef(captureStorageSession());
+  account.current = captureStorageSession();
 
   const [paymentModal, setPaymentModal] = useState({
     visible: false,
@@ -45,20 +48,21 @@ export default function LearnScreen({ onNavigate }) {
 
   const handlePaymentSuccess = async (details) => {
     setPaymentModal((prev) => ({ ...prev, visible: false }));
-    if (details.itemType === 'vip') {
-      await subscribeVipMonthly(details);
-      Alert.alert('Tabriklaymiz! 👑', 'VIP obunangiz faollashtirildi! Barcha kitoblar ochiq.');
-    } else if (details.itemType === 'book') {
-      await purchaseBook(details.bookId, details);
-      Alert.alert('Xarid muvaffaqiyatli! 📚', `${details.itemTitle} ochildi!`);
-    }
+    if (details.mock !== true) return;
+    const result = details.itemType === 'vip'
+      ? await subscribeVipMonthly(details)
+      : await purchaseBook(details.bookId, details);
+    Alert.alert('TEST/MOCK', result?.success
+      ? 'Sinov uchun ochildi. Haqiqiy xarid yoki obuna yaratilmagan.'
+      : (result?.error || 'Sinov yakunlanmadi.'));
   };
 
-  const handleOpenUnit = (unitNum) => {
-    if (setActiveLesson) {
-      setActiveLesson(selectedBook, unitNum);
-    }
-    if (onNavigate) {
+  const handleOpenUnit = async (unitNum) => {
+    const session = account.current;
+    if (!isStorageSessionCurrent(session)) return;
+    try { if (setActiveLesson) await setActiveLesson(selectedBook, unitNum); }
+    catch { Alert.alert('Saqlash xatosi', 'Dars tanlovi saqlanmadi.'); return; }
+    if (isStorageSessionCurrent(session) && onNavigate) {
       onNavigate('Flashcards');
     }
   };
@@ -74,14 +78,13 @@ export default function LearnScreen({ onNavigate }) {
 
   // Foydalanuvchining ushbu kitobdagi o'rganilgan so'zlari
   // Har bir kitobda 30 ta unit, har bir unitda 20 ta so'z (jami 600 ta so'z)
-  const bookBaseWords = (selectedBook - 1) * 600;
   const wordsInThisBook = Math.max(
     0,
-    Math.min(600, user.totalWordsLearned - bookBaseWords)
+    Math.min(600, user.bookLearnedCounts?.[selectedBook] ?? Math.round((user.bookProgress?.[selectedBook] || 0) * 6))
   );
 
-  const completedUnitsCount = Math.floor(wordsInThisBook / 20);
-  const currentActiveUnit = completedUnitsCount + 1;
+  const currentActiveUnit = Array.from({ length: 30 }, (_, i) => i + 1)
+    .find(unit => !user.completedUnits?.[`${selectedBook}:${unit}`]) || 31;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -206,7 +209,7 @@ export default function LearnScreen({ onNavigate }) {
           /* Units Grid */
           <View style={styles.unitsGrid}>
             {Array.from({ length: 30 }, (_, i) => i + 1).map((unitNum) => {
-              const isCompleted = unitNum <= completedUnitsCount;
+              const isCompleted = !!user.completedUnits?.[`${selectedBook}:${unitNum}`];
               const isCurrent = unitNum === currentActiveUnit;
               const isLocked = unitNum > currentActiveUnit;
 

@@ -5,7 +5,7 @@
  * To'g'ri javob va tasodifiy noto'g'ri variantlar (distractors) real-time shakllanadi.
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,11 +15,13 @@ import {
   SafeAreaView,
   Platform,
   Modal,
+  Alert,
 } from 'react-native';
 import { colors } from '../theme.js';
 import allWordsData from '../data/all_words.json';
 import { useUser } from '../context/UserContext.js';
 import { useLanguage } from '../context/LanguageContext.js';
+import { captureStorageSession, isStorageSessionCurrent } from '../services/storage.js';
 
 export default function QuizScreen({ onNavigate }) {
   const { user, recordQuizResult, setActiveLesson } = useUser();
@@ -31,6 +33,9 @@ export default function QuizScreen({ onNavigate }) {
   const [selectedOptionId, setSelectedOptionId] = useState(null);
   const [score, setScore] = useState(0);
   const [quizFinished, setQuizFinished] = useState(false);
+  const saving = useRef(false);
+  const account = useRef(captureStorageSession());
+  account.current = captureStorageSession();
   const [isUnitSelectorVisible, setIsUnitSelectorVisible] = useState(false);
 
   // Faol kitob va unit bo'yicha 20 ta so'z
@@ -113,7 +118,7 @@ export default function QuizScreen({ onNavigate }) {
   const question = totalQuestions > 0 ? generatedQuestions[safeIndex] : null;
 
   const handleSelectOption = (option) => {
-    if (selectedOptionId) return;
+    if (selectedOptionId || saving.current) return;
 
     setSelectedOptionId(option.id);
     if (option.isCorrect) {
@@ -121,13 +126,19 @@ export default function QuizScreen({ onNavigate }) {
     }
   };
 
-  const handleNext = () => {
-    setSelectedOptionId(null);
+  const handleNext = async () => {
+    const session = account.current;
+    if (!isStorageSessionCurrent(session) || saving.current || quizFinished) return;
     if (safeIndex < totalQuestions - 1) {
+      setSelectedOptionId(null);
       setCurrentQuestionIndex(safeIndex + 1);
     } else {
-      setQuizFinished(true);
-      recordQuizResult(score, totalQuestions);
+      saving.current = true;
+      try {
+        await recordQuizResult(score, totalQuestions);
+        if (isStorageSessionCurrent(session)) setQuizFinished(true);
+      } catch { Alert.alert('Saqlash xatosi', 'Test natijasi saqlanmadi. Qayta urinib ko‘ring.'); }
+      finally { saving.current = false; }
     }
   };
 

@@ -9,10 +9,8 @@
  */
 
 import { supabase, isSupabaseConfigured } from './supabaseClient.js';
-import { getStorageItem, setStorageItem, STORAGE_KEYS } from './storage.js';
+import { getStorageItem, setStorageItem, STORAGE_KEYS, getStorageAccountId, captureStorageSession, isStorageSessionCurrent } from './storage.js';
 
-const SUPABASE_REST_URL = 'https://lbsqxownrjfmjoojdsfk.supabase.co/rest/v1';
-const SUPABASE_ANON_KEY = 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
 const STORAGE_KEY_LEADERBOARD = 'ingly_cached_leaderboard';
 
 /**
@@ -91,8 +89,9 @@ export function calculateUserXP(wordsCount = 0, streakDays = 0, accuracy = 0) {
  * Foydalanuvchining eng so'nggi natijalarini Supabase `app_settings` dagi
  * `leaderboard_scores` kalitiga sinxronlashtirish
  */
-export async function syncUserLeaderboardScore(currentUser) {
-  if (!currentUser || !currentUser.username) return;
+export async function syncUserLeaderboardScore(currentUser, token = captureStorageSession()) {
+  const owner = token.owner;
+  if (!owner || currentUser?.id !== owner || !currentUser.username) return;
 
   try {
     const cleanUsername = String(currentUser.username).toLowerCase().replace(/^@/, '').trim();
@@ -100,7 +99,7 @@ export async function syncUserLeaderboardScore(currentUser) {
     const bookWords = Number(currentUser.totalWordsLearned) || 0;
     
     // Shaxsiy lug'atdagi so'zlarni ham hisobga olish
-    const customWords = (await getStorageItem(STORAGE_KEYS.CUSTOM_WORDS, [])) || [];
+    const customWords = (await getStorageItem(STORAGE_KEYS.CUSTOM_WORDS, [], token)) || [];
     const customLearned = customWords.filter(w => w.learned).length;
     const totalWords = bookWords + customLearned;
 
@@ -127,41 +126,16 @@ export async function syncUserLeaderboardScore(currentUser) {
     };
 
     // 1. Keshdagi leaderboardni yangilash
-    let localBoard = (await getStorageItem(STORAGE_KEY_LEADERBOARD, [])) || [];
+    let localBoard = (await getStorageItem(STORAGE_KEY_LEADERBOARD, [], token)) || [];
     const idx = localBoard.findIndex(u => String(u.username).toLowerCase() === cleanUsername);
     if (idx !== -1) {
       localBoard[idx] = { ...localBoard[idx], ...userEntry };
     } else {
       localBoard.push(userEntry);
     }
-    await setStorageItem(STORAGE_KEY_LEADERBOARD, localBoard);
+    await setStorageItem(STORAGE_KEY_LEADERBOARD, localBoard, token);
 
-    // 2. Supabase orqali bulutga saqlash
-    if (isSupabaseConfigured() && supabase) {
-      const { data: existingSetting } = await supabase
-        .from('app_settings')
-        .select('setting_value')
-        .eq('setting_key', 'leaderboard_scores')
-        .limit(1);
-
-      let scoresMap = {};
-      if (existingSetting && existingSetting.length > 0) {
-        const val = existingSetting[0].setting_value;
-        if (typeof val === 'object' && val !== null) {
-          scoresMap = val;
-        } else if (typeof val === 'string' && val.startsWith('{')) {
-          try { scoresMap = JSON.parse(val); } catch (e) {}
-        }
-      }
-
-      scoresMap[cleanUsername] = userEntry;
-
-      await supabase.from('app_settings').upsert({
-        setting_key: 'leaderboard_scores',
-        setting_value: scoresMap,
-        description: 'Barcha foydalanuvchilarning real-time reyting va so\'z yodlash statistikasi'
-      }, { onConflict: 'setting_key' });
-    }
+    // Trusted server leaderboard publication is deferred to Phase 3.
   } catch (err) {
     console.warn('[Leaderboard] syncUserLeaderboardScore xatosi:', err?.message || err);
   }
@@ -174,12 +148,14 @@ export async function syncUserLeaderboardScore(currentUser) {
  * - Hozirgi kirgan foydalanuvchining eng so'nggi natijalari
  * Natija: 1-o'rindan oxirigacha saralangan massiv
  */
-export async function fetchLeaderboard(currentUser = null) {
+export async function fetchLeaderboard(currentUser = null, token = captureStorageSession()) {
+  const owner = token.owner;
+  if (!owner || currentUser?.id !== owner) return [];
   let combinedUsersMap = new Map();
 
   // 1. Keshdagi ma'lumotlarni o'qish
   try {
-    const cached = await getStorageItem(STORAGE_KEY_LEADERBOARD, []);
+    const cached = await getStorageItem(STORAGE_KEY_LEADERBOARD, [], token);
     if (Array.isArray(cached)) {
       cached.forEach(u => {
         if (u && u.username) combinedUsersMap.set(String(u.username).toLowerCase(), u);
@@ -187,70 +163,7 @@ export async function fetchLeaderboard(currentUser = null) {
     }
   } catch (e) {}
 
-  // 2. Supabase bulut bazasidan real foydalanuvchilar va ularning ballarini yuklash
-  try {
-    const headers = {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-    };
-
-    // A. Barcha ro'yxatdan o'tgan foydalanuvchilarni olish
-    const usersRes = await fetch(`${SUPABASE_REST_URL}/users?select=id,full_name,username,phone,is_premium,created_at`, { headers });
-    let dbUsers = [];
-    if (usersRes.ok) {
-      dbUsers = await usersRes.json();
-    }
-
-    // B. Leaderboard ballarini olish
-    const scoresRes = await fetch(`${SUPABASE_REST_URL}/app_settings?setting_key=eq.leaderboard_scores&select=setting_value`, { headers });
-    let scoresMap = {};
-    if (scoresRes.ok) {
-      const scoresData = await scoresRes.json();
-      if (scoresData && scoresData.length > 0) {
-        const val = scoresData[0].setting_value;
-        if (typeof val === 'object' && val !== null) {
-          scoresMap = val;
-        } else if (typeof val === 'string' && val.startsWith('{')) {
-          try { scoresMap = JSON.parse(val); } catch (e) {}
-        }
-      }
-    }
-
-    // Har bir Supabase foydalanuvchisini birlashtirish
-    if (Array.isArray(dbUsers)) {
-      dbUsers.forEach(u => {
-        const uName = String(u.username || '').toLowerCase().trim();
-        if (!uName) return;
-
-        const scoreEntry = scoresMap[uName] || {};
-        const totalWords = Number(scoreEntry.totalWords || scoreEntry.wordsLearned || 0);
-        const streak = Number(scoreEntry.streak || 0);
-        const accuracy = Number(scoreEntry.accuracy || 0);
-        const xp = Number(scoreEntry.xp) || calculateUserXP(totalWords, streak, accuracy);
-        const levelInfo = getUserLevelInfo(totalWords);
-
-        combinedUsersMap.set(uName, {
-          username: uName,
-          name: u.full_name || scoreEntry.name || uName,
-          avatar: scoreEntry.avatar || (u.is_premium ? '👑' : '👨‍🎓'),
-          bookWords: Number(scoreEntry.bookWords || totalWords),
-          customWords: Number(scoreEntry.customWords || 0),
-          totalWords: totalWords,
-          streak: streak,
-          accuracy: accuracy,
-          xp: xp,
-          level: levelInfo.level,
-          levelTitle: levelInfo.titleUz,
-          levelIcon: levelInfo.icon,
-          isPremium: !!u.is_premium || !!scoreEntry.isPremium,
-          updatedAt: scoreEntry.updatedAt || u.created_at,
-        });
-      });
-    }
-  } catch (err) {
-    console.warn('[Leaderboard] Remote fetch xatosi:', err?.message || err);
-  }
-
+  // Do not enumerate private profiles or download legacy shared score blobs.
   // 3. Hozirgi kirgan foydalanuvchi ma'lumotlarini eng yangi holatda kiritish
   if (currentUser && currentUser.username) {
     const curUname = String(currentUser.username).toLowerCase().replace(/^@/, '').trim();
@@ -258,7 +171,7 @@ export async function fetchLeaderboard(currentUser = null) {
     
     let curCustomLearned = 0;
     try {
-      const customWords = (await getStorageItem(STORAGE_KEYS.CUSTOM_WORDS, [])) || [];
+      const customWords = (await getStorageItem(STORAGE_KEYS.CUSTOM_WORDS, [], token)) || [];
       curCustomLearned = customWords.filter(w => w.learned).length;
     } catch (e) {}
 
@@ -343,7 +256,7 @@ export async function fetchLeaderboard(currentUser = null) {
   });
 
   // Keshga saqlash
-  setStorageItem(STORAGE_KEY_LEADERBOARD, rankedList).catch(() => {});
+  setStorageItem(STORAGE_KEY_LEADERBOARD, rankedList, token).catch(() => {});
 
-  return rankedList;
+  return isStorageSessionCurrent(token) ? rankedList : [];
 }

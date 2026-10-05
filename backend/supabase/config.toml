@@ -1,0 +1,6 @@
+# The handler validates every bearer token with Supabase Auth getUser() itself.
+# This supports publishable API keys without trusting the gateway's legacy JWT mode.
+project_id = "ingly"
+
+[functions.admin-accounts]
+verify_jwt = false

@@ -21,6 +21,7 @@ import {
 import { colors } from '../theme.js';
 import { useUser } from '../context/UserContext.js';
 import { useLanguage } from '../context/LanguageContext.js';
+import { captureStorageSession, isStorageSessionCurrent } from '../services/storage.js';
 import {
   fetchLeaderboard,
   getUserLevelInfo,
@@ -41,19 +42,19 @@ export default function LeaderboardScreen({ onNavigate }) {
 
   // Ma'lumotlarni yuklash
   const loadData = useCallback(async (isPullRefresh = false) => {
+    const session = captureStorageSession();
     if (!isPullRefresh) setLoading(true);
     try {
       // Avval joriy foydalanuvchi ballini serverga sinxron qilamiz
-      await syncUserLeaderboardScore(user);
-      const data = await fetchLeaderboard(user);
-      if (Array.isArray(data)) {
+      await syncUserLeaderboardScore(user, session);
+      const data = await fetchLeaderboard(user, session);
+      if (isStorageSessionCurrent(session) && Array.isArray(data)) {
         setLeaderboard(data);
       }
     } catch (e) {
       console.warn('Leaderboard load error:', e);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (isStorageSessionCurrent(session)) { setLoading(false); setRefreshing(false); }
     }
   }, [user]);
 

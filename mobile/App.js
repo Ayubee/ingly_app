@@ -67,7 +67,7 @@ function MainAppContent() {
     <View style={styles.appContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       {/* Active Screen View */}
-      <View style={styles.screenContainer}>{renderScreen()}</View>
+      <View key={user.id} style={styles.screenContainer}>{renderScreen()}</View>
 
       {/* Persistent Bottom Tab Navigation Bar */}
       <BottomNavigation

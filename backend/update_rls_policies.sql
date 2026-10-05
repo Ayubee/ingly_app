@@ -1,9 +1,2 @@
--- =============================================================================
--- [OGOHLANTIRISH / DEPRECATED]
--- Ushbu fayldagi ochiq ruxsatlar (Allow all) xavfsizlik auditi davomida bekor qilindi.
--- Barcha xavfsiz RLS qoidalari, Column-Level Security va xavfsiz RPC funksiyalari
--- `backend/security_hardening.sql` fayliga ko'chirildi.
--- Iltimos, `backend/security_hardening.sql` skriptidan foydalaning!
--- =============================================================================
-
-\i security_hardening.sql
+-- Retired. Apply backend/migrations/20261005_security_phase2.sql instead.
+DO $$ BEGIN RAISE EXCEPTION 'Legacy security script retired: apply Security Phase 2 migration'; END $$;

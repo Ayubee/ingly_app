@@ -5,7 +5,7 @@
  * talaffuz va SRS (Spaced Repetition) takrorlash tizimi.
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import {
   SafeAreaView,
   Dimensions,
   Modal,
+  Alert,
 } from 'react-native';
 import { colors, srsModes } from '../theme.js';
 import MovieClipModal from '../components/MovieClipModal.js';
@@ -23,6 +24,7 @@ import allWordsData from '../data/all_words.json';
 import { useUser } from '../context/UserContext.js';
 import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
+import { captureStorageSession, isStorageSessionCurrent } from '../services/storage.js';
 
 const { width } = Dimensions.get('window');
 
@@ -41,6 +43,11 @@ export default function FlashcardScreen({ onNavigate }) {
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [isUnitFinished, setIsUnitFinished] = useState(false);
+  const saving = useRef(false);
+  const advanceTimer = useRef(null);
+  const account = useRef(captureStorageSession());
+  account.current = captureStorageSession();
+  useEffect(() => () => clearTimeout(advanceTimer.current), []);
   const [videosEnabled, setVideosEnabled] = useState(
     () => getAppSettings()?.videos_enabled !== false
   );
@@ -63,6 +70,9 @@ export default function FlashcardScreen({ onNavigate }) {
 
   // Unit o'zgarganda indeksni 0 ga tushirish
   useEffect(() => {
+    clearTimeout(advanceTimer.current);
+    saving.current = false;
+    setFeedbackMessage(null);
     setCurrentIndex(0);
     setIsUnitFinished(false);
   }, [currentBook, currentUnit]);
@@ -131,8 +141,10 @@ export default function FlashcardScreen({ onNavigate }) {
     }, 1500);
   };
 
-  const handleSelectSRS = (mode) => {
-    if (!currentWord || feedbackMessage) return;
+  const handleSelectSRS = async (mode) => {
+    const session = account.current;
+    if (!isStorageSessionCurrent(session) || !currentWord || feedbackMessage || saving.current) return;
+    saving.current = true;
 
     const modeLabel =
       mode === 'hard'
@@ -142,9 +154,13 @@ export default function FlashcardScreen({ onNavigate }) {
         : 'Yodlandi! (Keyingi oraliq 4 kun)';
 
     setFeedbackMessage(modeLabel);
-    recordWordLearned(currentWord.id, mode);
+    try { await recordWordLearned(currentWord.id, mode); }
+    catch { saving.current = false; setFeedbackMessage(null); Alert.alert('Saqlash xatosi', 'Progress saqlanmadi. Qayta urinib ko‘ring.'); return; }
+    if (!isStorageSessionCurrent(session)) { saving.current = false; setFeedbackMessage(null); return; }
 
-    setTimeout(() => {
+    advanceTimer.current = setTimeout(() => {
+      saving.current = false;
+      if (!isStorageSessionCurrent(session)) return;
       setFeedbackMessage(null);
       if (safeIndex < totalWords - 1) {
         setCurrentIndex((prev) => prev + 1);

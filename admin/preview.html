@@ -18,6 +18,9 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <!-- Supabase JS Client CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/auth.js"></script>
+  <script src="/real-data.js"></script>
+  <script src="/real-data-ui.js"></script>
 
   <script>
     tailwind.config = {
@@ -94,191 +97,52 @@
     // =========================================================================
     // INGLY DEFENSIVE CRYPTOGRAPHY LAYER (FIPS 180-4 SHA-256 + Salted Hashing)
     // =========================================================================
-    const INGLY_SALT_PREFIX = 'ingly_v1_secure_salt_';
+
     // Super admin paroli xavfsiz heshi (Salted SHA-256)
-    const SUPER_ADMIN_HASH = '274841b89758ad14cdcdc6ed2db6c738f3df85f12b0eab491b72abb65886aa3e';
-    const SESSION_EXPIRY_MS = 2 * 60 * 60 * 1000; // 2 soat (Sessiya muddati)
-
-    function sha256(ascii) {
-      if (!ascii) return '';
-      const str = String(ascii);
-      function rightRotate(value, amount) {
-        return (value >>> amount) | (value << (32 - amount));
-      }
-      const mathPow = Math.pow;
-      const maxWord = mathPow(2, 32);
-      let lengthProperty = 'length';
-      let i;
-      let result = '';
-      const words = [];
-      const utf8 = unescape(encodeURIComponent(str));
-      const asciiBitLength = utf8[lengthProperty] * 8;
-      const hash = [];
-      const k = [];
-      let primeCounter = 0;
-
-      const isComposite = {};
-      for (let candidate = 2; primeCounter < 64; candidate++) {
-        if (!isComposite[candidate]) {
-          for (i = 0; i < 313; i += candidate) {
-            isComposite[i] = candidate;
-          }
-          hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
-          k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
-        }
-      }
-
-      for (i = 0; i < utf8[lengthProperty]; i++) {
-        words[i >> 2] |= utf8.charCodeAt(i) << (24 - (i % 4) * 8);
-      }
-      words[asciiBitLength >> 5] |= 0x80 << (24 - (asciiBitLength % 32));
-      words[(((asciiBitLength + 64) >> 9) << 4) + 15] = asciiBitLength;
-
-      for (let i = 0; i < words[lengthProperty]; i += 16) {
-        const w = words.slice(i, i + 16);
-        for (let idx = 0; idx < 16; idx++) {
-          if (w[idx] === undefined) w[idx] = 0;
-        }
-        const oldHash = hash.slice(0, 8);
-
-        for (let j = 0; j < 64; j++) {
-          if (j >= 16) {
-            const s0 = rightRotate(w[j - 15], 7) ^ rightRotate(w[j - 15], 18) ^ (w[j - 15] >>> 3);
-            const s1 = rightRotate(w[j - 2], 17) ^ rightRotate(w[j - 2], 19) ^ (w[j - 2] >>> 10);
-            w[j] = (w[j - 16] + s0 + w[j - 7] + s1) | 0;
-          }
-          const s1 = rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25);
-          const ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
-          const temp1 = (hash[7] + s1 + ch + k[j] + w[j]) | 0;
-          const s0 = rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22);
-          const maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
-          const temp2 = (s0 + maj) | 0;
-
-          hash[7] = hash[6];
-          hash[6] = hash[5];
-          hash[5] = hash[4];
-          hash[4] = (hash[3] + temp1) | 0;
-          hash[3] = hash[2];
-          hash[2] = hash[1];
-          hash[1] = hash[0];
-          hash[0] = (temp1 + temp2) | 0;
-        }
-
-        for (let j = 0; j < 8; j++) {
-          hash[j] = (hash[j] + oldHash[j]) | 0;
-        }
-      }
-
-      for (let i = 0; i < 8; i++) {
-        for (let j = 3; j >= 0; j--) {
-          const b = (hash[i] >> (8 * j)) & 255;
-          result += (b < 16 ? '0' : '') + b.toString(16);
-        }
-      }
-      return result;
-    }
-
-    function hashPassword(password) {
-      if (!password) return '';
-      const clean = String(password).trim();
-      if (/^[a-f0-9]{64}$/i.test(clean)) return clean.toLowerCase();
-      return sha256(INGLY_SALT_PREFIX + clean);
-    }
-
-    function getValidAdminSession() {
-      try {
-        const raw = sessionStorage.getItem('ingly_admin_session') || localStorage.getItem('ingly_admin_session');
-        if (!raw) return null;
-        const s = JSON.parse(raw);
-        if (!s || !s.expiresAt || Date.now() > s.expiresAt) {
-          sessionStorage.removeItem('ingly_admin_session');
-          localStorage.removeItem('ingly_admin_session');
-          return null;
-        }
-        return s;
-      } catch (e) {
-        return null;
-      }
-    }
+    const { Dashboard: RealDashboard, Finance: RealFinance, Monetization: RealMonetization } = window.inglyRealUI || {};
 
     function App() {
-      // Admin Xavfsizlik va Autentifikatsiya (Kriptografik tekshiruv va sessiya muddati)
-      const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
-        return Boolean(getValidAdminSession());
-      });
+      const adminDataGeneration = window.inglyRealData?.api.generation();
+      const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
       const [adminLoginInput, setAdminLoginInput] = useState('');
       const [adminPasswordInput, setAdminPasswordInput] = useState('');
       const [authError, setAuthError] = useState('');
       const [showPassword, setShowPassword] = useState(false);
-
-      // Sessiya muddatini doimiy tekshirish (har 30 soniyada)
+      const [verifiedAdmin, setVerifiedAdmin] = useState(null);
       useEffect(() => {
-        const sessionCheckInterval = setInterval(() => {
-          if (isAdminLoggedIn && !getValidAdminSession()) {
-            handleAdminLogout();
-            showToast('⚠️ Admin sessiyasi muddati tugadi! Qaytadan kiring.');
+        let mounted = true;
+        let requestVersion = 0;
+        let acceptedAdminId = null;
+        const check = async () => {
+          const version = ++requestVersion;
+          try {
+            const access = await window.inglyAuth.authorize();
+            if (mounted && version === requestVersion) {
+              if (acceptedAdminId !== access.id) { setUsers([]); setAdminList([]); }
+              acceptedAdminId = access.id; setVerifiedAdmin(access); setIsAdminLoggedIn(true);
+            }
+          } catch {
+            if (mounted && version === requestVersion) { acceptedAdminId = null; setVerifiedAdmin(null); setIsAdminLoggedIn(false); setUsers([]); setAdminList([]); }
           }
-        }, 30000);
-        return () => clearInterval(sessionCheckInterval);
-      }, [isAdminLoggedIn]);
-
-      const handleAdminLogin = (e) => {
+        };
+        check();
+        const { data } = window.inglyAuth.client.auth.onAuthStateChange(() => { setTimeout(() => { if (mounted) check(); }, 0); });
+        return () => { mounted = false; data.subscription.unsubscribe(); };
+      }, []);
+      const handleAdminLogin = async (e) => {
         if (e) e.preventDefault();
-        const cleanLogin = adminLoginInput.trim();
-        const cleanPass = adminPasswordInput.trim();
-
-        if (!cleanLogin || !cleanPass) {
-          setAuthError('Login va parolni kiriting!');
-          return;
-        }
-
-        const inputHash = hashPassword(cleanPass);
-        let authenticatedAdmin = null;
-
-        // 1. Super Admin tekshiruvi (Kriptografik hesh orqali, ochiq parol yo'q)
-        if (cleanLogin.toLowerCase() === 'joji' && inputHash === SUPER_ADMIN_HASH) {
-          authenticatedAdmin = { name: 'Joji (Super Admin)', username: 'Joji', role: 'super_admin' };
-        } else {
-          // Secondary admin login stays disabled until trusted server authentication.
-          setAuthError("Bu admin uchun kirish server autentifikatsiyasi joriy etilguncha yopiq.");
-          return;
-        }
-
-        if (authenticatedAdmin) {
-          const now = Date.now();
-          const sessionData = {
-            user: authenticatedAdmin.username,
-            name: authenticatedAdmin.name || authenticatedAdmin.username,
-            role: authenticatedAdmin.role || 'super_admin',
-            token: sha256(authenticatedAdmin.username + '_' + now + '_' + Math.random()),
-            createdAt: now,
-            expiresAt: now + SESSION_EXPIRY_MS
-          };
-          sessionStorage.setItem('ingly_admin_session', JSON.stringify(sessionData));
-          localStorage.setItem('ingly_admin_session', JSON.stringify(sessionData));
-          // Eski zaif kalitlarni tozalash
-          localStorage.removeItem('ingly_admin_auth');
-          sessionStorage.removeItem('ingly_admin_auth');
-
-          setIsAdminLoggedIn(true);
-          setAuthError('');
-          showToast(`Xush kelibsiz, ${authenticatedAdmin.name || authenticatedAdmin.username}!`);
-        } else {
-          setAuthError('Login yoki parol noto\'g\'ri! Ruxsat etilmadi.');
-        }
+        try {
+          const access = await window.inglyAuth.login(adminLoginInput.trim(), adminPasswordInput);
+          setVerifiedAdmin(access); setIsAdminLoggedIn(true); setAdminPasswordInput(''); setAuthError('');
+        } catch (error) { setAuthError(error.message || 'Tasdiqlangan admin email/parol yoki ruxsat talab qilinadi.'); setAdminPasswordInput(''); }
       };
-
-      const handleAdminLogout = () => {
-        sessionStorage.removeItem('ingly_admin_session');
-        localStorage.removeItem('ingly_admin_session');
-        localStorage.removeItem('ingly_admin_auth');
-        localStorage.removeItem('ingly_admin_user');
-        sessionStorage.removeItem('ingly_admin_auth');
-        sessionStorage.removeItem('ingly_admin_user');
-        setIsAdminLoggedIn(false);
-        setAdminLoginInput('');
-        setAdminPasswordInput('');
-        setAuthError('');
+      const handleAdminLogout = async () => {
+        setVerifiedAdmin(null); setIsAdminLoggedIn(false); setUsers([]); setAdminList([]);
+        setAdminPasswordInput(''); setNewPasswordInput(''); setPasswordModalUser(null);
+        setAdminForm(prev => ({...prev,password:''})); setNewUserForm(prev => ({...prev,password:''}));
+        setShowAdminModal(false); setShowAddUserModal(false); setShowPermsModal(false);
+        setVipModalUser(null); setSelectedAdmin(null);
+        await window.inglyAuth.logout();
       };
 
       const [tab, setTab] = useState('dashboard');
@@ -321,9 +185,6 @@
         const saved = localStorage.getItem('ingly_single_book_original_price');
         return saved !== null ? Number(saved) : 35000;
       });
-      const [cardReceiverNumber, setCardReceiverNumber] = useState(() => {
-        return localStorage.getItem('ingly_card_receiver_number') || '8600 5304 1234 5678';
-      });
       const [videosEnabled, setVideosEnabled] = useState(() => {
         const saved = localStorage.getItem('ingly_videos_enabled');
         return saved !== null ? JSON.parse(saved) : true;
@@ -340,101 +201,6 @@
         try { return saved ? JSON.parse(saved) : null; } catch (e) { return null; }
       });
 
-      // Moliya & Kirim-Chiqimlar (Tranzaksiyalar) State
-      const [transactions, setTransactions] = useState(() => {
-        const saved = localStorage.getItem('ingly_transactions');
-        if (saved) {
-          try { return JSON.parse(saved); } catch (e) {}
-        }
-        return [
-          {
-            id: 'tx_101',
-            type: 'income',
-            user_name: 'Dilnoza Rahimova',
-            username: 'dilnoza_r',
-            user_avatar: '👩‍🎓',
-            item_title: 'Ingly VIP Oylik Obuna 👑',
-            item_type: 'vip',
-            amount: 29000,
-            payment_method: 'Click',
-            status: 'completed',
-            created_at: '2026-10-05T01:45:00.000Z',
-            note: 'Click ID: clk_982341'
-          },
-          {
-            id: 'tx_102',
-            type: 'income',
-            user_name: 'Anvar Karimov',
-            username: 'anvar_k',
-            user_avatar: '👨‍🎓',
-            item_title: 'Book 2 - Pre-Intermediate (Kitob xaridi) 📚',
-            item_type: 'book',
-            amount: 19000,
-            payment_method: 'Payme',
-            status: 'completed',
-            created_at: '2026-10-04T19:20:00.000Z',
-            note: 'Payme ID: pm_552190'
-          },
-          {
-            id: 'tx_103',
-            type: 'expense',
-            user_name: 'Supabase Cloud',
-            username: 'system',
-            user_avatar: '⚡',
-            item_title: 'PostgreSQL Bulutli Server & Realtime to\'lovi',
-            item_type: 'server',
-            amount: 120000,
-            payment_method: 'Bank Karta',
-            status: 'completed',
-            created_at: '2026-10-03T10:00:00.000Z',
-            note: 'Oylik bulutli server to\'lovi'
-          },
-          {
-            id: 'tx_104',
-            type: 'income',
-            user_name: 'Madina Umarova',
-            username: 'madina_u',
-            user_avatar: '👩‍💻',
-            item_title: 'Book 3 - Intermediate (Kitob xaridi) 📚',
-            item_type: 'book',
-            amount: 19000,
-            payment_method: 'Uzcard/Humo',
-            status: 'completed',
-            created_at: '2026-10-02T16:10:00.000Z',
-            note: 'Karta: 8600 **** 5678'
-          },
-          {
-            id: 'tx_105',
-            type: 'expense',
-            user_name: 'SMS Xizmati Provider',
-            username: 'system',
-            user_avatar: '📱',
-            item_title: 'Foydalanuvchilar SMS xizmati paketi',
-            item_type: 'sms',
-            amount: 45000,
-            payment_method: 'Click',
-            status: 'completed',
-            created_at: '2026-10-01T12:00:00.000Z',
-            note: '500 ta SMS paketi'
-          }
-        ];
-      });
-
-      const [showTxModal, setShowTxModal] = useState(false);
-      const [txFilterType, setTxFilterType] = useState('all'); // 'all', 'income', 'expense'
-      const [txSearchTerm, setTxSearchTerm] = useState('');
-      const [txForm, setTxForm] = useState({
-        type: 'income',
-        user_name: '',
-        username: '',
-        item_title: 'Ingly VIP Oylik Obuna 👑',
-        item_type: 'vip',
-        amount: 29000,
-        payment_method: 'Click',
-        status: 'completed',
-        note: ''
-      });
-
       const [isSavingPrices, setIsSavingPrices] = useState(false);
       const [selectedMovie, setSelectedMovie] = useState(null);
       const [videoTab, setVideoTab] = useState('youtube'); // 'youtube' yoki 'html5'
@@ -448,18 +214,7 @@
         setTimeout(() => setToast(''), 3000);
       };
 
-      const [users, setUsers] = useState(() => {
-        const saved = localStorage.getItem('ingly_users');
-        if (saved) {
-          try { return JSON.parse(saved); } catch (e) {}
-        }
-        return [
-          { id: 1, name: 'Anvar Karimov', phone: '+998 90 123 45 67', username: 'anvar_k', words: 420, streak: 14, isBlocked: false, isVip: false, created_at: '2026-09-15T10:30:00.000Z' },
-          { id: 2, name: 'Dilnoza Rahimova', phone: '+998 93 987 65 43', username: 'dilnoza_r', words: 890, streak: 28, isBlocked: false, isVip: true, created_at: '2026-08-20T14:15:00.000Z' },
-          { id: 3, name: 'Jasur Bekmirzayev', phone: '+998 97 555 44 33', username: 'jasur_pro', words: 120, streak: 3, isBlocked: true, isVip: false, created_at: '2026-03-10T09:00:00.000Z' },
-          { id: 4, name: 'Madina Umarova', phone: '+998 91 333 22 11', username: 'madina_u', words: 640, streak: 21, isBlocked: false, isVip: false, created_at: '2026-10-04T18:45:00.000Z' }
-        ];
-      });
+      const [users, setUsers] = useState([]);
 
       const [allWords, setAllWords] = useState([]);
       const [selectedBook, setSelectedBook] = useState(1);
@@ -499,17 +254,7 @@
         moderator: 'Moderator'
       };
 
-      const [adminList, setAdminList] = useState(() => {
-        const saved = localStorage.getItem('ingly_admin_list');
-        if (saved) {
-          try { return JSON.parse(saved); } catch (e) {}
-        }
-        return [
-          { id: 1, name: 'Boshqaruvchi (Asosiy)', username: 'Joji', role: 'super_admin', roleLabel: 'Super Admin', perms: ['all', 'manage_words', 'manage_users', 'manage_admins', 'manage_settings'], isActive: true },
-          { id: 2, name: 'Otabek Mirzayev', username: 'otabek_moderator', role: 'moderator', roleLabel: 'Moderator', perms: ['manage_users'], isActive: true },
-          { id: 3, name: 'Malika Karimova', username: 'malika_editor', role: 'editor', roleLabel: 'Kontent Menejer', perms: ['manage_words'], isActive: true }
-        ];
-      });
+      const [adminList, setAdminList] = useState([]);
 
       const [showAdminModal, setShowAdminModal] = useState(false);
       const [showPermsModal, setShowPermsModal] = useState(false);
@@ -536,8 +281,8 @@
       const LIVE_SUPABASE_URL = 'https://lbsqxownrjfmjoojdsfk.supabase.co';
       const LIVE_SUPABASE_KEY = 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
 
-      const [supabaseUrl, setSupabaseUrl] = useState(() => localStorage.getItem('ingly_supabase_url') || LIVE_SUPABASE_URL);
-      const [supabaseKey, setSupabaseKey] = useState(() => localStorage.getItem('ingly_supabase_key') || LIVE_SUPABASE_KEY);
+      const [supabaseUrl, setSupabaseUrl] = useState(LIVE_SUPABASE_URL);
+      const [supabaseKey, setSupabaseKey] = useState(LIVE_SUPABASE_KEY);
       const [supabaseConnected, setSupabaseConnected] = useState(false);
       const [showSupabaseModal, setShowSupabaseModal] = useState(false);
       const [supabaseClient, setSupabaseClient] = useState(null);
@@ -547,10 +292,11 @@
         const client = customClient || supabaseClient;
         if (!client) return;
         try {
-          // 1. users jadvalidan barcha foydalanuvchilarni parollari (password_hash) bilan birga olish
+          const access = await window.inglyAuth.authorize();
+          // Safe profile columns only; passwords belong to Supabase Auth.
           const { data: rawUsers, error: usersErr } = await client
             .from('users')
-            .select('*')
+            .select('id,auth_user_id,full_name,username,phone,is_blocked,is_premium,premium_until,created_at,updated_at')
             .order('created_at', { ascending: false });
 
           // 2. Statistika (v_user_stats) dan yodlangan so'zlar va streak ma'lumotlarini olish
@@ -565,7 +311,9 @@
             }
           } catch (stErr) {}
 
-          if (!usersErr && Array.isArray(rawUsers) && rawUsers.length > 0) {
+          const currentAccess = await window.inglyAuth.authorize();
+          if (currentAccess.id !== access.id) return;
+          if (!usersErr && Array.isArray(rawUsers)) {
             const mapped = rawUsers.map(u => {
               const uStats = statsMap.get(String(u.id)) || statsMap.get(String(u.username || '').toLowerCase()) || {};
               return {
@@ -573,8 +321,6 @@
                 name: u.full_name || 'Noma\'lum',
                 phone: u.phone || '-',
                 username: u.username || 'user',
-                password: u.password_hash || '',
-                password_hash: u.password_hash || '',
                 words: Number(uStats.mastered_words_count || u.total_words_learned || 0),
                 streak: Number(uStats.current_streak || u.current_streak || 0),
                 isBlocked: !!u.is_blocked,
@@ -584,7 +330,7 @@
               };
             });
             setUsers(mapped);
-            localStorage.setItem('ingly_users', JSON.stringify(mapped));
+
             return;
           }
         } catch (e) {
@@ -592,15 +338,18 @@
         }
       };
 
-      const initSupabaseConnection = (url, key) => {
+      const initSupabaseConnection = async (url, key) => {
         if (!url || !key) return;
         try {
+          const initiatingAccess = await window.inglyAuth.authorize();
           if (window.supabase) {
-            const client = window.supabase.createClient(url, key);
+            const client = window.inglyAuth.client;
             setSupabaseClient(client);
 
             // 1. App settings ni o'qish (ads, vip, free books)
-            client.from('app_settings').select('*').then(({ data, error }) => {
+            client.from('app_settings').select('*').then(async ({ data, error }) => {
+              const currentAccess = await window.inglyAuth.authorize();
+              if (currentAccess.id !== initiatingAccess.id) return;
               if (!error && Array.isArray(data)) {
                 setSupabaseConnected(true);
                 data.forEach(item => {
@@ -651,18 +400,6 @@
                       : item.setting_value;
                     setCurrentAnnouncement(parsed || null);
                     if (parsed) localStorage.setItem('ingly_latest_announcement', JSON.stringify(parsed));
-                  } else if (item.setting_key === 'card_receiver_number') {
-                    const val = String(item.setting_value || '8600 5304 1234 5678');
-                    setCardReceiverNumber(val);
-                    localStorage.setItem('ingly_card_receiver_number', val);
-                  } else if (item.setting_key === 'transactions_data') {
-                    const parsed = typeof item.setting_value === 'string' && item.setting_value.startsWith('[')
-                      ? JSON.parse(item.setting_value)
-                      : item.setting_value;
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                      setTransactions(parsed);
-                      localStorage.setItem('ingly_transactions', JSON.stringify(parsed));
-                    }
                   }
                 });
                 showToast('Supabase sozlamalari yuklandi!');
@@ -670,19 +407,12 @@
                 setSupabaseConnected(false);
                 console.warn('Supabase app_settings fetch xatosi:', error);
               }
-            });
+            }).catch(() => setSupabaseConnected(false));
 
             // 2. Foydalanuvchilar ro'yxatini yuklash
             loadUsersFromSupabase(client);
 
-            // 3. Supabase Realtime: Foydalanuvchi ro'yxatdan o'tganda avtomatik yangilash
-            try {
-              client.channel('realtime_users_listener')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-                  loadUsersFromSupabase(client);
-                })
-                .subscribe();
-            } catch (e) {}
+            // Private user rows are not published to Realtime. Reload over authorized REST.
           }
         } catch (e) {
           console.error('Supabase init xatosi:', e);
@@ -690,10 +420,15 @@
       };
 
       useEffect(() => {
-        if (supabaseUrl && supabaseKey) {
-          initSupabaseConnection(supabaseUrl, supabaseKey);
-        }
-      }, []);
+        if (!isAdminLoggedIn) return;
+        initSupabaseConnection(window.inglyAuth.url, window.inglyAuth.anonKey);
+        window.inglyAuth.client.from('admins').select('id,auth_user_id,full_name,username,role,permissions,is_active').then(async ({data,error}) => {
+          const access = await window.inglyAuth.authorize();
+          if (access.id !== verifiedAdmin.id) return;
+          if (!error && data) setAdminList(data.map(a => ({...a,name:a.full_name,perms:a.permissions,isActive:a.is_active,roleLabel:a.role})));
+        }).catch(() => {});
+        return () => { window.inglyAuth.client.removeAllChannels(); };
+      }, [isAdminLoggedIn, verifiedAdmin?.id]);
 
       useEffect(() => {
         fetch('./all_words.json')
@@ -732,158 +467,14 @@
         }
       };
 
-      // Moliya & Tranzaksiyalarni Saqlash
-      const handleSaveTransaction = (e) => {
-        e && e.preventDefault && e.preventDefault();
-        const amountNum = Number(txForm.amount) || 0;
-        if (amountNum <= 0) {
-          showToast('Iltimos, to\'g\'ri summani kiriting!');
-          return;
-        }
-
-        const newTx = {
-          id: 'tx_' + Date.now(),
-          type: txForm.type || 'income',
-          user_name: txForm.user_name.trim() || (txForm.type === 'income' ? 'Foydalanuvchi' : 'Kompaniya'),
-          username: txForm.username.trim() || 'user',
-          user_avatar: txForm.type === 'income' ? '👤' : '📉',
-          item_title: txForm.item_title.trim() || (txForm.type === 'income' ? 'Ingly Xarid' : 'Xarajat'),
-          item_type: txForm.item_type || 'other',
-          amount: amountNum,
-          payment_method: txForm.payment_method || 'Click',
-          status: txForm.status || 'completed',
-          created_at: new Date().toISOString(),
-          note: txForm.note.trim()
-        };
-
-        const updated = [newTx, ...transactions];
-        setTransactions(updated);
-        localStorage.setItem('ingly_transactions', JSON.stringify(updated));
-        setShowTxModal(false);
-        showToast(newTx.type === 'income' ? 'Yangi kirim muvaffaqiyatli qo\'shildi! 💰' : 'Yangi chiqim qayd etildi! 📉');
-
-        if (supabaseClient) {
-          try {
-            supabaseClient.from('app_settings').upsert({
-              setting_key: 'transactions_data',
-              setting_value: updated,
-              description: 'Ingly ilovasi moliya, kirim va chiqimlar yozuvlari'
-            }, { onConflict: 'setting_key' }).then(() => {});
-          } catch (e) {
-            console.warn('Supabase transactions save error:', e);
-          }
-        }
-      };
-
-      // Tranzaksiyani O'chirish
-      const handleDeleteTransaction = (txId) => {
-        if (!confirm('Ushbu tranzaksiya yozuvini o\'chirmoqchimisiz?')) return;
-        const updated = transactions.filter(t => t.id !== txId);
-        setTransactions(updated);
-        localStorage.setItem('ingly_transactions', JSON.stringify(updated));
-        showToast('Tranzaksiya o\'chirildi!');
-
-        if (supabaseClient) {
-          try {
-            supabaseClient.from('app_settings').upsert({
-              setting_key: 'transactions_data',
-              setting_value: updated,
-              description: 'Ingly ilovasi moliya, kirim va chiqimlar yozuvlari'
-            }, { onConflict: 'setting_key' }).then(() => {});
-          } catch (e) {
-            console.warn('Supabase transactions delete error:', e);
-          }
-        }
-      };
-
-      // Moliya hisobotini CSV formatda eksport qilish
-      const handleExportFinancesCSV = () => {
-        if (!transactions.length) {
-          showToast('Eksport qilish uchun tranzaksiyalar mavjud emas!');
-          return;
-        }
-        const headers = ["ID", "Turi", "Foydalanuvchi", "Username", "Mahsulot/Xarajat", "Summa (so'm)", "To'lov Tizimi", "Holat", "Sana", "Izoh"];
-        const rows = transactions.map(t => [
-          t.id,
-          t.type === 'income' ? 'Kirim' : 'Chiqim',
-          `"${(t.user_name || '').replace(/"/g, '""')}"`,
-          `"${(t.username || '').replace(/"/g, '""')}"`,
-          `"${(t.item_title || '').replace(/"/g, '""')}"`,
-          t.amount,
-          t.payment_method,
-          t.status,
-          `"${new Date(t.created_at).toLocaleString('uz-UZ')}"`,
-          `"${(t.note || '').replace(/"/g, '""')}"`
-        ]);
-        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `ingly_moliya_kirim_chiqim_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Moliya hisoboti Excel/CSV formatida yuklab olindi! 📊');
-      };
-
-      // Reklama switchi
-      const handleToggleAds = async () => {
-        const newVal = !adsEnabled;
-        setAdsEnabled(newVal);
-        localStorage.setItem('ingly_ads_enabled', JSON.stringify(newVal));
-        showToast(`Reklama: ${newVal ? 'YOQILDI' : 'O\'CHIRILDI'}`);
-
-        if (supabaseClient) {
-          try {
-            await supabaseClient.from('app_settings').upsert({
-              setting_key: 'ads_enabled',
-              setting_value: newVal,
-              description: 'Google AdMob reklamalarini ilovada ko\'rsatish.'
-            }, { onConflict: 'setting_key' });
-          } catch (e) {
-            console.warn('Supabase ads save error:', e);
-          }
-        }
-      };
-
-      // VIP obuna switchi
-      const handleToggleVip = async () => {
-        const newVal = !vipEnabled;
-        setVipEnabled(newVal);
-        localStorage.setItem('ingly_vip_enabled', JSON.stringify(newVal));
-        showToast(`VIP rejim: ${newVal ? 'YOQILDI' : 'O\'CHIRILDI'}`);
-
-        if (supabaseClient) {
-          try {
-            await supabaseClient.from('app_settings').upsert({
-              setting_key: 'premium_mode_enabled',
-              setting_value: newVal,
-              description: 'Pullik obuna (Premium) rejimini yoqish/o\'chirish.'
-            }, { onConflict: 'setting_key' });
-          } catch (e) {
-            console.warn('Supabase vip save error:', e);
-          }
-        }
-      };
-
       // Barcha videolarni ko'rsatish/yashirish switchi (Global Feature Flag)
       const handleToggleVideos = async () => {
-        const newVal = !videosEnabled;
-        setVideosEnabled(newVal);
-        localStorage.setItem('ingly_videos_enabled', JSON.stringify(newVal));
-        showToast(`Kinolar: ${newVal ? 'YOQILDI (Ilovada ko\'rinadi)' : 'O\'CHIRILDI (Foydalanuvchilardan yashirildi)'}`);
-
-        if (supabaseClient) {
-          try {
-            await supabaseClient.from('app_settings').upsert({
-              setting_key: 'videos_enabled',
-              setting_value: newVal,
-              description: 'Barcha kinolarni/videolarni mobil ilovada foydalanuvchilarga ko\'rsatish yoki yashirish.'
-            }, { onConflict: 'setting_key' });
-          } catch (e) {
-            console.warn('Supabase videos save error:', e);
-          }
-        }
+        if (adminDataGeneration !== window.inglyRealData.api.generation()) return;
+        try {
+          const config = await window.inglyRealData.api.configure({ videos_enabled: !videosEnabled });
+          setVideosEnabled(config.videos_enabled === true);
+          showToast('Server configuration saved.');
+        } catch (error) { showToast(error.message); }
       };
 
       // Home Page Yangilik / E'lonini Chiqarish (Barcha foydalanuvchilar Home sahifasida ko'rinadi)
@@ -937,491 +528,41 @@
         }
       };
 
-      // Bepul kitoblar soni (Eski rejim)
-      const handleSetFreeBooks = async (num) => {
-        setFreeBooks(num);
-        localStorage.setItem('ingly_free_books', String(num));
-        const updated = Array.from({ length: num }, (_, i) => i + 1);
-        setFreeBookIds(updated);
-        localStorage.setItem('ingly_free_book_ids', JSON.stringify(updated));
-        showToast(`Bepul kitoblar: ${num} ta etib belgilandi`);
-
-        try {
-          const patchHeaders = {
-            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
-            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          };
-          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
-            method: 'POST',
-            headers: patchHeaders,
-            body: JSON.stringify({
-              setting_key: 'free_book_ids',
-              setting_value: updated,
-              description: 'Admin tomonidan bepul qilingan kitoblar ID ro\'yxati'
-            })
-          });
-          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
-            method: 'POST',
-            headers: patchHeaders,
-            body: JSON.stringify({
-              setting_key: 'free_books_count',
-              setting_value: num,
-              description: 'Bepul kitoblar soni'
-            })
-          });
-          if (supabaseClient) {
-            await supabaseClient.from('app_settings').upsert([
-              { setting_key: 'free_book_ids', setting_value: updated, description: 'Bepul kitoblar ID ro\'yxati' },
-              { setting_key: 'free_books_count', setting_value: num, description: 'Bepul kitoblar soni' }
-            ], { onConflict: 'setting_key' });
-          }
-        } catch (e) {
-          console.warn('Supabase free books save error:', e);
-        }
-      };
-
-      // Qaysidir alohida kitobni tekin (bepul) yoki pullik qilish
-      const toggleBookFree = async (bookNum, forceState = null) => {
-        const num = Number(bookNum);
-        const currentlyFree = freeBookIds.includes(num);
-        const shouldBeFree = forceState !== null ? forceState : !currentlyFree;
-
-        let updated;
-        if (shouldBeFree) {
-          updated = Array.from(new Set([...freeBookIds, num])).sort((a, b) => a - b);
-        } else {
-          updated = freeBookIds.filter(id => id !== num);
-        }
-
-        setFreeBookIds(updated);
-        localStorage.setItem('ingly_free_book_ids', JSON.stringify(updated));
-
-        // Backward-compatibility: free_books_count
-        const maxFree = updated.length > 0 ? Math.max(...updated) : 0;
-        setFreeBooks(maxFree);
-        localStorage.setItem('ingly_free_books', String(maxFree));
-
-        const statusMsg = shouldBeFree ? `Book ${num}: TEKIN (Bepul ochiq) qilindi 🟢` : `Book ${num}: PULLIK (VIP) qilindi 🔒`;
-        showToast(statusMsg);
-
-        // Supabase ga saqlash
-        try {
-          const patchHeaders = {
-            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
-            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          };
-          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
-            method: 'POST',
-            headers: patchHeaders,
-            body: JSON.stringify({
-              setting_key: 'free_book_ids',
-              setting_value: updated,
-              description: 'Admin tomonidan bepul qilingan kitoblar ID ro\'yxati'
-            })
-          });
-          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
-            method: 'POST',
-            headers: patchHeaders,
-            body: JSON.stringify({
-              setting_key: 'free_books_count',
-              setting_value: maxFree,
-              description: 'Bepul kitoblar soni'
-            })
-          });
-          if (supabaseClient) {
-            await supabaseClient.from('app_settings').upsert([
-              { setting_key: 'free_book_ids', setting_value: updated, description: 'Bepul kitoblar ID ro\'yxati' },
-              { setting_key: 'free_books_count', setting_value: maxFree, description: 'Bepul kitoblar soni' }
-            ], { onConflict: 'setting_key' });
-          }
-        } catch (err) {
-          console.warn('Kitob holatini saqlash xatosi:', err);
-        }
-      };
-
-      // Kitoblar uchun tezkor presetlar
-      const applyFreeBooksPreset = async (presetType) => {
-        let updated = [1];
-        if (presetType === 'only_book_1') updated = [1];
-        else if (presetType === 'books_1_2') updated = [1, 2];
-        else if (presetType === 'books_1_2_3') updated = [1, 2, 3];
-        else if (presetType === 'all_free') updated = [1, 2, 3, 4, 5, 6];
-        else if (presetType === 'all_locked') updated = [];
-
-        setFreeBookIds(updated);
-        localStorage.setItem('ingly_free_book_ids', JSON.stringify(updated));
-        const maxFree = updated.length > 0 ? Math.max(...updated) : 0;
-        setFreeBooks(maxFree);
-        localStorage.setItem('ingly_free_books', String(maxFree));
-
-        showToast(`Kitoblar holati yangilandi! (${updated.length} ta kitob bepul)`);
-
-        try {
-          const patchHeaders = {
-            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
-            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          };
-          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
-            method: 'POST',
-            headers: patchHeaders,
-            body: JSON.stringify({
-              setting_key: 'free_book_ids',
-              setting_value: updated,
-              description: 'Admin tomonidan bepul qilingan kitoblar ID ro\'yxati'
-            })
-          });
-          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
-            method: 'POST',
-            headers: patchHeaders,
-            body: JSON.stringify({
-              setting_key: 'free_books_count',
-              setting_value: maxFree,
-              description: 'Bepul kitoblar soni'
-            })
-          });
-          if (supabaseClient) {
-            await supabaseClient.from('app_settings').upsert([
-              { setting_key: 'free_book_ids', setting_value: updated, description: 'Bepul kitoblar ID ro\'yxati' },
-              { setting_key: 'free_books_count', setting_value: maxFree, description: 'Bepul kitoblar soni' }
-            ], { onConflict: 'setting_key' });
-          }
-        } catch (e) {
-          console.warn('Preset saqlash xatosi:', e);
-        }
-      };
-
-      // VIP va Kitob narxlarini saqlash
-      const handleSavePrices = async () => {
-        setIsSavingPrices(true);
-        localStorage.setItem('ingly_vip_monthly_price', String(vipMonthlyPrice));
-        localStorage.setItem('ingly_vip_monthly_original_price', String(vipMonthlyOriginalPrice));
-        localStorage.setItem('ingly_single_book_price', String(singleBookPrice));
-        localStorage.setItem('ingly_single_book_original_price', String(singleBookOriginalPrice));
-        localStorage.setItem('ingly_card_receiver_number', cardReceiverNumber);
-
-        if (supabaseClient) {
-          try {
-            await Promise.all([
-              supabaseClient.from('app_settings').upsert({
-                setting_key: 'premium_monthly_price',
-                setting_value: Number(vipMonthlyPrice),
-                description: 'VIP Oylik Obuna amaldagi to\'lov narxi (so\'m)'
-              }, { onConflict: 'setting_key' }),
-              supabaseClient.from('app_settings').upsert({
-                setting_key: 'premium_monthly_original_price',
-                setting_value: Number(vipMonthlyOriginalPrice),
-                description: 'VIP Oylik Obuna asl (haqiqiy) narxi (so\'m)'
-              }, { onConflict: 'setting_key' }),
-              supabaseClient.from('app_settings').upsert({
-                setting_key: 'single_book_price',
-                setting_value: Number(singleBookPrice),
-                description: 'Bitta kitob amaldagi to\'lov narxi (so\'m)'
-              }, { onConflict: 'setting_key' }),
-              supabaseClient.from('app_settings').upsert({
-                setting_key: 'single_book_original_price',
-                setting_value: Number(singleBookOriginalPrice),
-                description: 'Bitta kitob asl (haqiqiy) narxi (so\'m)'
-              }, { onConflict: 'setting_key' }),
-              supabaseClient.from('app_settings').upsert({
-                setting_key: 'card_receiver_number',
-                setting_value: cardReceiverNumber,
-                description: 'To\'lovlarni qabul qilish bank karta raqami'
-              }, { onConflict: 'setting_key' })
-            ]);
-            showToast('Narxlar va to\'lov sozlamalari Supabase\'da saqlandi! 💾');
-          } catch (e) {
-            console.warn('Narxlarni saqlashda xatolik:', e);
-            showToast('Lokal saqlandi, Supabase ulanishini tekshiring');
-          }
-        } else {
-          showToast('Narxlar muvaffaqiyatli saqlandi! 💾');
-        }
-        setIsSavingPrices(false);
-      };
-
       // Foydalanuvchini bloklash / blokdan ochish
-      const toggleBlockUser = async (id, username) => {
-        const cleanUser = (username || '').replace(/^@/, '').trim().toLowerCase();
-        const target = users.find(u => u.id === id || (cleanUser && (u.username || '').replace(/^@/, '').toLowerCase() === cleanUser));
+      const toggleBlockUser = async (id) => {
+        const target = users.find(u => u.id === id);
         if (!target) return;
-        const newBlockedState = !target.isBlocked;
-
-        const updated = users.map(u => 
-          (u.id === id || (cleanUser && (u.username || '').replace(/^@/, '').toLowerCase() === cleanUser)) 
-            ? { ...u, isBlocked: newBlockedState } 
-            : u
-        );
-        setUsers(updated);
-        localStorage.setItem('ingly_users', JSON.stringify(updated));
-
-        const actionText = newBlockedState ? 'BLOKLANDI 🚫' : 'BLOKDAN OCHILDI ✅';
-        showToast(`"${target.name || target.username}" ${actionText}`);
-
-        // Supabase bulut bazasiga to'g'ridan-to'g'ri REST API orqali saqlash (100% kafolatlangan)
         try {
-          const patchHeaders = {
-            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
-            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          };
-
-          if (cleanUser) {
-            await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(cleanUser)}`, {
-              method: 'PATCH',
-              headers: patchHeaders,
-              body: JSON.stringify({ is_blocked: newBlockedState, updated_at: new Date().toISOString() })
-            });
-          }
-
-          if (target.id && String(target.id).length > 10) {
-            await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(target.id)}`, {
-              method: 'PATCH',
-              headers: patchHeaders,
-              body: JSON.stringify({ is_blocked: newBlockedState, updated_at: new Date().toISOString() })
-            });
-          }
-
-          if (supabaseClient) {
-            if (cleanUser) {
-              await supabaseClient.from('users').update({ is_blocked: newBlockedState }).eq('username', cleanUser);
-            }
-            if (target.id && String(target.id).length > 10) {
-              await supabaseClient.from('users').update({ is_blocked: newBlockedState }).eq('id', target.id);
-            }
-          }
-        } catch (e) {
-          console.warn('Supabase block user error:', e);
-        }
+          const row = await window.inglyAuth.manage('updateUser', { id: target.id, is_blocked: !target.isBlocked });
+          setUsers(prev => prev.map(u => u.id === target.id ? {...u,isBlocked:row.is_blocked} : u));
+        } catch (err) { showToast(err.message); }
       };
 
       // Foydalanuvchiga VIP / Premium berish yoki bekor qilish
       const handleSaveUserVip = async (targetDurationDays = null) => {
         if (!vipModalUser) return;
         setIsSavingVip(true);
-
-        const days = targetDurationDays !== null ? targetDurationDays : vipDurationDays;
-        const isRevoke = days === 0 || days === 'revoke';
-        const newIsVip = !isRevoke;
-
-        let premiumUntilDate = null;
-        let durationLabel = '';
-
-        if (newIsVip) {
-          if (days === 'lifetime' || days >= 36500) {
-            premiumUntilDate = new Date('2099-12-31T23:59:59.000Z').toISOString();
-            durationLabel = 'Umrbod (Cheksiz) 💎';
-          } else {
-            const numDays = Number(days) || 30;
-            const targetMs = Date.now() + numDays * 24 * 60 * 60 * 1000;
-            premiumUntilDate = new Date(targetMs).toISOString();
-            durationLabel = `${numDays} kunlik ⏳`;
-          }
-        } else {
-          durationLabel = 'Bekor qilindi ❌';
-        }
-
         try {
-          const rawUser = vipModalUser.username || '';
-          const cleanUser = rawUser.replace(/^@/, '').trim().toLowerCase();
-          const targetId = vipModalUser.id;
-
-          const patchHeaders = {
-            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
-            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          };
-
-          const patchPayload = {
-            is_premium: newIsVip,
-            premium_until: premiumUntilDate,
-            updated_at: new Date().toISOString()
-          };
-
-          // 1. Supabase REST API orqali PATCH qilish (username bo'yicha)
-          if (cleanUser) {
-            try {
-              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(cleanUser)}`, {
-                method: 'PATCH',
-                headers: patchHeaders,
-                body: JSON.stringify(patchPayload)
-              });
-            } catch (err) {
-              console.warn('REST API username bo\'yicha VIP yangilash xatosi:', err);
-            }
-          }
-
-          // 2. Supabase REST API orqali PATCH qilish (UUID id bo'yicha)
-          if (targetId && String(targetId).length > 10) {
-            try {
-              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(targetId)}`, {
-                method: 'PATCH',
-                headers: patchHeaders,
-                body: JSON.stringify(patchPayload)
-              });
-            } catch (err) {
-              console.warn('REST API id bo\'yicha VIP yangilash xatosi:', err);
-            }
-          }
-
-          // 3. SupabaseClient orqali yangilash
-          if (supabaseClient) {
-            try {
-              if (cleanUser) {
-                await supabaseClient.from('users').update(patchPayload).eq('username', cleanUser);
-              }
-              if (targetId && String(targetId).length > 10) {
-                await supabaseClient.from('users').update(patchPayload).eq('id', targetId);
-              }
-            } catch (err) {
-              console.warn('supabaseClient VIP update xatosi:', err);
-            }
-          }
-
-          // 4. Moliya audit jurnaliga (transactions) yozish
-          const newTx = {
-            id: 'tx_vip_' + Date.now(),
-            created_at: new Date().toISOString(),
-            user_id: targetId,
-            user_name: vipModalUser.name,
-            user_phone: vipModalUser.phone,
-            username: cleanUser,
-            item_type: 'vip_monthly',
-            item_title: newIsVip ? `Admin tomonidan berildi: VIP Premium (${durationLabel})` : `Admin tomonidan bekor qilindi: VIP Obuna`,
-            amount: 0,
-            payment_method: 'admin_grant',
-            status: 'completed',
-            is_manual: true
-          };
-
-          const updatedTxList = [newTx, ...(Array.isArray(transactions) ? transactions : [])];
-          setTransactions(updatedTxList);
-          localStorage.setItem('ingly_transactions', JSON.stringify(updatedTxList));
-
-          // 5. Local users state ni yangilash
-          const updatedUsers = users.map(u => {
-            const matchesId = u.id === targetId;
-            const matchesUser = cleanUser && (u.username || '').replace(/^@/, '').toLowerCase() === cleanUser;
-            if (matchesId || matchesUser) {
-              return {
-                ...u,
-                isVip: newIsVip,
-                premiumUntil: premiumUntilDate,
-                updated_at: new Date().toISOString()
-              };
-            }
-            return u;
-          });
-
-          setUsers(updatedUsers);
-          localStorage.setItem('ingly_users', JSON.stringify(updatedUsers));
-
-          if (newIsVip) {
-            showToast(`👑 "${vipModalUser.name}" ga VIP Premium (${durationLabel}) berildi!`);
-          } else {
-            showToast(`⚠️ "${vipModalUser.name}" ning VIP obunasi bekor qilindi!`);
-          }
-
-          setVipModalUser(null);
-        } catch (err) {
-          console.error('VIP saqlash xatosi:', err);
-          showToast('VIP statusini o\'zgartirishda xatolik yuz berdi!');
-        } finally {
-          setIsSavingVip(false);
-        }
+          const days = targetDurationDays === null ? vipDurationDays : targetDurationDays;
+          const premium = days !== 0 && days !== 'revoke';
+          const until = !premium ? null : days === 'lifetime' ? '2099-12-31T23:59:59Z' : new Date(Date.now() + Number(days) * 86400000).toISOString();
+          const row = await window.inglyAuth.manage('updateUser', { id: vipModalUser.id, is_premium: premium, premium_until: until });
+          setUsers(prev => prev.map(u => u.id === row.id ? {...u,isVip:row.is_premium,premiumUntil:row.premium_until} : u));
+          setVipModalUser(null); showToast('Server tasdiqladi.');
+        } catch (err) { showToast(err.message); }
+        finally { setIsSavingVip(false); }
       };
 
-      // Foydalanuvchi parolini saqlash (Kriptografik SHA-256 heshlash bilan)
+      // Password reset is verified and executed by the trusted admin endpoint.
       const handleSaveUserPassword = async (e) => {
-        if (e && e.preventDefault) e.preventDefault();
-        if (!passwordModalUser) return;
-        const cleanPass = (newPasswordInput || '').trim();
-        if (!cleanPass) {
-          showToast('Iltimos, yangi parol kiriting!');
-          return;
-        }
-        if (cleanPass.length < 4) {
-          showToast('Parol kamida 4 ta belgidan iborat bo\'lishi kerak!');
-          return;
-        }
-
+        if (e) e.preventDefault();
+        if (!passwordModalUser || newPasswordInput.length < 6) { showToast('Parol kamida 6 ta belgi.'); return; }
         setIsSavingPassword(true);
         try {
-          const rawUser = passwordModalUser.username || '';
-          const cleanUser = rawUser.replace(/^@/, '').trim().toLowerCase();
-          const targetId = passwordModalUser.id;
-          const hashedPass = hashPassword(cleanPass);
-
-          const patchHeaders = {
-            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
-            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          };
-
-          // 1. Supabase REST API orqali PATCH qilish (username bo'yicha)
-          if (cleanUser) {
-            try {
-              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(cleanUser)}`, {
-                method: 'PATCH',
-                headers: patchHeaders,
-                body: JSON.stringify({ password_hash: hashedPass, updated_at: new Date().toISOString() })
-              });
-            } catch (err) {
-              console.warn('REST patch by username error:', err);
-            }
-          }
-
-          // 2. ID bo'yicha ham PATCH (agar UUID bo'lsa)
-          if (targetId && String(targetId).length > 10) {
-            try {
-              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(targetId)}`, {
-                method: 'PATCH',
-                headers: patchHeaders,
-                body: JSON.stringify({ password_hash: hashedPass, updated_at: new Date().toISOString() })
-              });
-            } catch (err) {
-              console.warn('REST patch by id error:', err);
-            }
-          }
-
-          // 3. SupabaseClient orqali ham update qilish
-          if (supabaseClient) {
-            try {
-              if (cleanUser) {
-                await supabaseClient.from('users').update({ password_hash: hashedPass }).eq('username', cleanUser);
-              }
-              if (targetId && String(targetId).length > 10) {
-                await supabaseClient.from('users').update({ password_hash: hashedPass }).eq('id', targetId);
-              }
-            } catch (scErr) {}
-          }
-
-          // 4. Mahalliy ro'yxatni yangilash (Parol ochiq saqlanmaydi)
-          const updated = users.map(u => 
-            (u.id === targetId || (cleanUser && (u.username || '').replace(/^@/, '').toLowerCase() === cleanUser))
-              ? { ...u, password: '', password_hash: hashedPass }
-              : u
-          );
-          setUsers(updated);
-          localStorage.setItem('ingly_users', JSON.stringify(updated));
-
-          showToast(`✅ "${passwordModalUser.name}" yangi paroli muvaffaqiyatli saqlandi: ${cleanPass}`);
-          setPasswordModalUser(null);
-          setNewPasswordInput('');
-        } catch (err) {
-          console.error('Parol saqlash xatosi:', err);
-          showToast('Parolni saqlashda xatolik yuz berdi!');
-        } finally {
-          setIsSavingPassword(false);
-        }
+          await window.inglyAuth.manage('resetPassword', { id: passwordModalUser.id, password: newPasswordInput });
+          setNewPasswordInput(''); setPasswordModalUser(null); showToast('Auth parol yangilandi.');
+        } catch (err) { showToast(err.message); }
+        finally { setIsSavingPassword(false); }
       };
 
       // So'z qo'shish modalini ochish
@@ -1556,7 +697,7 @@
       // Admin qo'shish modalini ochish
       const openAddAdminModal = () => {
         setAdminForm({
-          name: '',
+          name: '', email: '',
           username: '',
           password: '',
           role: 'editor',
@@ -1577,105 +718,37 @@
       // Yangi adminni saqlash
       const handleSaveNewAdmin = async (e) => {
         if (e) e.preventDefault();
-        const cleanName = adminForm.name.trim();
-        const cleanUsername = adminForm.username.trim().toLowerCase();
-        const cleanPassword = adminForm.password.trim();
-
-        if (!cleanName || !cleanUsername || !cleanPassword) {
-          showToast('Iltimos, barcha maydonlarni to\'ldiring!');
-          return;
-        }
-
-        if (adminList.some(a => (a.username || '').toLowerCase() === cleanUsername)) {
-          showToast(`"${cleanUsername}" logini allaqachon mavjud!`);
-          return;
-        }
-
-        const newAdminObj = {
-          id: Date.now(),
-          name: cleanName,
-          username: cleanUsername,
-          role: adminForm.role,
-          roleLabel: ROLE_LABELS[adminForm.role] || 'Admin',
-          perms: adminForm.perms.length > 0 ? adminForm.perms : ['manage_words'],
-          isActive: true
-        };
-
-        const updated = [...adminList, newAdminObj];
-        setAdminList(updated);
-        localStorage.setItem('ingly_admin_list', JSON.stringify(updated));
-        setShowAdminModal(false);
-        showToast(`Admin yozuvi yaratildi: "${cleanUsername}". Bu hisob orqali kirish hozircha yopiq.`);
-
-        if (supabaseClient) {
-          try {
-            await supabaseClient.from('admins').insert([{
-              full_name: cleanName,
-              username: cleanUsername,
-              password_hash: hashPassword(cleanPassword),
-              role: adminForm.role,
-              permissions: newAdminObj.perms,
-              is_active: true
-            }]);
-          } catch (err) {
-            console.warn('Supabase admins insert error:', err);
-          }
-        }
+        try {
+          const created = await window.inglyAuth.manage('createAdmin', {
+            full_name: adminForm.name, username: adminForm.username,
+            email: adminForm.email, password: adminForm.password, role: adminForm.role, permissions: adminForm.perms,
+          });
+          setAdminList(prev => [...prev, {...created,name:created.full_name,perms:created.permissions,isActive:created.is_active,roleLabel:created.role}]);
+          setAdminForm({ name:'',username:'',email:'',password:'',role:'editor',perms:['manage_words'] });
+          setShowAdminModal(false);
+          showToast('Auth admin yaratildi. Email tasdiqlash kerak; ruxsatlar serverda boshqariladi.');
+        } catch (err) { showToast(err.message); }
       };
 
       // Ruxsatlarni va rolni yangilash
       const handleSavePermissions = async (e) => {
         if (e) e.preventDefault();
         if (!selectedAdmin) return;
-
-        const updated = adminList.map(a => {
-          if (a.id === selectedAdmin.id) {
-            return {
-              ...selectedAdmin,
-              roleLabel: ROLE_LABELS[selectedAdmin.role] || selectedAdmin.role
-            };
-          }
-          return a;
-        });
-
-        setAdminList(updated);
-        localStorage.setItem('ingly_admin_list', JSON.stringify(updated));
-        setShowPermsModal(false);
-        showToast(`"${selectedAdmin.name}" uchun ruxsatlar yangilandi!`);
-
-        if (supabaseClient) {
-          try {
-            await supabaseClient.from('admins').update({
-              role: selectedAdmin.role,
-              permissions: selectedAdmin.perms,
-              is_active: selectedAdmin.isActive
-            }).eq('username', selectedAdmin.username);
-          } catch (err) {
-            console.warn('Supabase admins update error:', err);
-          }
-        }
+        try {
+          await window.inglyAuth.manage('updateAdmin', {id:selectedAdmin.id,role:selectedAdmin.role,permissions:selectedAdmin.perms,is_active:selectedAdmin.isActive});
+          setAdminList(prev => prev.map(a => a.id === selectedAdmin.id ? {...selectedAdmin} : a));
+          setShowPermsModal(false); showToast('Server ruxsatlarni yangiladi.');
+        } catch (err) { showToast(err.message); }
       };
 
       // Adminni o'chirish
       const handleDeleteAdmin = async (adminId) => {
-        const target = adminList.find(a => a.id === adminId);
-        if (target?.username === 'Joji' || target?.role === 'super_admin') {
-          alert('Asosiy Super Adminni tizimdan o\'chirib bo\'lmaydi!');
-          return;
-        }
-        if (!confirm(`Haqiqatan ham "${target?.name}" adminini o'chirmoqchimisiz?`)) return;
-
-        const updated = adminList.filter(a => a.id !== adminId);
-        setAdminList(updated);
-        localStorage.setItem('ingly_admin_list', JSON.stringify(updated));
-        setShowPermsModal(false);
-        showToast('Admin tizimdan o\'chirildi!');
-
-        if (supabaseClient && target?.username) {
-          try {
-            await supabaseClient.from('admins').delete().eq('username', target.username);
-          } catch (err) {}
-        }
+        if (!confirm('Admin Auth hisobini o\'chirish?')) return;
+        try {
+          const result = await window.inglyAuth.manage('deleteAdmin', {id:adminId});
+          if (result.id !== adminId) throw new Error('Server confirmation missing.');
+          setAdminList(prev => prev.filter(a => a.id !== adminId));
+        } catch (err) { showToast(err.message); }
       };
 
       if (!isAdminLoggedIn) {
@@ -1708,7 +781,7 @@
               {/* Login Form */}
               <form onSubmit={handleAdminLogin} class="space-y-4">
                 <div>
-                  <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Admin Logini</label>
+                  <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Admin Email</label>
                   <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
@@ -1718,7 +791,7 @@
                       required
                       value={adminLoginInput}
                       onChange={(e) => setAdminLoginInput(e.target.value)}
-                      placeholder="Loginni kiriting"
+                      placeholder="admin@example.com"
                       class="w-full bg-slate-900/80 border border-slate-700 rounded-2xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                     />
                   </div>
@@ -1800,7 +873,7 @@
               <nav class="space-y-1.5">
                 {[
                   { id: 'dashboard', label: 'Bosh Sahifa', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-                  { id: 'words', label: "So'zlar Bazasi (4000)", icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
+                  { id: 'words', label: "So'zlar bazasi", icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
                   { id: 'users', label: 'Foydalanuvchilar', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
                   { id: 'finances', label: 'Moliya & Kirim-Chiqim', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
                   { id: 'monetization', label: 'Monetizatsiya & Reklama', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
@@ -1855,7 +928,7 @@
               <div class="flex items-center gap-3">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  100% Bepul & Reklamasiz Rejim
+                  Tasdiqlangan admin sessiyasi
                 </span>
                 <span class="text-xs text-slate-400">|</span>
                 <span class="text-xs text-slate-500 font-medium">Baza: 4000 Essential English Words</span>
@@ -1865,13 +938,13 @@
               <div class="flex items-center gap-3">
                 <div class="text-right">
                   <div class="text-sm font-bold text-slate-800 flex items-center justify-end gap-1.5">
-                    <span>Joji</span>
-                    <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide bg-brand-100 text-brand-700 rounded-full">Super Admin</span>
+                    <span>{verifiedAdmin?.name || verifiedAdmin?.username}</span>
+                    <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide bg-brand-100 text-brand-700 rounded-full">{verifiedAdmin?.role}</span>
                   </div>
-                  <div class="text-[11px] font-medium text-slate-400">admin@ingly.uz</div>
+                  <div class="text-[11px] font-medium text-slate-400">{verifiedAdmin?.username}</div>
                 </div>
                 <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-600 to-accent-500 text-white font-bold flex items-center justify-center ring-4 ring-brand-50 shadow-sm">
-                  J
+                  {(verifiedAdmin?.name || verifiedAdmin?.username || 'A').slice(0, 1)}
                 </div>
                 <button 
                   onClick={handleAdminLogout} 
@@ -1888,99 +961,7 @@
             <div class="p-8 max-w-7xl w-full mx-auto space-y-8">
               
               {/* 1. DASHBOARD TAB */}
-              {tab === 'dashboard' && (
-                <div class="space-y-8">
-                  {/* Hero Banner */}
-                  <div class="rounded-3xl bg-gradient-to-r from-brand-600 via-brand-500 to-accent-400 p-8 text-white shadow-xl shadow-brand-500/15 relative overflow-hidden">
-                    <div class="relative z-10 max-w-2xl">
-                      <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold mb-3">
-                        v1.0.0 Rasmiy Boshqaruv
-                      </span>
-                      <h2 class="text-3xl font-extrabold mb-2">Ingly Boshqaruv Markaziga xush kelibsiz!</h2>
-                      <p class="text-white/85 text-sm mb-6 leading-relaxed">
-                        6 ta kitob, 4000 ta so'z, audio talaffuzlar va kinolardan hissiy qisqa lavhalar bilan jihozlangan O'zbekistonning eng zamonaviy ingliz tili lug'at tizimi.
-                      </p>
-                      <div class="flex gap-3">
-                        <button onClick={() => setTab('words')} class="bg-white text-brand-600 font-bold px-5 py-2.5 rounded-xl shadow hover:bg-slate-100 transition text-sm">
-                          So'zlarni Ko'rish (4000)
-                        </button>
-                        <button onClick={() => setTab('monetization')} class="bg-white/10 text-white border border-white/20 font-semibold px-5 py-2.5 rounded-xl hover:bg-white/20 transition text-sm">
-                          Monetizatsiya Switchlari
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 4 Stats Cards */}
-                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-                      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Faol Foydalanuvchilar (DAU)</div>
-                      <div class="text-3xl font-extrabold text-slate-900">3,240</div>
-                      <div class="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">↑ +14.2% o'sish bu hafta</div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-                      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Jami Foydalanuvchilar</div>
-                      <div class="text-3xl font-extrabold text-slate-900">14,850</div>
-                      <div class="text-xs font-semibold text-emerald-600 mt-2">O'zbekiston bo'yicha</div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-                      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">O'zlashtirilgan So'zlar</div>
-                      <div class="text-3xl font-extrabold text-slate-900">184,520</div>
-                      <div class="text-xs font-semibold text-brand-600 mt-2">Oraliq takrorlash bilan</div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-                      <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Faol Olovchalar (Streak)</div>
-                      <div class="text-3xl font-extrabold text-state-streak">2,890 🔥</div>
-                      <div class="text-xs font-semibold text-slate-500 mt-2">Kunlik uzluksiz ta'lim</div>
-                    </div>
-                  </div>
-
-                  {/* 6 Books Progress Cards */}
-                  <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm">
-                    <h3 class="text-lg font-extrabold text-slate-900 mb-6">Kitoblar va O'rganish Holati (Book 1 - Book 6)</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {[
-                        { num: 1, title: 'Book 1 - Elementary', words: 600, status: '100% Tayyor', color: 'from-blue-500 to-indigo-500', active: true },
-                        { num: 2, title: 'Book 2 - Pre-Intermediate', words: 600, status: 'Tayyorlanmoqda', color: 'from-indigo-500 to-purple-500', active: true },
-                        { num: 3, title: 'Book 3 - Intermediate', words: 600, status: 'Kutilmoqda', color: 'from-purple-500 to-pink-500', active: false },
-                        { num: 4, title: 'Book 4 - Upper-Intermediate', words: 600, status: 'Kutilmoqda', color: 'from-emerald-500 to-teal-500', active: false },
-                        { num: 5, title: 'Book 5 - Advanced', words: 600, status: 'Kutilmoqda', color: 'from-amber-500 to-orange-500', active: false },
-                        { num: 6, title: 'Book 6 - Mastery', words: 600, status: 'Kutilmoqda', color: 'from-rose-500 to-red-500', active: false },
-                      ].map(b => {
-                        const isFree = freeBookIds.includes(b.num);
-                        return (
-                          <div key={b.num} class={`border rounded-2xl p-5 transition ${isFree ? 'border-emerald-300 bg-emerald-50/30' : 'border-slate-200/80 bg-white hover:border-brand-500/40'}`}>
-                            <div class="flex items-center justify-between mb-3">
-                              <span class={`text-xs font-bold px-2.5 py-1 rounded-lg text-white bg-gradient-to-r ${b.color}`}>
-                                Book {b.num}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => toggleBookFree(b.num)}
-                                title={isFree ? "Ushbu kitobni pullik (VIP) qilish" : "Ushbu kitobni tekin (bepul) qilish"}
-                                class={`text-[11px] font-black px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 shadow-xs ${
-                                  isFree
-                                    ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                                    : 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100'
-                                }`}
-                              >
-                                <span>{isFree ? '🟢 TEKIN' : '🔒 PULLIK'}</span>
-                              </button>
-                            </div>
-                            <h4 class="font-bold text-slate-800 text-sm mb-1">{b.title}</h4>
-                            <div class="flex items-center justify-between text-xs mt-2 pt-2 border-t border-slate-100">
-                              <span class="text-slate-400">30 Unit • {b.words} ta so'z</span>
-                              <span class={`font-bold ${isFree ? 'text-emerald-700' : 'text-amber-800'}`}>
-                                {isFree ? 'Ochiq bepul' : 'Xarid talab'}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
+              {tab === 'dashboard' && <RealDashboard onNavigate={setTab} />}
 
               {/* 2. WORDS TAB */}
               {tab === 'words' && (() => {
@@ -2560,13 +1541,13 @@
                                 <div class="text-brand-600 font-bold">@{u.username}</div>
                                 <div class="text-[11px] flex items-center flex-wrap gap-1 mt-1" title="Parol xavfsiz shifrlangan (SHA-256)">
                                   <span>🛡️</span>
-                                  <span class={u.password || u.password_hash ? "font-bold text-emerald-700 font-mono bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1" : "text-slate-400 italic"}>
-                                    <span>{u.password || u.password_hash ? '••••••••' : 'parolsiz'}</span>
-                                    {(u.password || u.password_hash) && <span class="text-[10px] text-emerald-600 font-sans font-bold">(Himoyalangan)</span>}
+                                  <span class={false ? "font-bold text-emerald-700 font-mono bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center gap-1" : "text-slate-400 italic"}>
+                                    <span>{false ? '••••••••' : 'parolsiz'}</span>
+                                    {(false) && <span class="text-[10px] text-emerald-600 font-sans font-bold">(Himoyalangan)</span>}
                                   </span>
                                   {(() => {
                                     const ts = u.password_changed_at || u.created_at || u.updated_at;
-                                    if (!ts || !u.password_hash) return null;
+                                    if (!ts || true) return null;
                                     const days = Math.floor((Date.now() - new Date(ts).getTime()) / (1000 * 60 * 60 * 24));
                                     if (days >= 180) {
                                       return (
@@ -2685,694 +1666,9 @@
               )}
 
               {/* 3.1. FINANCES TAB: Moliya, Xaridlar & Kirim-Chiqimlar Boshqaruvi */}
-              {tab === 'finances' && (() => {
-                const totalIncome = transactions
-                  .filter(t => t.type === 'income' && t.status === 'completed')
-                  .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+              {tab === 'finances' && <RealFinance />}
 
-                const totalExpense = transactions
-                  .filter(t => t.type === 'expense' && t.status === 'completed')
-                  .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-
-                const netProfit = totalIncome - totalExpense;
-                const totalSalesCount = transactions.filter(t => t.type === 'income' && t.status === 'completed').length;
-
-                // Filtrlash
-                const filteredTransactions = transactions.filter(t => {
-                  if (txFilterType === 'income' && t.type !== 'income') return false;
-                  if (txFilterType === 'expense' && t.type !== 'expense') return false;
-                  if (txFilterType === 'vip' && t.item_type !== 'vip') return false;
-                  if (txFilterType === 'book' && t.item_type !== 'book') return false;
-
-                  const s = (txSearchTerm || '').trim().toLowerCase();
-                  if (!s) return true;
-                  const uName = (t.user_name || '').toLowerCase();
-                  const uLogin = (t.username || '').toLowerCase();
-                  const itemTitle = (t.item_title || '').toLowerCase();
-                  const pMethod = (t.payment_method || '').toLowerCase();
-                  return uName.includes(s) || uLogin.includes(s) || itemTitle.includes(s) || pMethod.includes(s);
-                });
-
-                return (
-                  <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-8 animate-in fade-in duration-200">
-                    {/* Header: Title & Actions */}
-                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div>
-                        <div class="flex items-center gap-3">
-                          <span class="text-3xl">💰</span>
-                          <div>
-                            <h2 class="text-2xl font-extrabold text-slate-900">Moliya & Kirim-Chiqimlar Boshqaruvi</h2>
-                            <p class="text-sm text-slate-500 mt-0.5">
-                              Foydalanuvchilar qanday obuna yoki kitob sotib oldi, qancha to'lov qildi va operatsion chiqimlar
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="flex items-center gap-3 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={handleExportFinancesCSV}
-                          class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-2xs"
-                        >
-                          <span>📊</span>
-                          <span>CSV / Excel Eksport</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTxForm({
-                              type: 'income',
-                              user_name: '',
-                              username: '',
-                              item_title: 'Ingly VIP Oylik Obuna 👑',
-                              item_type: 'vip',
-                              amount: 29000,
-                              payment_method: 'Click',
-                              status: 'completed',
-                              note: ''
-                            });
-                            setShowTxModal(true);
-                          }}
-                          class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-md cursor-pointer"
-                        >
-                          <span>+ Yangi Kirim / Chiqim Qo'shish</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 4 Ta Asosiy Statistika Kartasi */}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                      {/* 1. Jami Kirim (Tushum) */}
-                      <div class="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 p-5 rounded-2xl border border-emerald-200/80">
-                        <div class="flex items-center justify-between mb-2">
-                          <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">Jami Kirim (Daromad)</span>
-                          <span class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">📈</span>
-                        </div>
-                        <div class="text-2xl font-black text-emerald-700">
-                          +{Number(totalIncome).toLocaleString('uz-UZ')} <span class="text-xs font-bold text-emerald-600">so'm</span>
-                        </div>
-                        <p class="text-[11px] text-emerald-600/90 mt-1 font-medium">Barcha VIP va kitob sotuvlaridan tushum</p>
-                      </div>
-
-                      {/* 2. Jami Chiqim (Xarajatlar) */}
-                      <div class="bg-gradient-to-br from-rose-500/10 to-pink-500/5 p-5 rounded-2xl border border-rose-200/80">
-                        <div class="flex items-center justify-between mb-2">
-                          <span class="text-xs font-bold uppercase tracking-wider text-rose-800">Jami Chiqim (Xarajatlar)</span>
-                          <span class="w-8 h-8 rounded-xl bg-rose-500 text-white flex items-center justify-center font-bold text-sm">📉</span>
-                        </div>
-                        <div class="text-2xl font-black text-rose-700">
-                          -{Number(totalExpense).toLocaleString('uz-UZ')} <span class="text-xs font-bold text-rose-600">so'm</span>
-                        </div>
-                        <p class="text-[11px] text-rose-600/90 mt-1 font-medium">Server, hosting va xizmatlar xarajatlari</p>
-                      </div>
-
-                      {/* 3. Sof Foyda */}
-                      <div class="bg-gradient-to-br from-brand-500/10 to-indigo-500/5 p-5 rounded-2xl border border-brand-200/80">
-                        <div class="flex items-center justify-between mb-2">
-                          <span class="text-xs font-bold uppercase tracking-wider text-brand-800">Sof Foyda (Kirim - Chiqim)</span>
-                          <span class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center font-bold text-sm">💎</span>
-                        </div>
-                        <div class={`text-2xl font-black ${netProfit >= 0 ? 'text-brand-700' : 'text-rose-700'}`}>
-                          {netProfit >= 0 ? '+' : ''}{Number(netProfit).toLocaleString('uz-UZ')} <span class="text-xs font-bold text-brand-600">so'm</span>
-                        </div>
-                        <p class="text-[11px] text-slate-500 mt-1 font-medium">Sof daromad ko'rsatkichi</p>
-                      </div>
-
-                      {/* 4. Jami Xaridlar Soni */}
-                      <div class="bg-gradient-to-br from-purple-500/10 to-violet-500/5 p-5 rounded-2xl border border-purple-200/80">
-                        <div class="flex items-center justify-between mb-2">
-                          <span class="text-xs font-bold uppercase tracking-wider text-purple-800">Jami Xaridlar Soni</span>
-                          <span class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-sm">🛍️</span>
-                        </div>
-                        <div class="text-2xl font-black text-purple-700">
-                          {totalSalesCount} <span class="text-xs font-bold text-purple-600">ta xarid</span>
-                        </div>
-                        <p class="text-[11px] text-purple-600/90 mt-1 font-medium">Foydalanuvchilar amalga oshirgan xaridlar</p>
-                      </div>
-                    </div>
-
-                    {/* Filter & Search Toolbar */}
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-slate-100">
-                      <div class="flex items-center gap-2 overflow-x-auto pb-1">
-                        {[
-                          { id: 'all', label: 'Barchasi', count: transactions.length },
-                          { id: 'income', label: '🟢 Kirimlar', count: transactions.filter(t => t.type === 'income').length },
-                          { id: 'expense', label: '🔴 Chiqimlar', count: transactions.filter(t => t.type === 'expense').length },
-                          { id: 'vip', label: '👑 VIP Obunalar', count: transactions.filter(t => t.item_type === 'vip').length },
-                          { id: 'book', label: '📚 Kitoblar', count: transactions.filter(t => t.item_type === 'book').length }
-                        ].map(f => (
-                          <button
-                            key={f.id}
-                            type="button"
-                            onClick={() => setTxFilterType(f.id)}
-                            class={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0 ${
-                              txFilterType === f.id
-                                ? 'bg-slate-900 text-white shadow-xs'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
-                          >
-                            <span>{f.label} ({f.count})</span>
-                          </button>
-                        ))}
-                      </div>
-
-                      <div class="relative w-full sm:w-64">
-                        <input
-                          type="text"
-                          placeholder="Foydalanuvchi yoki mahsulot..."
-                          value={txSearchTerm}
-                          onChange={(e) => setTxSearchTerm(e.target.value)}
-                          class="w-full pl-9 pr-3.5 py-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-brand-500 shadow-2xs"
-                        />
-                        <span class="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
-                      </div>
-                    </div>
-
-                    {/* Tranzaksiyalar Jadvali */}
-                    <div class="overflow-x-auto rounded-2xl border border-slate-200">
-                      <table class="w-full text-left border-collapse text-sm">
-                        <thead>
-                          <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 text-xs uppercase tracking-wider">
-                            <th class="py-3.5 px-4">Foydalanuvchi (Xaridor)</th>
-                            <th class="py-3.5 px-4">Nima Oldi / Xarajat</th>
-                            <th class="py-3.5 px-4">Turi</th>
-                            <th class="py-3.5 px-4">Summa</th>
-                            <th class="py-3.5 px-4">To'lov Tizimi</th>
-                            <th class="py-3.5 px-4">Sana & Vaqt</th>
-                            <th class="py-3.5 px-4">Status</th>
-                            <th class="py-3.5 px-4 text-right">Amallar</th>
-                          </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 font-medium text-slate-700 text-xs">
-                          {filteredTransactions.length === 0 ? (
-                            <tr>
-                              <td colSpan="8" class="text-center py-8 text-slate-400 font-semibold">
-                                Mos keluvchi tranzaksiyalar topilmadi.
-                              </td>
-                            </tr>
-                          ) : (
-                            filteredTransactions.map(t => (
-                              <tr key={t.id} class="hover:bg-slate-50/80 transition">
-                                {/* Foydalanuvchi */}
-                                <td class="py-3.5 px-4">
-                                  <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-sm shrink-0">
-                                      {t.user_avatar || (t.type === 'income' ? '👤' : '📉')}
-                                    </div>
-                                    <div>
-                                      <div class="font-extrabold text-slate-900 text-xs">{t.user_name}</div>
-                                      <div class="text-[10px] text-slate-400 font-mono">@{t.username}</div>
-                                    </div>
-                                  </div>
-                                </td>
-
-                                {/* Nima oldi */}
-                                <td class="py-3.5 px-4">
-                                  <div class="font-bold text-slate-800">{t.item_title}</div>
-                                  {t.note ? <div class="text-[10px] text-slate-400 mt-0.5">{t.note}</div> : null}
-                                </td>
-
-                                {/* Turi */}
-                                <td class="py-3.5 px-4">
-                                  <span class={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
-                                    t.type === 'income' 
-                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
-                                      : 'bg-rose-100 text-rose-800 border border-rose-200'
-                                  }`}>
-                                    {t.type === 'income' ? '🟢 Kirim' : '🔴 Chiqim'}
-                                  </span>
-                                </td>
-
-                                {/* Summa */}
-                                <td class="py-3.5 px-4">
-                                  <span class={`font-black text-sm ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                    {t.type === 'income' ? '+' : '-'}{Number(t.amount).toLocaleString('uz-UZ')} so'm
-                                  </span>
-                                </td>
-
-                                {/* To'lov Tizimi */}
-                                <td class="py-3.5 px-4">
-                                  <span class={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold ${
-                                    t.payment_method === 'Click' 
-                                      ? 'bg-blue-100 text-blue-700' 
-                                      : t.payment_method === 'Payme' 
-                                        ? 'bg-teal-100 text-teal-700' 
-                                        : 'bg-purple-100 text-purple-700'
-                                  }`}>
-                                    {t.payment_method}
-                                  </span>
-                                </td>
-
-                                {/* Sana */}
-                                <td class="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
-                                  {new Date(t.created_at).toLocaleString('uz-UZ', { 
-                                    year: 'numeric', month: '2-digit', day: '2-digit', 
-                                    hour: '2-digit', minute: '2-digit' 
-                                  })}
-                                </td>
-
-                                {/* Status */}
-                                <td class="py-3.5 px-4">
-                                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    ✓ To'landi
-                                  </span>
-                                </td>
-
-                                {/* Amallar */}
-                                <td class="py-3.5 px-4 text-right">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteTransaction(t.id)}
-                                    title="Tranzaksiyani o'chirish"
-                                    class="text-xs font-bold text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition cursor-pointer"
-                                  >
-                                    🗑️ O'chirish
-                                  </button>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* 4. MONETIZATION TAB (Feature Flags) */}
-              {tab === 'monetization' && (
-                <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-sm space-y-8">
-                  <div>
-                    <h2 class="text-2xl font-extrabold text-slate-900">Monetizatsiya va Moslashuvchan Switchlar (Feature Flags)</h2>
-                    <p class="text-sm text-slate-500">Ilovani Play Marketda yangilamasdan, darhol admin paneldan turib reklama va obunani yoqish yoki o'chirish</p>
-                  </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* AdMob Switch */}
-                    <div class="border border-slate-200 rounded-3xl p-6 space-y-4">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                          <span class="text-3xl">📢</span>
-                          <div>
-                            <h4 class="font-bold text-slate-900">Google AdMob Reklamalari</h4>
-                            <p class="text-xs text-slate-400">Banner va oraliq reklamalarni ko'rsatish</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={handleToggleAds}
-                          class={`w-14 h-8 rounded-full transition-colors relative cursor-pointer ${adsEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                        >
-                          <span class={`w-6 h-6 bg-white rounded-full absolute top-1 transition-transform ${adsEnabled ? 'left-7' : 'left-1'}`}></span>
-                        </button>
-                      </div>
-                      <div class={`text-xs font-bold px-3 py-2 rounded-xl ${adsEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                        Holat: {adsEnabled ? 'Ilovada reklamalar yoqilgan' : '100% BEPUL va REKLAMASIZ (O\'chiq)'}
-                      </div>
-                    </div>
-
-                    {/* VIP Subscription Switch */}
-                    <div class="border border-slate-200 rounded-3xl p-6 space-y-4">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                          <span class="text-3xl">👑</span>
-                          <div>
-                            <h4 class="font-bold text-slate-900">Ingly VIP / Premium Obunasi</h4>
-                            <p class="text-xs text-slate-400">Pullik rejim va kitoblarni yopish</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={handleToggleVip}
-                          class={`w-14 h-8 rounded-full transition-colors relative cursor-pointer ${vipEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                        >
-                          <span class={`w-6 h-6 bg-white rounded-full absolute top-1 transition-transform ${vipEnabled ? 'left-7' : 'left-1'}`}></span>
-                        </button>
-                      </div>
-                      <div class={`text-xs font-bold px-3 py-2 rounded-xl ${vipEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                        Holat: {vipEnabled ? 'Pullik obuna tizimi yoqildi' : 'Hamma 6 ta kitob mutlaqo bepul (O\'chiq)'}
-                      </div>
-                    </div>
-
-                    {/* Global Cinema & Videos Switch */}
-                    <div class="border border-slate-200 rounded-3xl p-6 space-y-4">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                          <span class="text-3xl">🎬</span>
-                          <div>
-                            <h4 class="font-bold text-slate-900">Kinolarni Ilovada Ko'rsatish</h4>
-                            <p class="text-xs text-slate-400">Barcha videolarni yashirish yoki ko'rsatish</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={handleToggleVideos}
-                          class={`w-14 h-8 rounded-full transition-colors relative cursor-pointer ${videosEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
-                        >
-                          <span class={`w-6 h-6 bg-white rounded-full absolute top-1 transition-transform ${videosEnabled ? 'left-7' : 'left-1'}`}></span>
-                        </button>
-                      </div>
-                      <div class={`text-xs font-bold px-3 py-2 rounded-xl ${videosEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                        Holat: {videosEnabled ? 'Kinolar ilovada foydalanuvchilarga ochiq' : 'Kinolar va video lavhalar yashirilgan (O\'chiq)'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Kitoblarni Tekin / Pullik Qilish Boshqaruvi */}
-                  <div class="border border-emerald-200 bg-emerald-50/20 rounded-3xl p-6 space-y-5">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <div class="flex items-center gap-2">
-                          <span class="text-2xl">📚</span>
-                          <h4 class="font-black text-slate-900 text-base">Kitoblarni Tekin (Bepul) yoki Pullik Qilish Boshqaruvi</h4>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-1">
-                          Istalgan kitobni alohida tanlab, uni barcha foydalanuvchilarga bepul yoki faqat VIP/pullik xarid qilib belgilashingiz mumkin.
-                        </p>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <span class="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          🟢 Bepul: {freeBookIds.length} ta kitob
-                        </span>
-                        <span class="text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300">
-                          🔒 Pullik: {6 - freeBookIds.length} ta kitob
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Tezkor Presetlar */}
-                    <div class="flex items-center gap-2 flex-wrap pt-1">
-                      <span class="text-xs font-bold text-slate-500 mr-1">Tezkor shablonlar:</span>
-                      <button
-                        type="button"
-                        onClick={() => applyFreeBooksPreset('only_book_1')}
-                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 transition cursor-pointer"
-                      >
-                        📕 Faqat Book 1 bepul
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyFreeBooksPreset('books_1_2')}
-                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 transition cursor-pointer"
-                      >
-                        🎁 Book 1 & 2 bepul
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyFreeBooksPreset('books_1_2_3')}
-                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 transition cursor-pointer"
-                      >
-                        ✨ Book 1, 2, 3 bepul
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyFreeBooksPreset('all_free')}
-                        class="px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer shadow-xs"
-                      >
-                        🎉 Barchasini TEKIN qilish (Aksiya)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => applyFreeBooksPreset('all_locked')}
-                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition cursor-pointer"
-                      >
-                        🔒 Barchasi pullik (Faqat VIP)
-                      </button>
-                    </div>
-
-                    {/* 6 Ta Kitob Kartochkalari */}
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-                      {[
-                        { num: 1, title: 'Book 1 - Elementary', icon: '📕', desc: 'A1 daraja • 600 so\'z' },
-                        { num: 2, title: 'Book 2 - Pre-Intermediate', icon: '🎓', desc: 'A2 daraja • 600 so\'z' },
-                        { num: 3, title: 'Book 3 - Intermediate', icon: '📘', desc: 'B1 daraja • 600 so\'z' },
-                        { num: 4, title: 'Book 4 - Upper-Intermediate', icon: '📙', desc: 'B2 daraja • 600 so\'z' },
-                        { num: 5, title: 'Book 5 - Advanced', icon: '📓', desc: 'C1 daraja • 600 so\'z' },
-                        { num: 6, title: 'Book 6 - Mastery', icon: '🏆', desc: 'C2 daraja • 600 so\'z' },
-                      ].map(b => {
-                        const isFree = freeBookIds.includes(b.num);
-                        return (
-                          <div
-                            key={b.num}
-                            class={`p-4 rounded-2xl border transition flex flex-col justify-between ${
-                              isFree
-                                ? 'bg-white border-emerald-300 shadow-xs ring-1 ring-emerald-200'
-                                : 'bg-white border-slate-200 opacity-95'
-                            }`}
-                          >
-                            <div>
-                              <div class="flex items-center justify-between mb-2">
-                                <span class="text-xl">{b.icon}</span>
-                                <span class={`text-[11px] font-black px-2.5 py-1 rounded-full ${
-                                  isFree
-                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                    : 'bg-amber-100 text-amber-900 border border-amber-300'
-                                }`}>
-                                  {isFree ? '🟢 TEKIN (BEPUL)' : '🔒 VIP / PULLIK'}
-                                </span>
-                              </div>
-                              <h5 class="font-black text-slate-900 text-sm">{b.title}</h5>
-                              <p class="text-xs text-slate-500 mt-0.5">{b.desc}</p>
-                              <p class="text-[11px] mt-2 font-medium text-slate-600">
-                                {isFree 
-                                  ? '✅ Hamma foydalanuvchilar to\'lovsiz o\'rgana oladi.' 
-                                  : '⚠️ Faqat VIP foydalanuvchilar yoki xarid qilganlar o\'qiy oladi.'}
-                              </p>
-                            </div>
-
-                            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                              <span class="text-[11px] font-bold text-slate-400">
-                                Status: <strong class={isFree ? 'text-emerald-700' : 'text-amber-800'}>{isFree ? 'Ochiq' : 'Qulflangan'}</strong>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => toggleBookFree(b.num)}
-                                class={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1 shadow-xs ${
-                                  isFree
-                                    ? 'bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-200 hover:border-rose-200'
-                                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
-                                }`}
-                              >
-                                <span>{isFree ? '🔒 Pullik qilish' : '🟢 Tekin qilish'}</span>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* To'lov Tizimlari va Dinamik Narxlar Sozlamasi */}
-                  <div class="border border-purple-200 bg-purple-50/40 rounded-3xl p-6 space-y-5">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <div class="flex items-center gap-2">
-                          <span class="text-2xl">💳</span>
-                          <h4 class="font-bold text-slate-900 text-base">To'lov Tizimlari va Dinamik Narxlar (Click, Payme, Bank Karta)</h4>
-                        </div>
-                        <p class="text-xs text-slate-500 mt-1">
-                          VIP oylik obuna va kitob narxlarini o'zgartiring. Saqlangan narxlar mobil ilovada darhol jonli ko'rinadi!
-                        </p>
-                      </div>
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700">🔵 Click</span>
-                        <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-teal-100 text-teal-700">🟢 Payme</span>
-                        <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-purple-100 text-purple-700">💳 Uzcard / Humo</span>
-                      </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* 1. VIP Monthly Price with Discount */}
-                      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-2">
-                            <span class="text-xl">👑</span>
-                            <h5 class="text-sm font-extrabold text-slate-900">VIP Oylik Obuna Narxlari</h5>
-                          </div>
-                          {vipMonthlyOriginalPrice > vipMonthlyPrice ? (
-                            <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              🔥 -{Math.round(((vipMonthlyOriginalPrice - vipMonthlyPrice) / vipMonthlyOriginalPrice) * 100)}% AKSIYA
-                            </span>
-                          ) : (
-                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Chegirmasiz</span>
-                          )}
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {/* Asl (Haqiqiy) Narx */}
-                          <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">
-                              Asl (Haqiqiy) Narxi:
-                            </label>
-                            <div class="relative">
-                              <input
-                                type="number"
-                                value={vipMonthlyOriginalPrice}
-                                onChange={(e) => setVipMonthlyOriginalPrice(Number(e.target.value))}
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 focus:outline-none focus:border-brand-500"
-                                placeholder="59000"
-                              />
-                              <span class="absolute right-3 top-2 text-xs text-slate-400 font-semibold">so'm</span>
-                            </div>
-                            <p class="text-[10px] text-slate-400 mt-1">Usti chizib ko'rsatiladigan narx</p>
-                          </div>
-
-                          {/* Chegirmadagi (To'lov) Narxi */}
-                          <div>
-                            <label class="block text-xs font-bold text-brand-700 mb-1">
-                              Chegirmadagi Narxi (To'lov):
-                            </label>
-                            <div class="relative">
-                              <input
-                                type="number"
-                                value={vipMonthlyPrice}
-                                onChange={(e) => setVipMonthlyPrice(Number(e.target.value))}
-                                class="w-full bg-brand-50/50 border-2 border-brand-500 rounded-xl px-3 py-2 text-sm font-black text-brand-700 focus:outline-none"
-                                placeholder="29000"
-                              />
-                              <span class="absolute right-3 top-2 text-xs text-brand-600 font-bold">so'm/oy</span>
-                            </div>
-                            <p class="text-[10px] text-brand-600 font-semibold mt-1">Foydalanuvchi to'laydigan amaldagi narx</p>
-                          </div>
-                        </div>
-
-                        {/* Jonli Namuna (Live Preview) */}
-                        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-xl p-3 flex items-center justify-between">
-                          <div>
-                            <p class="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Ilovadagi ko'rinishi:</p>
-                            <div class="flex items-center gap-2 mt-0.5">
-                              {vipMonthlyOriginalPrice > vipMonthlyPrice && (
-                                <span class="text-xs text-slate-400 line-through font-semibold">
-                                  {Number(vipMonthlyOriginalPrice).toLocaleString('uz-UZ')} so'm
-                                </span>
-                              )}
-                              <span class="text-sm font-black text-purple-900">
-                                {Number(vipMonthlyPrice).toLocaleString('uz-UZ')} so'm
-                              </span>
-                              <span class="text-[11px] text-slate-500 font-semibold">/ oy</span>
-                            </div>
-                          </div>
-                          {vipMonthlyOriginalPrice > vipMonthlyPrice && (
-                            <div class="text-right">
-                              <span class="text-[11px] font-bold text-emerald-700 bg-white px-2 py-1 rounded-lg border border-emerald-200 shadow-xs">
-                                Foyda: {(vipMonthlyOriginalPrice - vipMonthlyPrice).toLocaleString('uz-UZ')} so'm
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 2. Single Book Price with Discount */}
-                      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center gap-2">
-                            <span class="text-xl">📚</span>
-                            <h5 class="text-sm font-extrabold text-slate-900">Bitta Kitob Sotib Olish Narxlari</h5>
-                          </div>
-                          {singleBookOriginalPrice > singleBookPrice ? (
-                            <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                              🔥 -{Math.round(((singleBookOriginalPrice - singleBookPrice) / singleBookOriginalPrice) * 100)}% AKSIYA
-                            </span>
-                          ) : (
-                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Chegirmasiz</span>
-                          )}
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {/* Asl (Haqiqiy) Narx */}
-                          <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">
-                              Asl (Haqiqiy) Narxi:
-                            </label>
-                            <div class="relative">
-                              <input
-                                type="number"
-                                value={singleBookOriginalPrice}
-                                onChange={(e) => setSingleBookOriginalPrice(Number(e.target.value))}
-                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 focus:outline-none focus:border-brand-500"
-                                placeholder="35000"
-                              />
-                              <span class="absolute right-3 top-2 text-xs text-slate-400 font-semibold">so'm</span>
-                            </div>
-                            <p class="text-[10px] text-slate-400 mt-1">Usti chizib ko'rsatiladigan narx</p>
-                          </div>
-
-                          {/* Chegirmadagi (To'lov) Narxi */}
-                          <div>
-                            <label class="block text-xs font-bold text-brand-700 mb-1">
-                              Chegirmadagi Narxi (To'lov):
-                            </label>
-                            <div class="relative">
-                              <input
-                                type="number"
-                                value={singleBookPrice}
-                                onChange={(e) => setSingleBookPrice(Number(e.target.value))}
-                                class="w-full bg-brand-50/50 border-2 border-brand-500 rounded-xl px-3 py-2 text-sm font-black text-brand-700 focus:outline-none"
-                                placeholder="19000"
-                              />
-                              <span class="absolute right-3 top-2 text-xs text-brand-600 font-bold">so'm</span>
-                            </div>
-                            <p class="text-[10px] text-brand-600 font-semibold mt-1">Foydalanuvchi to'laydigan amaldagi narx</p>
-                          </div>
-                        </div>
-
-                        {/* Jonli Namuna (Live Preview) */}
-                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
-                          <div>
-                            <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Ilovadagi ko'rinishi:</p>
-                            <div class="flex items-center gap-2 mt-0.5">
-                              {singleBookOriginalPrice > singleBookPrice && (
-                                <span class="text-xs text-slate-400 line-through font-semibold">
-                                  {Number(singleBookOriginalPrice).toLocaleString('uz-UZ')} so'm
-                                </span>
-                              )}
-                              <span class="text-sm font-black text-amber-900">
-                                {Number(singleBookPrice).toLocaleString('uz-UZ')} so'm
-                              </span>
-                            </div>
-                          </div>
-                          {singleBookOriginalPrice > singleBookPrice && (
-                            <div class="text-right">
-                              <span class="text-[11px] font-bold text-emerald-700 bg-white px-2 py-1 rounded-lg border border-emerald-200 shadow-xs">
-                                Foyda: {(singleBookOriginalPrice - singleBookPrice).toLocaleString('uz-UZ')} so'm
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 3. Card Receiver Number */}
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div class="flex items-center gap-3">
-                        <div class="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center text-xl">💳</div>
-                        <div>
-                          <label class="block text-xs font-bold text-slate-800">Qabul qiluvchi Karta raqami (Uzcard / Humo / Visa)</label>
-                          <p class="text-xs text-slate-400">To'lovlar kelib tushadigan admin yoki kompaniya bank hisob raqami</p>
-                        </div>
-                      </div>
-                      <div class="w-full sm:w-72">
-                        <input
-                          type="text"
-                          value={cardReceiverNumber}
-                          onChange={(e) => setCardReceiverNumber(e.target.value)}
-                          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-black text-slate-900 focus:outline-none focus:border-brand-500 tracking-wider"
-                          placeholder="8600 5304 1234 5678"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="flex justify-end pt-2">
-                      <button
-                        onClick={handleSavePrices}
-                        disabled={isSavingPrices}
-                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm px-7 py-3 rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                      >
-                        <span>{isSavingPrices ? 'Saqlanmoqda...' : 'Narxlar va Chegirmalarni Saqlash 💾'}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {tab === 'monetization' && <RealMonetization />}
 
               {/* 5. ADMINS TAB */}
               {tab === 'admins' && (
@@ -3634,7 +1930,7 @@
                       type="text" 
                       placeholder="https://xyzcompany.supabase.co" 
                       value={supabaseUrl}
-                      onChange={(e) => setSupabaseUrl(e.target.value)}
+                      readOnly
                       class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-brand-500"
                     />
                   </div>
@@ -3645,14 +1941,14 @@
                       rows="3"
                       placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                       value={supabaseKey}
-                      onChange={(e) => setSupabaseKey(e.target.value)}
+                      readOnly
                       class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-brand-500 font-mono"
                     ></textarea>
                   </div>
 
                   <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-blue-800 leading-relaxed">
                     <p class="font-bold mb-1">Qayerdan olish mumkin?</p>
-                    <p>Supabase loyihangizdan (supabase.com) <strong>Project Settings -> API</strong> bo'limiga kiring va <em>Project URL</em> hamda <em>anon (public)</em> kalitini nusxalab bu yerga joylang.</p>
+                    <p>Supabase loyihangizdan (supabase.com) <strong>Project Settings -> API</strong> bo'limiga kiring va <em>Project URL</em> hamda <em>anon (public)</em> kalitini tekshiring. Loyihani almashtirish deploy konfiguratsiyasida bajariladi.</p>
                   </div>
                 </div>
 
@@ -3673,11 +1969,9 @@
                   </button>
                   <button 
                     onClick={() => {
-                      const cleanUrl = supabaseUrl.trim();
-                      const cleanKey = supabaseKey.trim();
+                      const cleanUrl = window.inglyAuth.url;
+                      const cleanKey = window.inglyAuth.anonKey;
                       if (cleanUrl && cleanKey) {
-                        localStorage.setItem('ingly_supabase_url', cleanUrl);
-                        localStorage.setItem('ingly_supabase_key', cleanKey);
                         initSupabaseConnection(cleanUrl, cleanKey);
                         showToast('Sozlamalar saqlandi, ulanish tekshirilmoqda...');
                       }
@@ -3897,6 +2191,7 @@
                 </div>
 
                 <form onSubmit={handleSaveNewAdmin} class="space-y-4 text-xs">
+                  <input type="email" required placeholder="Admin email" value={adminForm.email || ''} onChange={e => setAdminForm({...adminForm,email:e.target.value})} class="w-full border rounded-xl p-3" />
                   {users.length > 0 && (
                     <div class="bg-purple-50/70 p-3 rounded-2xl border border-purple-100 mb-2">
                       <label class="block font-bold text-purple-900 mb-1 flex items-center gap-1.5">
@@ -4188,7 +2483,7 @@
                     <span class="text-slate-500 font-medium">Joriy parol holati:</span>
                     <span class="font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200 inline-flex items-center gap-1">
                       <span>🔒</span>
-                      <span>{passwordModalUser.password || passwordModalUser.password_hash ? '•••••••• (Himoyalangan / SHA-256)' : 'O\'rnatilmagan'}</span>
+                      <span>Supabase Auth boshqaradi</span>
                     </span>
                   </div>
 
@@ -4427,137 +2722,6 @@
             </div>
           )}
 
-          {/* Yangi Kirim / Chiqim Qo'shish Modali */}
-          {showTxModal && (
-            <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div class="flex items-center gap-2.5">
-                    <span class="text-2xl">💰</span>
-                    <div>
-                      <h3 class="font-extrabold text-base text-slate-900">Yangi Tranzaksiya Qo'shish</h3>
-                      <p class="text-xs text-slate-400">Kirim (foydalanuvchi xaridi) yoki Chiqim (xarajat) kiritish</p>
-                    </div>
-                  </div>
-                  <button onClick={() => setShowTxModal(false)} class="text-slate-400 hover:text-slate-600 font-bold p-1 cursor-pointer">✕</button>
-                </div>
-
-                <form onSubmit={handleSaveTransaction} class="space-y-3.5 text-xs">
-                  {/* Tranzaksiya turi */}
-                  <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() => setTxForm({ ...txForm, type: 'income', item_title: 'Ingly VIP Oylik Obuna 👑', item_type: 'vip', amount: 29000 })}
-                      class={`py-2 text-center rounded-lg font-bold transition cursor-pointer ${txForm.type === 'income' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
-                    >
-                      🟢 Kirim (Foydalanuvchi Xaridi)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTxForm({ ...txForm, type: 'expense', user_name: 'Kompaniya / Provider', username: 'system', item_title: 'Server & Hosting to\'lovi', item_type: 'server', amount: 50000 })}
-                      class={`py-2 text-center rounded-lg font-bold transition cursor-pointer ${txForm.type === 'expense' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
-                    >
-                      🔴 Chiqim (Xarajat)
-                    </button>
-                  </div>
-
-                  {/* Foydalanuvchi tanlash yoki kiritish */}
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label class="block font-bold text-slate-700 mb-1">{txForm.type === 'income' ? 'Foydalanuvchi Ismi:' : 'Xarajat Qabul Qiluvchi:'}</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder={txForm.type === 'income' ? "Masalan: Jasur Bekmirzayev" : "Masalan: Supabase Cloud"}
-                        value={txForm.user_name}
-                        onChange={(e) => setTxForm({ ...txForm, user_name: e.target.value })}
-                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label class="block font-bold text-slate-700 mb-1">Username (@login):</label>
-                      <input
-                        type="text"
-                        placeholder="jasur_pro"
-                        value={txForm.username}
-                        onChange={(e) => setTxForm({ ...txForm, username: e.target.value })}
-                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Mahsulot / Nima oldi */}
-                  <div>
-                    <label class="block font-bold text-slate-700 mb-1">{txForm.type === 'income' ? 'Nima Sotib Oldi?' : 'Xarajat Maqsadi:'}</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Masalan: Ingly VIP Oylik Obuna 👑 yoki Book 2 - Pre-Intermediate 📚"
-                      value={txForm.item_title}
-                      onChange={(e) => setTxForm({ ...txForm, item_title: e.target.value })}
-                      class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
-                    />
-                  </div>
-
-                  {/* Summa va To'lov Tizimi */}
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label class="block font-bold text-slate-700 mb-1">Summa (so'm):</label>
-                      <input
-                        type="number"
-                        required
-                        value={txForm.amount}
-                        onChange={(e) => setTxForm({ ...txForm, amount: e.target.value })}
-                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-black text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
-                        placeholder="29000"
-                      />
-                    </div>
-                    <div>
-                      <label class="block font-bold text-slate-700 mb-1">To'lov Tizimi:</label>
-                      <select
-                        value={txForm.payment_method}
-                        onChange={(e) => setTxForm({ ...txForm, payment_method: e.target.value })}
-                        class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
-                      >
-                        <option value="Click">🔵 Click</option>
-                        <option value="Payme">🟢 Payme</option>
-                        <option value="Uzcard/Humo">🟣 Bank Karta (Uzcard/Humo)</option>
-                        <option value="Naqd">💵 Naqd pul</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Izoh */}
-                  <div>
-                    <label class="block font-bold text-slate-700 mb-1">Qo'shimcha Izoh (Ixtiyoriy):</label>
-                    <input
-                      type="text"
-                      placeholder="Chek raqami yoki to'lov tafsiloti..."
-                      value={txForm.note}
-                      onChange={(e) => setTxForm({ ...txForm, note: e.target.value })}
-                      class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 bg-white"
-                    />
-                  </div>
-
-                  <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => setShowTxModal(false)}
-                      class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
-                    >
-                      Bekor qilish
-                    </button>
-                    <button
-                      type="submit"
-                      class="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition cursor-pointer"
-                    >
-                      Saqlash
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
         </div>
       );
     }

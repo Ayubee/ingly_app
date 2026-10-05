@@ -6,8 +6,9 @@
  * Foydalanuvchining shaxsiy o'rganish progressi (storage.js) bilan avtomatik birlashtiriladi.
  */
 
-import { getAllProgress, getFavorites, getWordProgress } from './storage';
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { getAllProgress, getFavorites, getWordProgress, captureStorageSession, isStorageSessionCurrent } from './storage';
+import bundledWords from '../data/all_words.json';
+const bundledIndex = new Map(bundledWords.map(word => [Number(word.id), word]));
 
 // 6 ta kitobning umumiy konfiguratsiyasi
 export const BOOKS_METADATA = [
@@ -516,6 +517,9 @@ PRELOADED_CORE_WORDS.forEach((w) => wordsCache.set(Number(w.id), w));
  * (4000 ta so'z strukturasini to'liq saqlash va internetsiz ham bo'sh qolmasligi uchun)
  */
 function getOrGenerateWord(bookNum, unitNum, wordIndex) {
+  const bundled = bundledIndex.get((bookNum - 1) * 600 + (unitNum - 1) * 20 + wordIndex);
+  if (bundled) return { ...bundled, phonetic: bundled.ipa || bundled.phonetic || '', definition: bundled.desc || '', example: bundled.exam || '' };
+
   const globalId = (bookNum - 1) * 600 + (unitNum - 1) * 20 + wordIndex;
 
   if (wordsCache.has(globalId)) {
@@ -551,8 +555,8 @@ function getOrGenerateWord(bookNum, unitNum, wordIndex) {
 /**
  * 6 ta kitob ro'yxatini foydalanuvchining umumiy progressi bilan olish
  */
-export async function getBooks() {
-  const allProgress = await getAllProgress();
+export async function getBooks(owner = captureStorageSession()) {
+  const allProgress = await getAllProgress(owner);
 
   return BOOKS_METADATA.map((b) => {
     let masteredCount = 0;
@@ -566,7 +570,7 @@ export async function getBooks() {
     for (let id = startId; id <= endId; id++) {
       const p = allProgress[String(id)];
       if (p) {
-        if (p.status === 'mastered') masteredCount++;
+        if (p.completed || p.status === 'mastered') masteredCount++;
         else if (p.status === 'review') reviewCount++;
         else if (p.status === 'hard') hardCount++;
       }
@@ -589,17 +593,18 @@ export async function getBooks() {
 /**
  * Bitta kitob tafsilotini olish
  */
-export async function getBook(bookNumber) {
-  const books = await getBooks();
+export async function getBook(bookNumber, owner = captureStorageSession()) {
+  const books = await getBooks(owner);
+  if (!isStorageSessionCurrent(owner)) return null;
   return books.find((b) => b.book_number === Number(bookNumber)) || books[0];
 }
 
 /**
  * Kitobdagi barcha 30 ta dars (unitlar) ro'yxatini olish
  */
-export async function getUnits(bookNumber) {
+export async function getUnits(bookNumber, owner = captureStorageSession()) {
   const bNum = Number(bookNumber);
-  const allProgress = await getAllProgress();
+  const allProgress = await getAllProgress(owner);
   const units = [];
 
   for (let u = 1; u <= 30; u++) {
@@ -613,7 +618,7 @@ export async function getUnits(bookNumber) {
     for (let wid = startId; wid <= endId; wid++) {
       const prog = allProgress[String(wid)];
       if (prog) {
-        if (prog.status === 'mastered') mastered++;
+        if (prog.completed || prog.status === 'mastered') mastered++;
         else if (prog.status === 'review') reviewing++;
         else if (prog.status === 'hard') hard++;
       }
@@ -642,59 +647,23 @@ export async function getUnits(bookNumber) {
  * Berilgan kitob va darsdagi 20 ta so'zni foydalanuvchi progressi bilan olish
  * (Supabase bulut bazasidagi eng so'nggi yangilangan so'zlarni ham avtomatik tortadi)
  */
-export async function getUnitWords(bookNumber, unitNumber) {
+export async function getUnitWords(bookNumber, unitNumber, owner = captureStorageSession()) {
   const bNum = Number(bookNumber);
   const uNum = Number(unitNumber);
-  const allProgress = await getAllProgress();
-  const favorites = new Set((await getFavorites()).map(Number));
+  const allProgress = await getAllProgress(owner);
+  const favorites = new Set((await getFavorites(owner)).map(Number));
 
-  // 1. Supabase'dan jonli so'zlarni tekshirish
-  const remoteWordsMap = new Map();
-  if (isSupabaseConfigured()) {
-    try {
-      const { data, error } = await supabase
-        .from('words')
-        .select('*')
-        .limit(20);
-
-      if (!error && Array.isArray(data) && data.length > 0) {
-        data.forEach(w => {
-          const idx = w.order_index || 1;
-          remoteWordsMap.set(idx, {
-            id: w.id,
-            book: bNum,
-            unit: uNum,
-            word: w.word,
-            phonetic: w.phonetic,
-            pos: w.part_of_speech || 'noun',
-            uzbek: w.uzbek_translation,
-            definition: w.definition,
-            definition_uz: w.definition_uz,
-            example: w.example,
-            example_uz: w.example_uz,
-            image_url: w.image_url,
-            audio_url: w.audio_url,
-            video_clip_url: w.video_clip_url,
-            movie: 'Ingly Cinema',
-            clip: `Ingly Video: ${w.word}`
-          });
-        });
-      }
-    } catch (e) {
-      // Oflayn rejim
-    }
-  }
-
+  // Bundled content is immediately available; opening a lesson needs no network round trip.
   const words = [];
   for (let i = 1; i <= 20; i++) {
     // Agar Supabase bazasida admin kiritgan so'z bo'lsa uni olamiz, aks holda oflayn bazadan
-    const wordObj = remoteWordsMap.get(i) || getOrGenerateWord(bNum, uNum, i);
+    const wordObj = getOrGenerateWord(bNum, uNum, i);
     const prog = allProgress[String(wordObj.id)] || null;
 
     words.push({
       ...wordObj,
       status: prog ? prog.status : null,
-      is_mastered: prog?.status === 'mastered',
+      is_mastered: !!prog?.completed || prog?.status === 'mastered',
       is_hard: prog?.status === 'hard',
       is_review: prog?.status === 'review',
       review_count: prog ? prog.review_count || 0 : 0,
@@ -703,16 +672,16 @@ export async function getUnitWords(bookNumber, unitNumber) {
     });
   }
 
-  return words;
+  return isStorageSessionCurrent(owner) ? words : [];
 }
 
 /**
  * ID bo'yicha bitta so'z ma'lumotini olish
  */
-export async function getWordById(wordId) {
+export async function getWordById(wordId, owner = captureStorageSession()) {
   const idNum = Number(wordId);
-  const prog = await getWordProgress(idNum);
-  const favorites = new Set((await getFavorites()).map(Number));
+  const prog = await getWordProgress(idNum, owner);
+  const favorites = new Set((await getFavorites(owner)).map(Number));
 
   // Qaysi kitob va unitdaligini hisoblash
   const bookNum = Math.floor((idNum - 1) / 600) + 1;
@@ -722,10 +691,11 @@ export async function getWordById(wordId) {
 
   const baseWord = getOrGenerateWord(bookNum, unitNum, wordIndex);
 
+  if (!isStorageSessionCurrent(owner)) return null;
   return {
     ...baseWord,
     status: prog ? prog.status : null,
-    is_mastered: prog?.status === 'mastered',
+    is_mastered: !!prog?.completed || prog?.status === 'mastered',
     is_hard: prog?.status === 'hard',
     is_review: prog?.status === 'review',
     review_count: prog ? prog.review_count || 0 : 0,
@@ -736,11 +706,11 @@ export async function getWordById(wordId) {
 /**
  * So'zlarni qidirish (Inglizcha so'z, O'zbekcha tarjima yoki ta'rif bo'yicha)
  */
-export async function searchWords(query, limit = 50) {
+export async function searchWords(query, limit = 50, owner = captureStorageSession()) {
   if (!query || !query.trim()) return [];
 
   const q = query.trim().toLowerCase();
-  const allProgress = await getAllProgress();
+  const allProgress = await getAllProgress(owner);
   const results = [];
 
   // Avval xotiradagi barcha mavjud so'zlar bo'ylab qidiramiz
@@ -761,52 +731,52 @@ export async function searchWords(query, limit = 50) {
     }
   }
 
-  return results;
+  return isStorageSessionCurrent(owner) ? results : [];
 }
 
 /**
  * O'rganish statusi bo'yicha so'zlar ro'yxatini olish ('hard', 'review', 'mastered')
  */
-export async function getWordsByStatus(status) {
-  const allProgress = await getAllProgress();
+export async function getWordsByStatus(status, owner = captureStorageSession()) {
+  const allProgress = await getAllProgress(owner);
   const matchingWords = [];
 
   for (const [idStr, prog] of Object.entries(allProgress)) {
     if (prog.status === status) {
-      const wordObj = await getWordById(Number(idStr));
+      const wordObj = await getWordById(Number(idStr), owner);
       matchingWords.push(wordObj);
     }
   }
 
-  return matchingWords;
+  return isStorageSessionCurrent(owner) ? matchingWords : [];
 }
 
 /**
  * Barcha sevimli so'zlar ro'yxatini olish
  */
-export async function getFavoriteWords() {
-  const favIds = await getFavorites();
+export async function getFavoriteWords(owner = captureStorageSession()) {
+  const favIds = await getFavorites(owner);
   const words = [];
 
   for (const id of favIds) {
-    const wordObj = await getWordById(id);
+    const wordObj = await getWordById(id, owner);
     if (wordObj) words.push(wordObj);
   }
 
-  return words;
+  return isStorageSessionCurrent(owner) ? words : [];
 }
 
 /**
  * Foydalanuvchining butun ilova bo'yicha umumiy statistikasi
  */
-export async function getOverviewStats() {
-  const allProgress = await getAllProgress();
+export async function getOverviewStats(owner = captureStorageSession()) {
+  const allProgress = await getAllProgress(owner);
   let mastered = 0;
   let review = 0;
   let hard = 0;
 
   Object.values(allProgress).forEach((item) => {
-    if (item.status === 'mastered') mastered++;
+    if (item.completed || item.status === 'mastered') mastered++;
     else if (item.status === 'review') review++;
     else if (item.status === 'hard') hard++;
   });

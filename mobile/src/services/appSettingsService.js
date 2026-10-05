@@ -7,7 +7,7 @@
  */
 
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import { getStorageItem, setStorageItem } from './storage';
+import { getStorageItem, setStorageItem, getStorageAccountId, captureStorageSession } from './storage';
 
 const STORAGE_KEY_SETTINGS = 'ingly_cached_app_settings';
 
@@ -24,10 +24,8 @@ let currentSettings = {
   premium_monthly_price: 29000,          // VIP oylik obuna chegirmadagi amaldagi narxi (so'm)
   single_book_original_price: 35000,     // Bitta kitob asl (haqiqiy) narxi (so'm)
   single_book_price: 19000,              // Bitta kitob chegirmadagi amaldagi narxi (so'm)
-  card_receiver_number: '8600 5304 1234 5678', // To'lov kartasi
-  click_service_id: 'ingly_click_main',
-  payme_merchant_id: 'ingly_payme_main',
 };
+const publicSettingKeys = new Set(Object.keys(currentSettings));
 
 const listeners = new Set();
 let isRealtimeSubscribed = false;
@@ -67,7 +65,9 @@ export async function initAppSettings() {
   try {
     const cached = await getStorageItem(STORAGE_KEY_SETTINGS, null);
     if (cached) {
-      currentSettings = { ...currentSettings, ...cached };
+      const safeSettings = Object.fromEntries(Object.entries(cached).filter(([key]) => publicSettingKeys.has(key)));
+      currentSettings = { ...currentSettings, ...safeSettings };
+      await setStorageItem(STORAGE_KEY_SETTINGS, currentSettings);
       notifyListeners();
     }
   } catch (e) {
@@ -118,8 +118,6 @@ export async function initAppSettings() {
             : typeof item.setting_value === 'string' && item.setting_value.startsWith('{')
               ? JSON.parse(item.setting_value)
               : item.setting_value || null;
-        } else if (item.setting_key === 'card_receiver_number') {
-          currentSettings.card_receiver_number = String(item.setting_value || '8600 5304 1234 5678');
         }
       });
 
@@ -172,8 +170,6 @@ export async function initAppSettings() {
             currentSettings.single_book_original_price = Number(item.setting_value) || 35000;
           } else if (item.setting_key === 'single_book_price') {
             currentSettings.single_book_price = Number(item.setting_value) || 19000;
-          } else if (item.setting_key === 'card_receiver_number') {
-            currentSettings.card_receiver_number = String(item.setting_value || '8600 5304 1234 5678');
           }
 
           setStorageItem(STORAGE_KEY_SETTINGS, currentSettings);
@@ -202,7 +198,12 @@ export async function recordTransaction({
   paymentMethod = 'Click',
   note = ''
 }) {
+  if (!(typeof __DEV__ !== 'undefined' && __DEV__ && process.env.EXPO_PUBLIC_ENABLE_MOCK_PAYMENTS === 'true')) throw new Error('Mock payments disabled.');
+  const session = captureStorageSession();
+  const owner = session.owner;
+  if (!owner) throw new Error('Authentication required.');
   const newTx = {
+    mock: true,
     id: 'tx_' + Date.now(),
     type,
     user_name: userName,
@@ -212,44 +213,18 @@ export async function recordTransaction({
     item_type: itemType,
     amount: Number(amount) || 0,
     payment_method: paymentMethod,
-    status: 'completed',
+    status: 'mock',
     created_at: new Date().toISOString(),
     note
   };
 
   // 1. Mahalliy xotiraga qo'shish
   try {
-    const localTxs = (await getStorageItem('ingly_transactions', [])) || [];
+    const localTxs = (await getStorageItem('ingly_transactions', [], session)) || [];
     const updatedLocal = [newTx, ...localTxs];
-    await setStorageItem('ingly_transactions', updatedLocal);
+    await setStorageItem('ingly_transactions', updatedLocal, session);
   } catch (e) {}
 
-  // 2. Supabase app_settings dagi transactions_data ga qo'shish
-  if (isSupabaseConfigured()) {
-    try {
-      const { data } = await supabase
-        .from('app_settings')
-        .select('setting_value')
-        .eq('setting_key', 'transactions_data')
-        .maybeSingle();
-
-      let currentList = [];
-      if (data && data.setting_value) {
-        currentList = typeof data.setting_value === 'string' && data.setting_value.startsWith('[')
-          ? JSON.parse(data.setting_value)
-          : (Array.isArray(data.setting_value) ? data.setting_value : []);
-      }
-      const updatedList = [newTx, ...currentList];
-
-      await supabase.from('app_settings').upsert({
-        setting_key: 'transactions_data',
-        setting_value: updatedList,
-        description: 'Ingly ilovasi moliya, kirim va chiqimlar yozuvlari'
-      }, { onConflict: 'setting_key' });
-    } catch (err) {
-      console.warn('recordTransaction Supabase error:', err);
-    }
-  }
   return newTx;
 }
 

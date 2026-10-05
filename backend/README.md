@@ -1,3 +1,7 @@
+> **Security Phase 2:** Use [the deployment guide](../docs/SECURITY_PHASE_2.md). Existing projects apply only `migrations/20261005_security_phase2.sql`; fresh Supabase projects apply the complete `schema.sql`. There is no default admin/password. This schema requires Supabase Auth and PostgreSQL 15+. Vanilla PostgreSQL instructions below require a Supabase-compatible local environment.
+
+> **Current Phase 3 mobile:** Both existing and fresh projects additionally need `migrations/20261005_repair_phase3_offline_sync.sql` after the Phase 2 baseline. See [the offline-sync report](../docs/REPAIR_PHASE_3_OFFLINE_SYNC.md); this migration has not been deployed or verified against a live database.
+
 # Ingly - Backend & Ma'lumotlar Bazasi Arxitekturasi
 
 Ushbu papkada **"Ingly - 4000 Essential English Words"** mobil ilovasi va Web Admin paneli uchun mo'ljallangan PostgreSQL / Supabase ma'lumotlar bazasi sxemasi (`schema.sql`) va sozlash qo'llanmasi joylashgan.
@@ -41,7 +45,7 @@ Supabase PostgreSQL asosida ishlaydi, shuning uchun sxemani yuklash juda oson:
    - Indekslar va RLS qoidalarini faollashtiradi;
    - Book 1 dan Book 6 gacha 6 ta kitob va 180 ta dars (unit)ni bazaga yozadi;
    - Standart tizim sozlamalarini (`ads_enabled: false`, `premium_mode_enabled: false`) kiritadi;
-   - Standart Super Admin (`username: admin`) va Book 1 Unit 1 namunaviy so'zlarini saqlaydi.
+   - Book 1 Unit 1 namunaviy so'zlarini saqlaydi. Admin faqat tasdiqlangan Auth identity orqali operator tomonidan yaratiladi.
 
 ---
 
@@ -83,19 +87,13 @@ Ilova rasmlar, audiolar va kino lavhalarini yuqori tezlikda yuklab olishi uchun 
 - **Kitoblar, darslar va so'zlar (`books`, `units`, `words`):** Barcha foydalanuvchilar va mobil ilova mehmonlari uchun `SELECT` (o'qish) huquqi ochiq. Tahrirlash faqat Admin / Service Role tomonidan amalga oshiriladi.
 - **Foydalanuvchi ma'lumotlari (`users`):** Har bir foydalanuvchi faqat o'z shaxsiy hisobini ko'rishi va tahrirlashi mumkin (`auth.uid() = id`).
 - **Progress va Streak (`user_progress`, `user_streaks`):** Foydalanuvchilar faqat o'zlarining progressi va olovcha ma'lumotlarini ko'rishlari va yangilashlari mumkin.
-- **Adminlar paneli (`admins`):** Faqat xizmat kaliti (`service_role`) orqali himoyalangan.
+- **Adminlar paneli (`admins`):** RLS/permission checks bilan o'qiladi; privileged yozish faqat tekshirilgan server endpoint orqali.
 
 ---
 
 ## 🔑 5. Standart Super Admin ma'lumotlari
 
-Baza ishga tushirilganda tizimda boshlang'ich Super Admin akkaunti mavjud bo'ladi:
-
-- **Login (Username):** `admin`
-- **Email:** `admin@ingly.uz`
-- **Boshlang'ich parol:** `Admin123!` *(Haqiqiy serverga yuklangandan so'ng xavfsizlik maqsadida darhol o'zgartiring)*
-- **Roli:** `super_admin`
-- **Ruxsatlari:** Barcha bo'limlar (`manage_words`, `manage_users`, `manage_admins`, `view_analytics`, `send_notifications`, `manage_settings`)
+Standart admin yoki parol yo'q. Tasdiqlangan Supabase Auth hisobini operator DB orqali `admins.auth_user_id` ga bog'laydi. [Security Phase 2](../docs/SECURITY_PHASE_2.md) bootstrap bosqichlariga amal qiling.
 
 ---
 
@@ -106,7 +104,6 @@ Mobil ilova oflayn rejimda ishlaganda yig'ilgan natijalar internet paydo bo'lgan
 ```typescript
 // Supabase JS / React Native chaqiruvi:
 const { data, error } = await supabase.rpc('sync_user_offline_progress', {
-  p_user_id: user.id,
   p_sync_items: [
     {
       word_id: 1,
@@ -129,3 +126,14 @@ const { data, error } = await supabase.rpc('sync_user_offline_progress', {
 - **Nizolarni hal qilish (Conflict Resolution):** `Last-Write-Wins` — agar serverda mavjud vaqt kelayotgan vaqtdan eski bo'lsa, ma'lumot yangilanadi. Aks holda eskiroq oflayn ma'lumot bazadagi yangi ma'lumotni buzmaydi.
 - **Streak yangilanishi:** Sinxronlangan so'zlar soniga mos ravishda foydalanuvchining kunlik faolligi va streak'i avtomatik qayta hisoblanadi.
 
+# Repair Phase 3 offline synchronization
+
+After the Security Phase 2 schema/migration, apply
+`migrations/20261005_repair_phase3_offline_sync.sql` in an approved staging change.
+Fresh installations also need this separate migration after `schema.sql`.
+The migration is supplied, not deployed. It adds owned learning entities, reset
+epochs, operation receipts and per-device/entity sequence checkpoints. Mobile
+uses `read_learning_sync` and `sync_learning_operations`; the old non-idempotent
+progress/activity RPCs lose client execution permission. Coordinate server/client
+rollout, since old mobile versions will retain queued progress after RPC rejection.
+See `../docs/REPAIR_PHASE_3_OFFLINE_SYNC.md` for conflict rules and verification.

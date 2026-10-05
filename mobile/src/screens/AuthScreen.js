@@ -31,7 +31,9 @@ const GOALS = [
 ];
 
 export default function AuthScreen() {
-  const { register, login, loginWithGoogle } = useUser();
+  const { register, login, loginWithGoogle, confirmRegistration } = useUser();
+  const [pendingPhone, setPendingPhone] = useState(null);
+  const [confirmationCode, setConfirmationCode] = useState('');
 
   // Mode: 'login' | 'register'
   const [authMode, setAuthMode] = useState('login');
@@ -53,7 +55,7 @@ export default function AuthScreen() {
   // Handle Login
   const handleLoginSubmit = async () => {
     if (!loginIdentifier.trim()) {
-      Alert.alert('Diqqat', 'Iltimos, Login (username) yoki Telefon raqamingizni kiriting!');
+      Alert.alert('Diqqat', 'Iltimos, Telefon raqamingiz yoki emailingizni kiriting!');
       return;
     }
     if (!loginPassword.trim()) {
@@ -63,9 +65,11 @@ export default function AuthScreen() {
 
     const res = await login({
       loginOrPhone: loginIdentifier.trim(),
-      password: loginPassword.trim(),
+      password: loginPassword,
     });
 
+    if (res.success && res.needsVerification) { setPendingPhone(res.phone); setConfirmationCode(''); }
+    if (res.success) setLoginPassword('');
     if (!res.success) {
       Alert.alert('Kirishda xatolik ❌', res.error);
       return;
@@ -78,7 +82,7 @@ export default function AuthScreen() {
     const cleanUsername = regUsername.trim().toLowerCase();
     const cleanPhone = regPhone.trim();
     const cleanPhoneDigits = cleanPhone.replace(/\D/g, '');
-    const cleanPassword = regPassword.trim();
+    const cleanPassword = regPassword;
 
     if (!cleanFullName) {
       Alert.alert('Diqqat', 'Iltimos, Ism va familiyangizni kiriting!');
@@ -113,16 +117,27 @@ export default function AuthScreen() {
     if (!res.success) {
       Alert.alert('Ro\'yxatdan o\'tishda xatolik', res.error);
     }
+    if (res.success) { setRegPassword(''); setLoginPassword(''); }
+    if (res.success && res.needsVerification) { setPendingPhone(res.phone); setConfirmationCode(''); }
   };
 
   // Handle Google Sign-In
   const handleGoogleSubmit = async () => {
-    await loginWithGoogle({
-      name: regFullName.trim() || loginIdentifier.trim() || 'Google Foydalanuvchisi',
-      email: 'user@gmail.com',
-      phone: regPhone.trim() || '+998 90 000 00 00',
-    });
+    await loginWithGoogle();
   };
+
+  if (pendingPhone) return (
+    <View style={{ flex: 1, justifyContent: 'center', padding: 24 }}>
+      <Text>Telefon tasdiqlash: {pendingPhone}</Text>
+      <TextInput placeholder="SMS kod" value={confirmationCode} onChangeText={setConfirmationCode} keyboardType="numeric" />
+      <TouchableOpacity onPress={async () => {
+        const result = await confirmRegistration(pendingPhone, confirmationCode);
+        if (!result.success) Alert.alert('Tasdiqlash', result.error);
+        else setPendingPhone(null);
+      }}><Text>Tasdiqlash</Text></TouchableOpacity>
+      <TouchableOpacity onPress={() => setPendingPhone(null)}><Text>Bekor qilish</Text></TouchableOpacity>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -193,14 +208,14 @@ export default function AuthScreen() {
               <View>
                 <Text style={styles.formTitle}>Akkauntga Kirish</Text>
                 <Text style={styles.formDesc}>
-                  Ilovaga kirish uchun Login yoki Telefon raqamingizni kiriting
+                  Ilovaga kirish uchun Telefon yoki emailingizni kiriting
                 </Text>
 
                 {/* Login yoki Telefon */}
-                <Text style={styles.fieldLabel}>Login yoki Telefon raqam:</Text>
+                <Text style={styles.fieldLabel}>Telefon yoki email:</Text>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="masalan: ayubeey yoki +99890..."
+                  placeholder="masalan: +998901234567"
                   placeholderTextColor="#94A3B8"
                   value={loginIdentifier}
                   onChangeText={setLoginIdentifier}
