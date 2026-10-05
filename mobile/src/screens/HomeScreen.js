@@ -20,6 +20,7 @@ import { colors } from '../theme.js';
 import CircularProgress from '../components/CircularProgress.js';
 import PaymentModal from '../components/PaymentModal.js';
 import { useUser } from '../context/UserContext.js';
+import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../services/storage.js';
 
@@ -47,6 +48,7 @@ const BOOKS_METADATA = [
 
 export default function HomeScreen({ onNavigate }) {
   const { user, isPasswordExpired, subscribeVipMonthly, purchaseBook, isVipActive } = useUser();
+  const { t } = useLanguage();
   const [appSettings, setAppSettings] = useState(getAppSettings());
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState([]);
 
@@ -141,7 +143,7 @@ export default function HomeScreen({ onNavigate }) {
               {user.name || 'O\'quvchi'}
             </Text>
             <Text style={styles.welcomeSubtitle}>
-              {user.streakDays === 0 ? 'Xush kelibsiz!' : 'Yana xush kelibsiz!'}
+              {user.streakDays === 0 ? t('home_welcome', 'Xush kelibsiz!') : t('home_welcome_back', 'Yana xush kelibsiz!')}
             </Text>
           </TouchableOpacity>
 
@@ -155,16 +157,16 @@ export default function HomeScreen({ onNavigate }) {
               <Text style={styles.streakFlameIcon}>🔥</Text>
               <View style={styles.streakTextBox}>
                 <View style={styles.streakTitleRow}>
-                  <Text style={styles.statLabel}>Daily Streak</Text>
+                  <Text style={styles.statLabel}>{t('home_daily_streak', 'Daily Streak')}</Text>
                   <View style={styles.keepItUpBadge}>
                     <Text style={styles.keepItUpText}>
-                      {user.streakDays > 0 ? 'Keep it up!' : 'Start today!'}
+                      {user.streakDays > 0 ? t('home_keep_it_up', 'Keep it up!') : t('home_start_today', 'Start today!')}
                     </Text>
                   </View>
                 </View>
-                <Text style={styles.streakNumber}>{user.streakDays} Days</Text>
+                <Text style={styles.streakNumber}>{user.streakDays} {t('home_days', 'Days')}</Text>
                 <Text style={styles.statSubtext}>
-                  {user.streakDays === 0 ? 'Bugun birinchi darsni boshlang' : `Ketma-ket ${user.streakDays} kun`}
+                  {user.streakDays === 0 ? t('home_first_lesson', 'Bugun birinchi darsni boshlang') : `${t('home_consecutive_days', 'Ketma-ket')} ${user.streakDays} ${t('home_days', 'kun')}`}
                 </Text>
               </View>
             </View>
@@ -180,13 +182,13 @@ export default function HomeScreen({ onNavigate }) {
               />
               <View style={styles.goalTextBox}>
                 <Text style={styles.goalLabel}>
-                  Daily Goal: {dailyGoalPercent}%
+                  {t('home_daily_goal_label', 'Daily Goal')}: {dailyGoalPercent}%
                 </Text>
                 <Text style={styles.goalFraction}>
-                  ({userWordsToday}/{userDailyGoal} Words)
+                  ({userWordsToday}/{userDailyGoal} {t('home_words', 'Words')})
                 </Text>
                 <Text style={styles.statSubtext}>
-                  {dailyGoalPercent === 100 ? 'Maqsad bajarildi! 🎉' : 'Bugungi darslarni bajaring'}
+                  {dailyGoalPercent === 100 ? t('home_goal_done', 'Maqsad bajarildi! 🎉') : t('home_goal_todo', 'Bugungi darslarni bajaring')}
                 </Text>
               </View>
             </View>
@@ -327,7 +329,7 @@ export default function HomeScreen({ onNavigate }) {
                         </View>
                       )}
                     </View>
-                    <Text style={styles.lockedDesc}>Sotib olish uchun bosing 💳</Text>
+                    <Text style={styles.lockedDesc}>{t('home_click_to_buy', 'Sotib olish uchun bosing 💳')}</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -354,7 +356,7 @@ export default function HomeScreen({ onNavigate }) {
                     />
                     <View style={styles.checkBadge}>
                       <Text style={styles.checkIcon}>✓</Text>
-                      <Text style={styles.checkText}>COMPLETED</Text>
+                      <Text style={styles.checkText}>{t('home_completed', 'COMPLETED')}</Text>
                     </View>
                   </View>
 
@@ -372,7 +374,7 @@ export default function HomeScreen({ onNavigate }) {
                   <View style={styles.cardHeader}>
                     <View style={styles.activeTitleContainer}>
                       <Text style={styles.bookTitle} numberOfLines={2}>{b.title}</Text>
-                      <Text style={styles.currentActiveBadge}>Current Active</Text>
+                      <Text style={styles.currentActiveBadge}>{t('home_current_active', 'Current Active')}</Text>
                     </View>
                     <View style={[styles.iconCircle, { backgroundColor: '#F3E8FF' }]}>
                       <Text style={styles.bookIconEmoji}>{b.icon}</Text>
@@ -380,7 +382,7 @@ export default function HomeScreen({ onNavigate }) {
                   </View>
 
                   <Text style={styles.completedPercentText}>
-                    {progress}% Completed
+                    {progress}% {t('home_progress', 'Completed')}
                   </Text>
 
                   {/* Progress Bar */}
@@ -394,7 +396,7 @@ export default function HomeScreen({ onNavigate }) {
                   </View>
 
                   <Text style={styles.unitDetailText}>
-                    Unit {user.activeUnit} of 30
+                    Unit {user.activeUnit} / 30
                   </Text>
 
                   {/* Continue / Start Button */}
@@ -404,7 +406,7 @@ export default function HomeScreen({ onNavigate }) {
                     onPress={() => onNavigate && onNavigate('Flashcards')}
                   >
                     <Text style={styles.continueButtonText}>
-                      {progress === 0 ? 'Boshlash ➔' : 'Davom ettirish ➔'}
+                      {progress === 0 ? t('home_start_btn', 'Boshlash ➔') : t('home_continue_btn', 'Davom ettirish ➔')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -427,7 +429,7 @@ export default function HomeScreen({ onNavigate }) {
                 </View>
 
                 <View style={styles.lockedBottom}>
-                  <Text style={styles.lockedDesc}>Book {b.id - 1} tugagach ochiladi</Text>
+                  <Text style={styles.lockedDesc}>Book {b.id - 1} {t('home_unlocks_after', 'tugagach ochiladi')}</Text>
                 </View>
               </View>
             );

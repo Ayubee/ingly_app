@@ -18,11 +18,13 @@ import {
 } from 'react-native';
 import { colors, booksConfig } from '../theme.js';
 import { useUser } from '../context/UserContext.js';
+import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 import PaymentModal from '../components/PaymentModal.js';
 
 export default function LearnScreen({ onNavigate }) {
   const { user, setActiveLesson, subscribeVipMonthly, purchaseBook, isVipActive } = useUser();
+  const { t } = useLanguage();
   const [selectedBook, setSelectedBook] = useState(user?.activeBook || 1);
   const [appSettings, setAppSettings] = useState(getAppSettings());
 
@@ -89,7 +91,7 @@ export default function LearnScreen({ onNavigate }) {
       >
         {/* Header */}
         <View style={styles.headerBox}>
-          <Text style={styles.title}>Darslar va Unitlar</Text>
+          <Text style={styles.title}>{t('learn_title', 'Darslar va Unitlar')}</Text>
           <Text style={styles.subtitle}>
             4000 Essential English Words - 6 ta kitob va 180 ta unit
           </Text>
@@ -105,9 +107,9 @@ export default function LearnScreen({ onNavigate }) {
             <Text style={{ fontSize: 18 }}>✍️</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.customWordsShortcutTitle}>Shaxsiy Lug'atga So'z Qo'shish</Text>
+            <Text style={styles.customWordsShortcutTitle}>{t('mywords_title', "Shaxsiy Lug'at & Tarjimon")}</Text>
             <Text style={styles.customWordsShortcutSub}>
-              O'zingiz istagan so'zlarni tarjima qilib kartochkalarda yodlang
+              {t('mywords_input_placeholder', "O'zingiz istagan so'zlarni tarjima qilib kartochkalarda yodlang")}
             </Text>
           </View>
           <Text style={styles.customWordsShortcutArrow}>➔</Text>
@@ -258,7 +260,7 @@ export default function LearnScreen({ onNavigate }) {
 
                   {isCurrent && (
                     <View style={styles.startBtnSmall}>
-                      <Text style={styles.startBtnSmallText}>O'rganish ➔</Text>
+                      <Text style={styles.startBtnSmallText}>{t('home_start_btn', "O'rganish ➔")}</Text>
                     </View>
                   )}
                 </TouchableOpacity>

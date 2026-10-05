@@ -19,9 +19,11 @@ import {
 import { colors } from '../theme.js';
 import allWordsData from '../data/all_words.json';
 import { useUser } from '../context/UserContext.js';
+import { useLanguage } from '../context/LanguageContext.js';
 
 export default function QuizScreen({ onNavigate }) {
   const { user, recordQuizResult, setActiveLesson } = useUser();
+  const { t } = useLanguage();
   const currentBook = user?.activeBook || 1;
   const currentUnit = user?.activeUnit || 1;
 
@@ -297,8 +299,8 @@ export default function QuizScreen({ onNavigate }) {
               >
                 <Text style={styles.actionBtnText}>
                   {safeIndex < totalQuestions - 1
-                    ? 'Keyingi Savol ➔'
-                    : 'Natijani Ko\'rish 🏆'}
+                    ? t('quiz_next_question', 'Keyingi Savol ➔')
+                    : t('quiz_view_result', "Natijani Ko'rish 🏆")}
                 </Text>
               </TouchableOpacity>
             )}
@@ -324,11 +326,11 @@ export default function QuizScreen({ onNavigate }) {
             <View style={styles.statsRow}>
               <View style={styles.statBox}>
                 <Text style={styles.statVal}>{accuracy}%</Text>
-                <Text style={styles.statDesc}>Aniqlik</Text>
+                <Text style={styles.statDesc}>{t('quiz_accuracy_label', 'Aniqlik')}</Text>
               </View>
               <View style={styles.statBox}>
                 <Text style={styles.statVal}>+{score * 10} XP</Text>
-                <Text style={styles.statDesc}>Tajriba bali</Text>
+                <Text style={styles.statDesc}>{t('quiz_xp_label', 'Tajriba bali')}</Text>
               </View>
               <View style={styles.statBox}>
                 <Text style={styles.statVal}>
@@ -346,7 +348,7 @@ export default function QuizScreen({ onNavigate }) {
               activeOpacity={0.85}
               onPress={handleRestart}
             >
-              <Text style={styles.actionBtnText}>Testni Qayta Topshirish 🔄</Text>
+              <Text style={styles.actionBtnText}>{t('quiz_restart', 'Testni Qayta Topshirish 🔄')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -354,7 +356,7 @@ export default function QuizScreen({ onNavigate }) {
               activeOpacity={0.8}
               onPress={() => onNavigate && onNavigate('Flashcards')}
             >
-              <Text style={styles.flashcardsBtnText}>🎴 Unit Kartochkalariga Qaytish</Text>
+              <Text style={styles.flashcardsBtnText}>🎴 {t('quiz_back_to_cards', 'Unit Kartochkalariga Qaytish')}</Text>
             </TouchableOpacity>
 
             {currentUnit < 30 && (
@@ -374,7 +376,7 @@ export default function QuizScreen({ onNavigate }) {
               activeOpacity={0.8}
               onPress={() => onNavigate && onNavigate('Home')}
             >
-              <Text style={styles.homeBtnText}>Bosh Sahifaga Qaytish</Text>
+              <Text style={styles.homeBtnText}>{t('quiz_back_to_home', 'Bosh Sahifaga Qaytish')}</Text>
             </TouchableOpacity>
           </View>
         )}

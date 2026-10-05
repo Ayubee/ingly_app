@@ -21,6 +21,7 @@ import { colors, srsModes } from '../theme.js';
 import MovieClipModal from '../components/MovieClipModal.js';
 import allWordsData from '../data/all_words.json';
 import { useUser } from '../context/UserContext.js';
+import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 
 const { width } = Dimensions.get('window');
@@ -30,6 +31,7 @@ const DEFAULT_CARD_IMAGE = 'https://images.unsplash.com/photo-1544717305-2782549
 
 export default function FlashcardScreen({ onNavigate }) {
   const { user, recordWordLearned, setActiveLesson } = useUser();
+  const { t } = useLanguage();
   const currentBook = user?.activeBook || 1;
   const currentUnit = user?.activeUnit || 1;
 
@@ -304,7 +306,7 @@ export default function FlashcardScreen({ onNavigate }) {
         <View style={styles.topInfoContainer}>
           <View style={styles.progressHeaderRow}>
             <Text style={styles.progressCounterText}>
-              So'z: {safeIndex + 1} / {totalWords}
+              {t('cards_word_counter', "So'z")}: {safeIndex + 1} / {totalWords}
             </Text>
             <Text style={styles.progressPercentBadge}>{progressPercent}%</Text>
           </View>
@@ -384,7 +386,7 @@ export default function FlashcardScreen({ onNavigate }) {
             >
               <Text style={styles.movieClipEmoji}>🎬</Text>
               <Text style={styles.movieClipText}>
-                Kino kontekstini ko'rish ({currentWord.movieTitle})
+                {t('cards_movie_clip', "Kino kontekstini ko'rish")} ({currentWord.movieTitle})
               </Text>
             </TouchableOpacity>
           )}
@@ -407,7 +409,7 @@ export default function FlashcardScreen({ onNavigate }) {
               onPress={() => handleSelectSRS('hard')}
             >
               <Text style={styles.srsHardIcon}>✕</Text>
-              <Text style={styles.srsHardLabel}>Qiyin</Text>
+              <Text style={styles.srsHardLabel}>{t('cards_hard', 'Qiyin')}</Text>
             </TouchableOpacity>
             <Text style={styles.srsPercentText}>
               {currentWord?.stats?.hardPercent ?? 20}%
@@ -422,7 +424,7 @@ export default function FlashcardScreen({ onNavigate }) {
               onPress={() => handleSelectSRS('review')}
             >
               <Text style={styles.srsReviewIcon}>↻</Text>
-              <Text style={styles.srsReviewLabel}>Takrorlash</Text>
+              <Text style={styles.srsReviewLabel}>{t('cards_review', 'Takrorlash')}</Text>
             </TouchableOpacity>
             <Text style={styles.srsPercentText}>
               {currentWord?.stats?.reviewPercent ?? 35}%
@@ -437,7 +439,7 @@ export default function FlashcardScreen({ onNavigate }) {
               onPress={() => handleSelectSRS('mastered')}
             >
               <Text style={styles.srsMasteredIcon}>✓</Text>
-              <Text style={styles.srsMasteredLabel}>Yodlandi</Text>
+              <Text style={styles.srsMasteredLabel}>{t('cards_mastered', 'Yodlandi')}</Text>
             </TouchableOpacity>
             <Text style={styles.srsPercentText}>
               {currentWord?.stats?.masteredPercent ?? 45}%

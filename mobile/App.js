@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
 import { colors } from './src/theme.js';
 import { UserProvider, useUser } from './src/context/UserContext.js';
+import { LanguageProvider } from './src/context/LanguageContext.js';
 import { initAppSettings } from './src/services/appSettingsService.js';
 import AuthScreen from './src/screens/AuthScreen.js';
 import HomeScreen from './src/screens/HomeScreen.js';
@@ -76,9 +77,11 @@ function MainAppContent() {
 
 export default function App() {
   return (
-    <UserProvider>
-      <MainAppContent />
-    </UserProvider>
+    <LanguageProvider>
+      <UserProvider>
+        <MainAppContent />
+      </UserProvider>
+    </LanguageProvider>
   );
 }
 

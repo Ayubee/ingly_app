@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { colors } from '../theme.js';
 import { useUser } from '../context/UserContext.js';
+import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 import PaymentModal from '../components/PaymentModal.js';
 
@@ -30,6 +31,7 @@ const AVAILABLE_AVATARS = ['👨‍🎓', '👩‍🎓', '🦁', '🦊', '🚀',
 const REMINDER_TIMES = ['08:00', '13:00', '19:00', '21:00'];
 
 export default function ProfileScreen({ onNavigate }) {
+  const { language, setLanguage, t, supportedLanguages } = useLanguage();
   const {
     user,
     updateProfile,
@@ -132,6 +134,21 @@ export default function ProfileScreen({ onNavigate }) {
     setEditPhone(user.phone || '');
     setEditAvatar(user.avatar || '👨‍🎓');
     setIsEditModalVisible(true);
+  };
+
+  // Ilova tilini almashtirish (uz, ru, en)
+  const handleLanguageChange = async (langCode) => {
+    if (langCode === language) return;
+    await setLanguage(langCode);
+    const msgs = {
+      uz: 'Ilova tili O\'zbekchaga o\'zgartirildi! 🇺🇿',
+      ru: 'Язык приложения успешно изменен на Русский! 🇷🇺',
+      en: 'App language successfully switched to English! 🇬🇧',
+    };
+    Alert.alert(
+      langCode === 'uz' ? 'Muvaffaqiyatli 🌐' : langCode === 'ru' ? 'Успешно 🌐' : 'Success 🌐',
+      msgs[langCode] || 'Til muvaffaqiyatli o\'zgartirildi!'
+    );
   };
 
   // Parolni o'zgartirishni tasdiqlash va saqlash
@@ -304,48 +321,48 @@ export default function ProfileScreen({ onNavigate }) {
             onPress={openEditModal}
             style={styles.editProfileBtn}
           >
-            <Text style={styles.editProfileBtnText}>Profilni tahrirlash ✏️</Text>
+            <Text style={styles.editProfileBtnText}>{t('profile_edit', 'Profilni tahrirlash')} ✏️</Text>
           </TouchableOpacity>
         </View>
 
         {/* 1. O'rganish Statistikasi (Haqiqiy raqamlar) */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>O'rganish Statistikasi</Text>
-            <Text style={styles.bookActiveBadge}>Book {user.activeBook}</Text>
+            <Text style={styles.sectionTitle}>{t('profile_stats', 'O\'rganish Statistikasi')}</Text>
+            <Text style={styles.bookActiveBadge}>{t('profile_active_book', 'Book')} {user.activeBook}</Text>
           </View>
 
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>{user.totalWordsLearned}</Text>
-              <Text style={styles.statLabel}>Yodlangan so'zlar</Text>
+              <Text style={styles.statLabel}>{t('profile_total_learned', 'Yodlangan so\'zlar')}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={[styles.statNumber, { color: '#0EA5E9' }]}>
                 {user.reviewedWordsCount}
               </Text>
-              <Text style={styles.statLabel}>Takrorlashda</Text>
+              <Text style={styles.statLabel}>{t('profile_streak', 'Streak')} 🔥</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={[styles.statNumber, { color: '#EF4444' }]}>
                 {user.hardWordsCount}
               </Text>
-              <Text style={styles.statLabel}>Qiyin so'zlar</Text>
+              <Text style={styles.statLabel}>Qiyin / Review</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={[styles.statNumber, { color: '#F97316' }]}>
                 {user.accuracy}%
               </Text>
-              <Text style={styles.statLabel}>O'rtacha aniqlik</Text>
+              <Text style={styles.statLabel}>{t('profile_accuracy', 'Aniqlik')}</Text>
             </View>
           </View>
         </View>
 
         {/* 2. Kunlik Maqsad Sozlamalari */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Kunlik Maqsad (Daily Goal)</Text>
+          <Text style={styles.sectionTitle}>{t('profile_goal', 'Kunlik Maqsad (Daily Goal)')}</Text>
           <Text style={styles.sectionSubtitle}>
-            Har kuni o'rganishni rejalashtirgan so'zlar sonini tanlang:
+            {t('profile_goal_sub', 'Har kuni o\'rganishni rejalashtirgan so\'zlar sonini tanlang:')}
           </Text>
 
           <View style={styles.goalOptionsRow}>
@@ -383,7 +400,58 @@ export default function ProfileScreen({ onNavigate }) {
           </View>
         </View>
 
-        {/* 3. Bildirishnomalar va Eslatma Vaqti */}
+        {/* 3. Ilova Tili Sozlamalari (O'zbekcha / Русский / English) */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.sectionTitle}>🌐 {t('profile_language', 'Ilova Tili (App Language)')}</Text>
+              <Text style={styles.sectionSubtitle}>
+                {t('profile_language_sub', 'Ilovaning asosiy interfeys tilini tanlang:')}
+              </Text>
+            </View>
+            <View style={styles.langActiveBadge}>
+              <Text style={styles.langActiveBadgeText}>
+                {language === 'uz' ? '🇺🇿 O\'zbek' : language === 'ru' ? '🇷🇺 Русский' : '🇬🇧 English'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.langOptionsRow}>
+            {supportedLanguages.map((lang) => {
+              const isSelected = language === lang.code;
+              return (
+                <TouchableOpacity
+                  key={lang.code}
+                  activeOpacity={0.8}
+                  onPress={() => handleLanguageChange(lang.code)}
+                  style={[
+                    styles.langOptionCard,
+                    isSelected && styles.langOptionCardActive,
+                  ]}
+                >
+                  <Text style={styles.langFlag}>{lang.flag}</Text>
+                  <Text
+                    style={[
+                      styles.langNameText,
+                      isSelected && styles.langNameTextActive,
+                    ]}
+                  >
+                    {lang.name}
+                  </Text>
+                  {isSelected ? (
+                    <View style={styles.langCheckCircle}>
+                      <Text style={styles.langCheckText}>✓</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.langUncheckCircle} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 4. Bildirishnomalar va Eslatma Vaqti */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Kunlik Eslatmalar</Text>
           <View style={styles.switchRow}>
@@ -545,6 +613,7 @@ export default function ProfileScreen({ onNavigate }) {
                   { id: 4, title: 'Book 4 - Upper-Int', icon: '📙' },
                   { id: 5, title: 'Book 5 - Advanced', icon: '📓' },
                   { id: 6, title: 'Book 6 - Mastery', icon: '🏆' },
+                ].map((b) => {
                   const freeCount = appSettings.free_books_count !== undefined ? appSettings.free_books_count : 1;
                   const freeBookIds = Array.isArray(appSettings.free_book_ids) ? appSettings.free_book_ids : [1];
                   const isFree = b.id <= freeCount || freeBookIds.includes(b.id);
@@ -608,7 +677,7 @@ export default function ProfileScreen({ onNavigate }) {
 
         {/* 5. Amallar & Tozalash */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Boshqaruv & Xavfsizlik</Text>
+          <Text style={styles.sectionTitle}>{t('profile_security', 'Boshqaruv & Xavfsizlik')}</Text>
 
           {/* Parolni o'zgartirish */}
           <TouchableOpacity
@@ -624,7 +693,7 @@ export default function ProfileScreen({ onNavigate }) {
             <Text style={styles.actionIcon}>🔑</Text>
             <View style={{ flex: 1 }}>
               <View style={styles.passwordTitleRow}>
-                <Text style={styles.actionTitle}>Parolni o'zgartirish</Text>
+                <Text style={styles.actionTitle}>{t('profile_change_pass', 'Parolni o\'zgartirish')}</Text>
                 {isPasswordExpired && (
                   <View style={styles.expiredBadge}>
                     <Text style={styles.expiredBadgeText}>6 oydan oshdi ⚠️</Text>
@@ -636,7 +705,7 @@ export default function ProfileScreen({ onNavigate }) {
                   ? '6 oydan beri yangilanmadi! Yangilash tavsiya etiladi'
                   : user.passwordChangedAt
                   ? `Oxirgi marta: ${new Date(user.passwordChangedAt).toLocaleDateString('uz-UZ')}`
-                  : 'Eski parolni kiritish orqali yangilash'}
+                  : t('profile_change_pass_sub', 'Hisobingiz xavfsizligini ta\'minlash uchun')}
               </Text>
             </View>
             <Text style={styles.chevron}>➔</Text>
@@ -650,8 +719,8 @@ export default function ProfileScreen({ onNavigate }) {
           >
             <Text style={styles.actionIcon}>🔄</Text>
             <View style={{ flex: 1 }}>
-              <Text style={styles.actionTitle}>Natijalarni 0 ga qaytarish</Text>
-              <Text style={styles.actionSubtitle}>Barcha o'rganilgan so'zlarni tozalash</Text>
+              <Text style={styles.actionTitle}>{t('profile_reset', 'Natijalarni 0 ga qaytarish')}</Text>
+              <Text style={styles.actionSubtitle}>{t('profile_reset_sub', 'Barcha o\'rganilgan so\'zlarni tozalash')}</Text>
             </View>
             <Text style={styles.chevron}>➔</Text>
           </TouchableOpacity>
@@ -665,7 +734,7 @@ export default function ProfileScreen({ onNavigate }) {
             <Text style={styles.actionIcon}>🚪</Text>
             <View style={{ flex: 1 }}>
               <Text style={[styles.actionTitle, { color: '#EF4444' }]}>
-                Hisobdan chiqish
+                {t('profile_logout', 'Hisobdan chiqish')}
               </Text>
               <Text style={styles.actionSubtitle}>Yangi profil yaratish yoki almashish</Text>
             </View>
@@ -1693,5 +1762,78 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '700',
     color: '#EEF2FF',
+  },
+  langActiveBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  langActiveBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#4F46E5',
+  },
+  langOptionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  langOptionCard: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    position: 'relative',
+  },
+  langOptionCardActive: {
+    backgroundColor: '#EEF2FF',
+    borderColor: colors.primary.DEFAULT,
+  },
+  langFlag: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  langNameText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  langNameTextActive: {
+    color: colors.primary.DEFAULT,
+    fontWeight: '900',
+  },
+  langCheckCircle: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.primary.DEFAULT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  langCheckText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900',
+    lineHeight: 12,
+  },
+  langUncheckCircle: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
   },
 });

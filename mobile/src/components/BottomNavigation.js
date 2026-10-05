@@ -1,15 +1,18 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { colors } from '../theme.js';
+import { useLanguage } from '../context/LanguageContext.js';
 
 export default function BottomNavigation({ currentTab, onSelectTab }) {
+  const { t } = useLanguage();
+
   const tabs = [
-    { id: 'Home', label: 'Home', icon: '🏠' },
-    { id: 'Learn', label: 'Learn', icon: '📖' },
-    { id: 'MyWords', label: 'Lug\'atim', icon: '✍️' },
-    { id: 'Flashcards', label: 'Kartalar', icon: '🎴' },
-    { id: 'Quiz', label: 'Quiz', icon: '🏆' },
-    { id: 'Profile', label: 'Profil', icon: '👤' },
+    { id: 'Home', label: t('nav_home', 'Home'), icon: '🏠' },
+    { id: 'Learn', label: t('nav_learn', 'Learn'), icon: '📖' },
+    { id: 'MyWords', label: t('nav_my_words', 'Lug\'atim'), icon: '✍️' },
+    { id: 'Flashcards', label: t('nav_cards', 'Kartalar'), icon: '🎴' },
+    { id: 'Quiz', label: t('nav_quiz', 'Quiz'), icon: '🏆' },
+    { id: 'Profile', label: t('nav_profile', 'Profil'), icon: '👤' },
   ];
 
   return (

@@ -39,9 +39,11 @@ import {
 import { translateText } from '../services/translatorService.js';
 import { speak } from '../services/ttsService.js';
 import { useUser } from '../context/UserContext.js';
+import { useLanguage } from '../context/LanguageContext.js';
 
 export default function MyWordsScreen({ onNavigate }) {
   const { recordWordLearned } = useUser();
+  const { t } = useLanguage();
 
   // Holatlar (State)
   const [wordsList, setWordsList] = useState([]);
@@ -383,7 +385,7 @@ export default function MyWordsScreen({ onNavigate }) {
               <Text style={styles.headerSubBadge}>Tarjima & Kartochka</Text>
             </View>
             <View style={{ marginTop: 2 }}>
-              <Text style={styles.headerTitle}>Mening Lug'atim</Text>
+              <Text style={styles.headerTitle}>{t('mywords_title', "Mening Lug'atim")}</Text>
             </View>
           </View>
           {counts.unlearned > 0 && (
