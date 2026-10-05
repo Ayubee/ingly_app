@@ -437,3 +437,24 @@ export async function deleteCustomWord(wordId) {
   return updated;
 }
 
+/**
+ * Shaxsiy so'z ma'lumotlarini tahrirlash (So'z yoki tarjimani to'g'rilash)
+ */
+export async function updateCustomWord(wordId, updates) {
+  const list = await getCustomWords();
+  const updated = list.map(item => {
+    if (item.id === wordId) {
+      return {
+        ...item,
+        ...updates,
+        original: updates.original !== undefined ? updates.original.trim() : item.original,
+        translated: updates.translated !== undefined ? updates.translated.trim() : item.translated,
+        updated_at: new Date().toISOString()
+      };
+    }
+    return item;
+  });
+  await setStorageItem(STORAGE_KEYS.CUSTOM_WORDS, updated);
+  return updated;
+}
+

@@ -34,6 +34,7 @@ import {
   addCustomWord,
   setCustomWordLearnedStatus,
   deleteCustomWord,
+  updateCustomWord,
 } from '../services/storage.js';
 import { translateText } from '../services/translatorService.js';
 import { speak } from '../services/ttsService.js';
@@ -49,6 +50,10 @@ export default function MyWordsScreen({ onNavigate }) {
   const [activeTab, setActiveTab] = useState('unlearned'); // 'unlearned' | 'learned' | 'all'
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Kartochka tahrirlash modali holati (Foydalanuvchi tarjimani qo'lda to'g'irlashi uchun)
+  const [editingCard, setEditingCard] = useState(null);
+  const [editForm, setEditForm] = useState({ original: '', translated: '' });
 
   // Kartochka o'rganish modali holati
   const [activeCard, setActiveCard] = useState(null);
@@ -136,19 +141,14 @@ export default function MyWordsScreen({ onNavigate }) {
         return;
       }
 
-      // Agar o'zbekcha yozilgan bo'lsa -> original: o'zbekcha, translated: inglizcha
-      // Agar inglizcha yozilgan bo'lsa -> original: o'zbekcha, translated: inglizcha
-      let wordEn = res.translated;
-      let wordUz = res.original;
-
-      if (res.langFrom === 'en') {
-        wordEn = res.original;
-        wordUz = res.translated;
-      }
+      const wordEn = res.wordEn || res.translated || clean;
+      const wordUz = res.wordUz || res.original || clean;
 
       const newCard = await addCustomWord({
-        original: wordUz,
-        translated: wordEn,
+        original: wordUz,    // Old tomoni: O'zbekcha
+        translated: wordEn,  // Orqa tomoni: Inglizcha
+        wordEn: wordEn,
+        wordUz: wordUz,
         phonetic: res.phonetic || '',
         pos: res.pos || '',
         definition: res.definition || '',
@@ -158,13 +158,65 @@ export default function MyWordsScreen({ onNavigate }) {
 
       setWordsList(prev => [newCard, ...prev]);
       setInputText('');
-      showToast(`🎉 "${wordUz}" ➔ "${wordEn}" kartochkasi yaratildi!`);
+
+      if (res.correctedFrom && res.correctedFrom.toLowerCase() !== wordEn.toLowerCase()) {
+        showToast(`💡 Imlo to'g'rilandi: "${res.correctedFrom}" ➔ "${wordEn}" (${wordUz})`);
+      } else {
+        showToast(`🎉 "${wordEn}" ➔ "${wordUz}" kartochkasi yaratildi!`);
+      }
       setActiveTab('unlearned');
     } catch (e) {
       console.warn('handleAddWord xatosi:', e);
       showToast('Xatolik yuz berdi, qaytadan urinib ko\'ring');
     } finally {
       setIsTranslating(false);
+    }
+  };
+
+  // Kartochkani tahrirlash (Edit) oynasini ochish
+  const handleOpenEdit = (card) => {
+    setEditingCard(card);
+    setEditForm({
+      original: card.original || card.wordUz || '',
+      translated: card.translated || card.wordEn || '',
+    });
+  };
+
+  // Kartochka tahrirlanganda saqlash
+  const handleSaveEdit = async () => {
+    if (!editingCard) return;
+    const cleanOrig = editForm.original.trim();
+    const cleanTrans = editForm.translated.trim();
+
+    if (!cleanOrig || !cleanTrans) {
+      Alert.alert('Xatolik', 'Iltimos, so\'z va tarjima maydonlarini bo\'sh qoldirmang!');
+      return;
+    }
+
+    try {
+      const updated = await updateCustomWord(editingCard.id, {
+        original: cleanOrig,
+        translated: cleanTrans,
+        wordUz: cleanOrig,
+        wordEn: cleanTrans,
+      });
+      setWordsList(updated);
+
+      if (activeCard && activeCard.id === editingCard.id) {
+        setActiveCard(prev => ({
+          ...prev,
+          original: cleanOrig,
+          translated: cleanTrans,
+          wordUz: cleanOrig,
+          wordEn: cleanTrans,
+        }));
+      }
+
+      setEditingCard(null);
+      showToast('✓ Kartochka muvaffaqiyatli saqlandi!');
+    } catch (err) {
+      console.warn('handleSaveEdit xatosi:', err);
+      showToast('Xatolik: saqlab bo\'lmadi');
     }
   };
 
@@ -518,10 +570,13 @@ export default function MyWordsScreen({ onNavigate }) {
                   <View style={styles.cardTopRow}>
                     <View style={styles.cardWordRow}>
                       <Text style={styles.cardWordTitle}>{card.original}</Text>
-                      {card.translated && (
+                      {(card.wordEn || card.translated) && (
                         <TouchableOpacity
                           activeOpacity={0.7}
-                          onPress={() => speak(card.translated)}
+                          onPress={(e) => {
+                            e.stopPropagation && e.stopPropagation();
+                            speak(card.wordEn || card.translated);
+                          }}
                           style={styles.audioMiniBtn}
                         >
                           <Text style={styles.audioMiniIcon}>🔊</Text>
@@ -548,9 +603,24 @@ export default function MyWordsScreen({ onNavigate }) {
                         </Text>
                       </View>
 
+                      {/* Tahrirlash (✏️) tugmasi */}
                       <TouchableOpacity
                         activeOpacity={0.6}
-                        onPress={() => handleDeleteCard(card)}
+                        onPress={(e) => {
+                          e.stopPropagation && e.stopPropagation();
+                          handleOpenEdit(card);
+                        }}
+                        style={[styles.deleteMiniBtn, { backgroundColor: '#F1F5F9', marginRight: 4 }]}
+                      >
+                        <Text style={styles.deleteMiniIcon}>✏️</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        activeOpacity={0.6}
+                        onPress={(e) => {
+                          e.stopPropagation && e.stopPropagation();
+                          handleDeleteCard(card);
+                        }}
                         style={styles.deleteMiniBtn}
                       >
                         <Text style={styles.deleteMiniIcon}>🗑️</Text>
@@ -614,12 +684,22 @@ export default function MyWordsScreen({ onNavigate }) {
               <View style={styles.studyCardBody}>
                 {/* 1. Foydalanuvchi yozgan so'z (DOIM KO'RINADI) */}
                 <View style={styles.mainWordSection}>
-                  <Text style={styles.mainWordLabel}>So'z / Ibora:</Text>
-                  <Text style={styles.mainWordText}>{activeCard.original}</Text>
-                  {activeCard.translated && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                    <Text style={styles.mainWordLabel}>So'z / Ibora:</Text>
                     <TouchableOpacity
                       activeOpacity={0.7}
-                      onPress={() => speak(activeCard.translated)}
+                      onPress={() => handleOpenEdit(activeCard)}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F1F5F9', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}
+                    >
+                      <Text style={{ fontSize: 11 }}>✏️</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: '#475569' }}>Tahrirlash</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.mainWordText}>{activeCard.original}</Text>
+                  {(activeCard.wordEn || activeCard.translated) && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => speak(activeCard.wordEn || activeCard.translated)}
                       style={styles.soundButton}
                     >
                       <Text style={styles.soundIcon}>🔊</Text>
@@ -699,6 +779,76 @@ export default function MyWordsScreen({ onNavigate }) {
             )}
           </View>
         </View>
+      </Modal>
+
+      {/* ===================================================================
+          KARTOCHKANI TAHRIRLASH MODALI (EDIT MODAL)
+          =================================================================== */}
+      <Modal
+        visible={Boolean(editingCard)}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setEditingCard(null)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalOverlay}
+        >
+          <View style={[styles.studyCardContainer, { maxHeight: 380 }]}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderLeft}>
+                <Text style={styles.modalTag}>KARTOCHKANI TAHRIRLASH</Text>
+              </View>
+              <TouchableOpacity onPress={() => setEditingCard(null)} style={styles.closeBtn}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ padding: 18 }}>
+              <View style={{ marginBottom: 12 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#475569', marginBottom: 4 }}>
+                  O'zbekcha so'z / ma'nosi:
+                </Text>
+                <TextInput
+                  style={styles.editModalInput}
+                  value={editForm.original}
+                  onChangeText={(val) => setEditForm(prev => ({ ...prev, original: val }))}
+                  placeholder="O'zbekcha tarjimasi..."
+                  placeholderTextColor="#94A3B8"
+                />
+              </View>
+
+              <View style={{ marginBottom: 18 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#475569', marginBottom: 4 }}>
+                  Inglizcha so'z / ibora:
+                </Text>
+                <TextInput
+                  style={styles.editModalInput}
+                  value={editForm.translated}
+                  onChangeText={(val) => setEditForm(prev => ({ ...prev, translated: val }))}
+                  placeholder="Inglizcha so'z..."
+                  placeholderTextColor="#94A3B8"
+                />
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TouchableOpacity
+                  onPress={() => setEditingCard(null)}
+                  style={[styles.editActionBtn, { backgroundColor: '#F1F5F9' }]}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#64748B' }}>Bekor qilish</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleSaveEdit}
+                  style={[styles.editActionBtn, { backgroundColor: colors.primary.DEFAULT, flex: 2 }]}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#FFFFFF' }}>Saqlash 💾</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -1393,5 +1543,23 @@ const styles = StyleSheet.create({
     color: '#D1FAE5',
     fontWeight: '600',
     marginTop: 1,
+  },
+  editModalInput: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  editActionBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

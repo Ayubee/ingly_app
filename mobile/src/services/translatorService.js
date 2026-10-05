@@ -1,51 +1,73 @@
 /**
- * Ingly Mobile App - Smart Translator Service
+ * Ingly Mobile App - Smart Translator Service (v4.0)
  * 
  * Foydalanuvchi kiritgan so'z yoki iborani o'zbekchadan inglizchaga (yoki inglizchadan o'zbekchaga)
- * bir zumda tarjima qilish va kartochka parametrlarini tayyorlash.
+ * bir zumda tarjima qilish, imlo xatolarini avtomatik to'g'rilash va kartochka parametrlarini tayyorlash.
  * 
- * 1. Birinchi navbatda 'all_words.json' mahalliy 4000 ta so'zlar bazasidan qidiradi (oflayn).
- * 2. Agar topilmasa, Google GTX Translate API orqali tarjima qiladi (avtomatik til aniqlash).
- * 3. Internet bo'lmaganda yoki xatolikda MyMemory API zaxira shlyuziga murojaat qiladi.
+ * Imkoniyatlar:
+ * 1. Foydalanuvchi so'zni xato (typo: 'aple', 'computr', 'freind', 'techer') yozganda:
+ *    - To'g'ri o'zbekcha tarjimasi aniqlanadi.
+ *    - Imlo xatosi to'g'rilanib, to'g'ri inglizcha shakli olinadi ('aple' -> 'apple').
+ *    - Kartochkaga to'g'ri so'z va to'g'ri tarjima saqlanadi.
+ * 2. 4000 Essential English Words oflayn bazasidan bir zumda qidiruv.
+ * 3. O'zbekcha so'z kiritilganda inglizchaga ('kitob' -> 'book'), inglizcha kiritilganda o'zbekchaga ('book' -> 'kitob').
+ * 4. Google Chrome Extension Shlyuzi: yuqori tezlik, bepul va hech qanday cheklovlarsiz.
  */
 
 import allWordsData from '../data/all_words.json';
 
 /**
- * Mahalliy 4000 ta so'zdan qidirish
+ * Matnni tozalash va apostroflarni standartlashtirish
  */
-function searchInLocalDictionary(query) {
-  if (!query || !Array.isArray(allWordsData)) return null;
-  const clean = query.trim().toLowerCase();
+export function normalizeText(str) {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[ʻʼ`‘’]/g, "'")
+    .replace(/\s+/g, ' ');
+}
 
-  // 1. Inglizcha so'z bo'yicha aniq moslik
-  const enMatch = allWordsData.find(w => (w.word || '').toLowerCase() === clean);
-  if (enMatch) {
+/**
+ * Mahalliy 4000 ta so'z bazasidan tezkor qidirish (Oflayn)
+ */
+export function searchInLocalDictionary(rawQuery) {
+  if (!rawQuery || !Array.isArray(allWordsData)) return null;
+  const clean = normalizeText(rawQuery);
+  if (!clean) return null;
+
+  // 1. Aniq inglizcha so'z mosligi
+  const exactEn = allWordsData.find(w => normalizeText(w.word) === clean);
+  if (exactEn) {
     return {
-      original: enMatch.word,
-      translated: enMatch.uzbek || '',
-      phonetic: enMatch.phonetic || '',
-      pos: enMatch.pos || '',
-      definition: enMatch.definition || '',
-      example: enMatch.example || '',
-      source: 'local_en'
+      wordEn: exactEn.word,
+      wordUz: exactEn.uzbek,
+      phonetic: exactEn.ipa || exactEn.phonetic || '',
+      pos: exactEn.pos || '',
+      definition: exactEn.desc || exactEn.definition || '',
+      example: exactEn.exam || exactEn.example || '',
+      correctedFrom: null,
+      source: 'local_exact_en'
     };
   }
 
-  // 2. O'zbekcha tarjima bo'yicha qidirish
-  const uzMatch = allWordsData.find(w => {
-    const uz = (w.uzbek || '').toLowerCase();
-    return uz === clean || uz.split(/[,;\/]/).map(s => s.trim()).includes(clean);
+  // 2. Aniq o'zbekcha tarjima mosligi
+  const exactUz = allWordsData.find(w => {
+    const uz = normalizeText(w.uzbek);
+    if (uz === clean) return true;
+    const parts = uz.split(/[,;\/]/).map(s => normalizeText(s));
+    return parts.includes(clean);
   });
-  if (uzMatch) {
+  if (exactUz) {
     return {
-      original: clean,
-      translated: uzMatch.word || '',
-      phonetic: uzMatch.phonetic || '',
-      pos: uzMatch.pos || '',
-      definition: uzMatch.definition || '',
-      example: uzMatch.example || '',
-      source: 'local_uz'
+      wordEn: exactUz.word,
+      wordUz: exactUz.uzbek,
+      phonetic: exactUz.ipa || exactUz.phonetic || '',
+      pos: exactUz.pos || '',
+      definition: exactUz.desc || exactUz.definition || '',
+      example: exactUz.exam || exactUz.example || '',
+      correctedFrom: null,
+      source: 'local_exact_uz'
     };
   }
 
@@ -53,19 +75,42 @@ function searchInLocalDictionary(query) {
 }
 
 /**
- * Asosiy tarjima funksiyasi
- * @param {string} text Tarjima qilinadigan so'z yoki ibora
- * @param {string} forcedTarget 'en' | 'uz' | 'auto'
+ * Google Translate Shlyuzi
  */
-export async function translateText(text, forcedTarget = 'auto') {
+async function fetchGoogle(word, sl, tl) {
+  const url = `https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=${sl}&tl=${tl}&q=${encodeURIComponent(word)}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 4500);
+
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data[0])) return { text: data[0][0], detected: data[0][1] };
+      if (typeof data[0] === 'string') return { text: data[0], detected: sl };
+    }
+    return null;
+  } catch (e) {
+    clearTimeout(timeoutId);
+    return null;
+  }
+}
+
+/**
+ * Asosiy aqlli tarjima funksiyasi
+ * @param {string} text Tarjima qilinadigan so'z yoki ibora
+ */
+export async function translateText(text) {
   if (!text || !text.trim()) {
-    return { success: false, error: 'Matn kiritilmadi' };
+    return { success: false, error: 'Iltimos, so\'z yoki ibora kiriting!' };
   }
 
-  const clean = text.trim();
+  const rawClean = text.trim();
 
-  // 1. Mahalliy bazani tekshirish
-  const localResult = searchInLocalDictionary(clean);
+  // 1. Mahalliy 4000 ta so'zlar bazasidan qidirish (Oflayn)
+  const localResult = searchInLocalDictionary(rawClean);
   if (localResult) {
     return {
       success: true,
@@ -74,88 +119,103 @@ export async function translateText(text, forcedTarget = 'auto') {
     };
   }
 
-  // 2. Google GTX Translate API orqali onlayn tarjima
+  // 2. Onlayn aqlli tarjima va imlo to'g'rilash (Google Smart Engine)
   try {
-    const targetLang = forcedTarget === 'auto' ? 'en' : forcedTarget;
-    const gtxUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(clean)}`;
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4500);
-
-    const res = await fetch(gtxUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
-
-    if (res.ok) {
-      const data = await res.json();
-      if (Array.isArray(data) && data[0] && data[0][0]) {
-        let translatedText = data[0].map(item => item[0]).join('').trim();
-        const detectedLang = data[2] || 'uz';
-
-        // Agar foydalanuvchi inglizcha yozgan bo'lsa va avto-rejimlarda target 'en' bo'lib qolgan bo'lsa:
-        if (detectedLang === 'en' && forcedTarget === 'auto' && translatedText.toLowerCase() === clean.toLowerCase()) {
-          // Demak, bu inglizcha so'z, uni o'zbekchaga tarjima qilish kerak!
-          const uzRes = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=uz&dt=t&q=${encodeURIComponent(clean)}`);
-          if (uzRes.ok) {
-            const uzData = await uzRes.json();
-            if (Array.isArray(uzData) && uzData[0] && uzData[0][0]) {
-              return {
-                success: true,
-                original: clean,
-                translated: uzData[0].map(item => item[0]).join('').trim(),
-                langFrom: 'en',
-                langTo: 'uz',
-                phonetic: '',
-                source: 'gtx_en_to_uz'
-              };
-            }
-          }
-        }
+    // 2.1 Tilni avtomatik aniqlash uchun zond so'rov
+    const probe = await fetchGoogle(rawClean, 'auto', 'uz');
+    if (probe && probe.text) {
+      // Agar o'zbek tili deb aniqlangan bo'lsa (masalan 'kitob', 'maktab', 'salom')
+      if (probe.detected === 'uz') {
+        const enRes = await fetchGoogle(rawClean, 'uz', 'en');
+        const finalEn = enRes && enRes.text ? enRes.text : probe.text;
 
         return {
           success: true,
-          original: clean,
-          translated: translatedText,
-          langFrom: detectedLang,
-          langTo: targetLang,
+          wordUz: rawClean,
+          wordEn: finalEn,
           phonetic: '',
-          source: 'gtx'
+          pos: '',
+          definition: '',
+          example: '',
+          correctedFrom: null,
+          source: 'google_uz_to_en'
+        };
+      } else {
+        // Agar ingliz tili (yoki imlo xatosi bilan yozilgan so'z) bo'lsa:
+        // Masalan: 'aple', 'computr', 'freind', 'techer', 'apple'
+        const uzRes = await fetchGoogle(rawClean, 'en', 'uz');
+        const finalUz = uzRes && uzRes.text ? uzRes.text : probe.text;
+
+        // O'zbekcha tarjimadan to'g'ri inglizcha imlo shaklini qayta tekshirish (Typo Correction)
+        let fixedEn = rawClean;
+        if (finalUz) {
+          try {
+            const enCheck = await fetchGoogle(finalUz, 'uz', 'en');
+            if (enCheck && enCheck.text) {
+              let f = enCheck.text.trim();
+              // "the world" kabi artiklni olib tashlash
+              if (f.toLowerCase().startsWith('the ') && !rawClean.toLowerCase().startsWith('the ')) {
+                f = f.substring(4).trim();
+              }
+              if (f.toLowerCase() !== rawClean.toLowerCase()) {
+                fixedEn = f;
+              }
+            }
+          } catch (e) {}
+        }
+
+        const wasCorrected = fixedEn.toLowerCase() !== rawClean.toLowerCase();
+
+        return {
+          success: true,
+          wordEn: fixedEn,
+          wordUz: finalUz,
+          phonetic: '',
+          pos: '',
+          definition: '',
+          example: '',
+          correctedFrom: wasCorrected ? rawClean : null,
+          source: 'google_en_to_uz'
         };
       }
     }
-  } catch (gtxErr) {
-    console.warn('[Translator] Google GTX xatosi:', gtxErr?.message || gtxErr);
+  } catch (err) {
+    console.warn('[SmartTranslator] Tarjima xatosi:', err);
   }
 
-  // 3. Fallback: MyMemory API
+  // 3. Fallback: MyMemory API (Zaxira)
   try {
-    const pair = forcedTarget === 'uz' ? 'en|uz' : 'uz|en';
-    const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(clean)}&langpair=${pair}`;
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-    const mmRes = await fetch(myMemoryUrl, { signal: controller.signal });
-    clearTimeout(timeoutId);
-
+    const mmUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(rawClean)}&langpair=en|uz`;
+    const mmRes = await fetch(mmUrl);
     if (mmRes.ok) {
       const mmData = await mmRes.json();
       if (mmData && mmData.responseData && mmData.responseData.translatedText) {
-        return {
-          success: true,
-          original: clean,
-          translated: mmData.responseData.translatedText.trim(),
-          source: 'mymemory'
-        };
+        const transText = mmData.responseData.translatedText.trim();
+        if (!transText.includes('MYMEMORY WARNING') && !transText.includes('HTTP ERROR')) {
+          return {
+            success: true,
+            wordEn: rawClean,
+            wordUz: transText,
+            phonetic: '',
+            pos: '',
+            definition: '',
+            example: '',
+            correctedFrom: null,
+            source: 'mymemory'
+          };
+        }
       }
     }
-  } catch (mmErr) {
-    console.warn('[Translator] MyMemory xatosi:', mmErr?.message || mmErr);
-  }
+  } catch (mmErr) {}
 
-  // 4. Hech qaysi tarjima ishlamasa (masalan, to'liq oflayn bo'lsa)
   return {
     success: false,
-    original: clean,
-    error: 'Internet mavjud emas yoki tarjima xizmatiga ulanib bo\'lmadi. So\'z va tarjimani qo\'lda kiritishingiz mumkin.'
+    error: 'Internetga ulanib bo\'lmadi yoki so\'z tarjima qilinmadi. Iltimos, internetingizni tekshiring.'
   };
 }
+
+export default {
+  translateText,
+  searchInLocalDictionary,
+  normalizeText,
+};
