@@ -21,9 +21,20 @@ import CircularProgress from '../components/CircularProgress.js';
 import PaymentModal from '../components/PaymentModal.js';
 import { useUser } from '../context/UserContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../services/storage.js';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 44) / 2;
+
+// Standart yangilik e'loni (boshqa yangilik kelsa uning id'si o'zgaradi va qayta chiqadi)
+const DEFAULT_ANNOUNCEMENT = {
+  id: 'announcement_my_words_v1',
+  title: "Mening Lug'atim & Tarjimon",
+  tag: 'YANGI',
+  icon: '✍️',
+  subtitle: "Istalgan so'zni yozing, tarjima qiling va kartochkalarda yodlang!",
+  screen: 'MyWords',
+};
 
 const BOOKS_METADATA = [
   { id: 1, title: 'Book 1 - Elementary', level: 'A1 - A2', icon: '📕', unitsCount: 30 },
@@ -37,6 +48,7 @@ const BOOKS_METADATA = [
 export default function HomeScreen({ onNavigate }) {
   const { user, isPasswordExpired, subscribeVipMonthly, purchaseBook, isVipActive } = useUser();
   const [appSettings, setAppSettings] = useState(getAppSettings());
+  const [dismissedAnnouncements, setDismissedAnnouncements] = useState([]);
 
   const [paymentModal, setPaymentModal] = useState({
     visible: false,
@@ -61,8 +73,39 @@ export default function HomeScreen({ onNavigate }) {
     const unsub = onSettingsChange((st) => {
       if (st) setAppSettings({ ...st });
     });
+
+    // Foydalanuvchi bir marta bosgan/yopgan yangiliklarni o'qish
+    getStorageItem(STORAGE_KEYS.DISMISSED_ANNOUNCEMENTS, []).then((list) => {
+      if (Array.isArray(list)) {
+        setDismissedAnnouncements(list);
+      }
+    });
+
     return () => unsub();
   }, []);
+
+  // Faol yangilik: Admin paneldan kelsa o'sha, aks holda standart yangilik
+  const activeAnnouncement = (appSettings?.latest_announcement && appSettings?.latest_announcement?.id)
+    ? appSettings.latest_announcement
+    : DEFAULT_ANNOUNCEMENT;
+
+  // Foydalanuvchi bu yangilikni hali bosmagan bo'lsa ko'rinadi. Bosgach yo'qoladi.
+  // Keyinchalik yangi yangilik kelsa (yangi id bilan), u avtomatik yana chiqadi!
+  const isAnnouncementVisible = Boolean(
+    activeAnnouncement &&
+    activeAnnouncement.id &&
+    !dismissedAnnouncements.includes(activeAnnouncement.id)
+  );
+
+  const handleDismissAnnouncement = async (announcement, shouldNavigate = true) => {
+    if (!announcement || !announcement.id) return;
+    const updated = [...dismissedAnnouncements, announcement.id];
+    setDismissedAnnouncements(updated);
+    await setStorageItem(STORAGE_KEYS.DISMISSED_ANNOUNCEMENTS, updated);
+    if (shouldNavigate && announcement.screen && onNavigate) {
+      onNavigate(announcement.screen);
+    }
+  };
 
   const userDailyGoal = user.dailyGoal && user.dailyGoal > 0 ? user.dailyGoal : 20;
   const userWordsToday = user.wordsLearnedToday || 0;
@@ -150,28 +193,42 @@ export default function HomeScreen({ onNavigate }) {
           </View>
         </View>
 
-        {/* Quick Access: Mening Lug'atim & Shaxsiy Kartochkalar */}
-        <TouchableOpacity
-          style={styles.myWordsBanner}
-          activeOpacity={0.85}
-          onPress={() => onNavigate && onNavigate('MyWords')}
-        >
-          <View style={styles.myWordsBannerIconBox}>
-            <Text style={{ fontSize: 22 }}>✍️</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={styles.myWordsBannerTitle}>Mening Lug'atim & Tarjimon</Text>
-              <View style={styles.myWordsNewTag}>
-                <Text style={styles.myWordsNewTagText}>YANGI</Text>
+        {/* Yangiliklar va Yangi Funksiyalar Banneri (Bir marta bosganda yo'qoladi, yangisi qo'shilsa yana chiqadi) */}
+        {isAnnouncementVisible && (
+          <View style={styles.announcementWrapper}>
+            <TouchableOpacity
+              style={styles.myWordsBanner}
+              activeOpacity={0.85}
+              onPress={() => handleDismissAnnouncement(activeAnnouncement, true)}
+            >
+              <View style={styles.myWordsBannerIconBox}>
+                <Text style={{ fontSize: 22 }}>{activeAnnouncement.icon || '✍️'}</Text>
               </View>
-            </View>
-            <Text style={styles.myWordsBannerSubtitle}>
-              Istalgan so'zni yozing, tarjima qiling va kartochkalarda yodlang!
-            </Text>
+              <View style={{ flex: 1, paddingRight: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.myWordsBannerTitle}>{activeAnnouncement.title}</Text>
+                  <View style={styles.myWordsNewTag}>
+                    <Text style={styles.myWordsNewTagText}>{activeAnnouncement.tag || 'YANGI'}</Text>
+                  </View>
+                </View>
+                <Text style={styles.myWordsBannerSubtitle} numberOfLines={2}>
+                  {activeAnnouncement.subtitle}
+                </Text>
+              </View>
+              <Text style={styles.myWordsBannerArrow}>➔</Text>
+            </TouchableOpacity>
+
+            {/* Kichik qulay X (Yopish) tugmachasi */}
+            <TouchableOpacity
+              style={styles.announcementCloseBtn}
+              activeOpacity={0.7}
+              onPress={() => handleDismissAnnouncement(activeAnnouncement, false)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={styles.announcementCloseText}>✕</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.myWordsBannerArrow}>➔</Text>
-        </TouchableOpacity>
+        )}
 
         {/* Security Reminder: 6 Month Password Expiry */}
         {isPasswordExpired && (
@@ -779,6 +836,35 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#D97706',
   },
+  announcementWrapper: {
+    position: 'relative',
+    marginTop: 14,
+  },
+  announcementCloseBtn: {
+    position: 'absolute',
+    top: -6,
+    right: 6,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  announcementCloseText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#64748B',
+    lineHeight: 12,
+  },
   myWordsBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -795,7 +881,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
-    marginTop: 14,
+    marginTop: 0,
   },
   myWordsBannerIconBox: {
     width: 42,

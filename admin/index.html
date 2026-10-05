@@ -316,6 +316,17 @@
         const saved = localStorage.getItem('ingly_videos_enabled');
         return saved !== null ? JSON.parse(saved) : true;
       });
+      const [announcementForm, setAnnouncementForm] = useState({
+        title: "Mening Lug'atim & Tarjimon",
+        subtitle: "Istalgan so'zni yozing, tarjima qiling va kartochkalarda yodlang!",
+        icon: "✍️",
+        tag: "YANGI",
+        screen: "MyWords",
+      });
+      const [currentAnnouncement, setCurrentAnnouncement] = useState(() => {
+        const saved = localStorage.getItem('ingly_latest_announcement');
+        try { return saved ? JSON.parse(saved) : null; } catch (e) { return null; }
+      });
       const [isSavingPrices, setIsSavingPrices] = useState(false);
       const [selectedMovie, setSelectedMovie] = useState(null);
       const [videoTab, setVideoTab] = useState('youtube'); // 'youtube' yoki 'html5'
@@ -504,6 +515,12 @@
                     const val = item.setting_value === true || item.setting_value === 'true';
                     setVideosEnabled(val);
                     localStorage.setItem('ingly_videos_enabled', JSON.stringify(val));
+                  } else if (item.setting_key === 'latest_announcement') {
+                    const parsed = typeof item.setting_value === 'string' && item.setting_value.startsWith('{')
+                      ? JSON.parse(item.setting_value)
+                      : item.setting_value;
+                    setCurrentAnnouncement(parsed || null);
+                    if (parsed) localStorage.setItem('ingly_latest_announcement', JSON.stringify(parsed));
                   } else if (item.setting_key === 'card_receiver_number') {
                     const val = String(item.setting_value || '8600 5304 1234 5678');
                     setCardReceiverNumber(val);
@@ -633,6 +650,57 @@
             }, { onConflict: 'setting_key' });
           } catch (e) {
             console.warn('Supabase videos save error:', e);
+          }
+        }
+      };
+
+      // Home Page Yangilik / E'lonini Chiqarish (Barcha foydalanuvchilar Home sahifasida ko'rinadi)
+      const handlePublishAnnouncement = async () => {
+        if (!announcementForm.title.trim()) {
+          showToast('Iltimos, e\'lon sarlavhasini kiriting!');
+          return;
+        }
+        const newAnn = {
+          id: 'announcement_' + Date.now(),
+          title: announcementForm.title.trim(),
+          subtitle: announcementForm.subtitle.trim(),
+          icon: announcementForm.icon || '✨',
+          tag: announcementForm.tag || 'YANGI',
+          screen: announcementForm.screen || 'MyWords',
+          created_at: new Date().toISOString()
+        };
+        setCurrentAnnouncement(newAnn);
+        localStorage.setItem('ingly_latest_announcement', JSON.stringify(newAnn));
+        showToast('Yangi e\'lon barcha foydalanuvchilar Home sahifasiga chiqarildi! 🚀');
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('app_settings').upsert({
+              setting_key: 'latest_announcement',
+              setting_value: newAnn,
+              description: 'Mobil ilova Home sahifasida ko\'rinadigan so\'nggi yangilik / e\'lon'
+            }, { onConflict: 'setting_key' });
+          } catch (e) {
+            console.warn('Supabase announcement save error:', e);
+          }
+        }
+      };
+
+      // Home Page Yangilik / E'lonini O'chirish
+      const handleClearAnnouncement = async () => {
+        setCurrentAnnouncement(null);
+        localStorage.removeItem('ingly_latest_announcement');
+        showToast('E\'lon Home sahifadan olib tashlandi! 🗑️');
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('app_settings').upsert({
+              setting_key: 'latest_announcement',
+              setting_value: null,
+              description: 'Mobil ilova Home sahifasida ko\'rinadigan so\'nggi yangilik / e\'lon'
+            }, { onConflict: 'setting_key' });
+          } catch (e) {
+            console.warn('Supabase announcement clear error:', e);
           }
         }
       };
@@ -2321,7 +2389,127 @@
                         {/* Home indicator */}
                         <div class="w-20 h-1 bg-white/40 rounded-full mx-auto mt-auto mb-1"></div>
                       </div>
-                      <p class="text-xs font-semibold text-slate-400 mt-3">Smartfon blok-ekranidagi jonli ko'rinishi</p>
+                    </div>
+                  </div>
+
+                  {/* Home Page Yangilik va E'lonlar Boshqaruvi (In-App Feature Announcement) */}
+                  <div class="border-t border-slate-200/80 pt-8 mt-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-2xl">📢</span>
+                          <h3 class="text-lg font-extrabold text-slate-900">
+                            Home Page Yangilik & Yangi Funksiya E'loni
+                          </h3>
+                          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            1 marta bosganda yo'qoladi
+                          </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                          Ilovadagi barcha foydalanuvchilar Home sahifasida ko'rinadigan yangi funksiya yoki xabarnoma. Foydalanuvchi bir marta bosgach yo'qoladi, keyingi yangilik chiqqanda yana paydo bo'ladi.
+                        </p>
+                      </div>
+
+                      {currentAnnouncement && (
+                        <button
+                          type="button"
+                          onClick={handleClearAnnouncement}
+                          class="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 shrink-0"
+                        >
+                          <span>🗑️</span>
+                          <span>Joriy E'lonni O'chirish</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Hozirgi Faol E'lon Ko'rinishi */}
+                    {currentAnnouncement ? (
+                      <div class="bg-indigo-50/60 border border-indigo-200 rounded-2xl p-4 mb-5 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          <span class="text-3xl">{currentAnnouncement.icon || '✨'}</span>
+                          <div>
+                            <div class="flex items-center gap-2">
+                              <span class="text-xs font-extrabold text-slate-900">{currentAnnouncement.title}</span>
+                              <span class="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-amber-200 text-amber-900">
+                                {currentAnnouncement.tag || 'YANGI'}
+                              </span>
+                              <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.2 rounded-full">
+                                ● Jonli Ilovada Faol
+                              </span>
+                            </div>
+                            <p class="text-xs text-slate-600 mt-0.5">{currentAnnouncement.subtitle}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 mb-5 text-xs text-slate-500 flex items-center gap-2">
+                        <span>ℹ️</span>
+                        <span>Hozirda maxsus e'lon yo'q. Standart "Mening Lug'atim & Tarjimon" yangilik banneri ishlatilmoqda.</span>
+                      </div>
+                    )}
+
+                    {/* Yangi E'lon Kiritish Formasi */}
+                    <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-200/80 space-y-4">
+                      <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
+                        Yangi Yangilik / Funksiya E'lonini Yuborish:
+                      </h4>
+
+                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="sm:col-span-2">
+                          <label class="block text-xs font-bold text-slate-700 mb-1">E'lon Sarlavhasi:</label>
+                          <input
+                            type="text"
+                            value={announcementForm.title}
+                            onChange={(e) => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
+                            placeholder="Masalan: Yangi Unit 5 darslari qo'shildi! 🧠"
+                            class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-brand-500"
+                          />
+                        </div>
+                        <div>
+                          <label class="block text-xs font-bold text-slate-700 mb-1">Emoji va Teg:</label>
+                          <div class="flex gap-2">
+                            <input
+                              type="text"
+                              value={announcementForm.icon}
+                              onChange={(e) => setAnnouncementForm({ ...announcementForm, icon: e.target.value })}
+                              placeholder="✍️"
+                              class="w-16 border border-slate-200 rounded-xl px-2 py-2 text-center text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-brand-500"
+                            />
+                            <input
+                              type="text"
+                              value={announcementForm.tag}
+                              onChange={(e) => setAnnouncementForm({ ...announcementForm, tag: e.target.value })}
+                              placeholder="YANGI"
+                              class="flex-1 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-brand-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Qisqa Tavsif / Matn:</label>
+                        <input
+                          type="text"
+                          value={announcementForm.subtitle}
+                          onChange={(e) => setAnnouncementForm({ ...announcementForm, subtitle: e.target.value })}
+                          placeholder="Istalgan so'zni yozing, tarjima qiling va kartochkalarda yodlang!"
+                          class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 bg-white focus:outline-none focus:border-brand-500"
+                        />
+                      </div>
+
+                      <div class="flex items-center justify-between pt-2">
+                        <div class="text-[11px] text-slate-400">
+                          💡 Tugmani bosishingiz bilan mobil ilovaning Home sahifasida yangi banner paydo bo'ladi.
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handlePublishAnnouncement}
+                          class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-xs transition cursor-pointer shadow-md flex items-center gap-2 shrink-0"
+                        >
+                          <span>🚀</span>
+                          <span>Home Pageda E'lonni Chiqarish</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

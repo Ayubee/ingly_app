@@ -17,6 +17,7 @@ let currentSettings = {
   premium_mode_enabled: true,
   free_books_count: 1, // Faqat Book 1 bepul, Book 2-6 lar VIP / pullik
   videos_enabled: true, // Barcha kinolar va videolarni ilovada ko'rsatish/yashirish
+  latest_announcement: null, // Admin paneldan yuborilgan yangi e'lon/yangilik
   daily_goal_default: 20,
   premium_monthly_price: 29000, // VIP oylik obuna narxi (so'm)
   single_book_price: 10000,     // Bitta kitob narxi (so'm)
@@ -92,6 +93,12 @@ export async function initAppSettings() {
           currentSettings.single_book_price = Number(item.setting_value) || 10000;
         } else if (item.setting_key === 'videos_enabled') {
           currentSettings.videos_enabled = item.setting_value === true || item.setting_value === 'true';
+        } else if (item.setting_key === 'latest_announcement') {
+          currentSettings.latest_announcement = item.setting_value && typeof item.setting_value === 'object'
+            ? item.setting_value
+            : typeof item.setting_value === 'string' && item.setting_value.startsWith('{')
+              ? JSON.parse(item.setting_value)
+              : item.setting_value || null;
         } else if (item.setting_key === 'card_receiver_number') {
           currentSettings.card_receiver_number = String(item.setting_value || '8600 5304 1234 5678');
         }
@@ -117,6 +124,12 @@ export async function initAppSettings() {
             currentSettings.premium_mode_enabled = item.setting_value === true || item.setting_value === 'true';
           } else if (item.setting_key === 'videos_enabled') {
             currentSettings.videos_enabled = item.setting_value === true || item.setting_value === 'true';
+          } else if (item.setting_key === 'latest_announcement') {
+            currentSettings.latest_announcement = item.setting_value && typeof item.setting_value === 'object'
+              ? item.setting_value
+              : typeof item.setting_value === 'string' && item.setting_value.startsWith('{')
+                ? JSON.parse(item.setting_value)
+                : item.setting_value || null;
           } else if (item.setting_key === 'free_books_count') {
             currentSettings.free_books_count = item.setting_value !== undefined ? Number(item.setting_value) : 1;
           } else if (item.setting_key === 'premium_monthly_price') {
