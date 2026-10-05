@@ -4,6 +4,8 @@
 
 # Ingly - Backend & Ma'lumotlar Bazasi Arxitekturasi
 
+> **Admin real data:** After the Phase 2 baseline and `migrations/20261005_repair_phase3_offline_sync.sql`, approved staging rollout additionally requires `migrations/20261006_admin_real_data.sql`. This prepares authorized analytics/configuration RPCs and a protected finance ledger; it has NOT been deployed or executed. See [the admin audit report](../docs/ADMIN_REAL_DATA_AUDIT_REPAIR.md). `tests/admin_real_data.sql` is a manually approved staging-only rollback test, not an automatic production operation. Never import the legacy transactions_data blob without provenance review.
+
 Ushbu papkada **"Ingly - 4000 Essential English Words"** mobil ilovasi va Web Admin paneli uchun mo'ljallangan PostgreSQL / Supabase ma'lumotlar bazasi sxemasi (`schema.sql`) va sozlash qo'llanmasi joylashgan.
 
 ---

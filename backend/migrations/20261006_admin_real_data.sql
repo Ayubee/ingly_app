@@ -40,6 +40,7 @@ CREATE TABLE public.finance_ledger (
   reference TEXT NOT NULL CHECK(length(reference) BETWEEN 1 AND 200),
   occurred_at TIMESTAMPTZ NOT NULL,
   status TEXT NOT NULL CHECK(status IN ('completed','pending','failed','cancelled','voided')),
+  recorded_status TEXT NOT NULL CHECK(recorded_status IN ('completed','pending','failed','cancelled')),
   environment TEXT NOT NULL CHECK(environment IN ('production','test','mock')),
   source TEXT NOT NULL CHECK(source IN ('manual','verified_provider')),
   is_purchase BOOLEAN NOT NULL DEFAULT false,
@@ -95,7 +96,7 @@ CREATE FUNCTION public.admin_dashboard_snapshot()
 RETURNS JSONB LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $$
 DECLARE result JSONB; today DATE := (now() AT TIME ZONE 'Asia/Tashkent')::DATE;
 BEGIN
-  IF auth.uid() IS NULL OR NOT ingly_private.has_permission('view_stats') THEN
+  IF auth.uid() IS NULL OR NOT (ingly_private.has_permission('view_stats') OR ingly_private.has_permission('view_analytics')) THEN
     RAISE EXCEPTION 'Analytics authorization required' USING ERRCODE='42501'; END IF;
   WITH population AS (
     SELECT u.id,a.created_at FROM public.users u JOIN auth.users a ON a.id=u.auth_user_id AND u.id=a.id
@@ -125,12 +126,10 @@ BEGIN
       (SELECT count(DISTINCT d.user_id) FROM completed d WHERE d.book=c.book) learners
     FROM public.admin_course_catalog c GROUP BY c.book
   ), streaks AS (
-    SELECT p.id FROM population p LEFT JOIN public.learning_sync_entities e ON e.user_id=p.id AND e.entity_key='learning'
-    LEFT JOIN public.user_streaks s ON s.user_id=p.id
-    WHERE CASE WHEN e.user_id IS NOT NULL THEN
-      coalesce(e.payload->>'lastActiveDate','') IN (today::TEXT,(today-1)::TEXT)
+    SELECT p.id FROM population p JOIN public.learning_sync_entities e ON e.user_id=p.id AND e.entity_key='learning'
+    -- Legacy CURRENT_DATE snapshots cannot prove the Uzbekistan day boundary.
+    WHERE e.device<>'legacy' AND coalesce(e.payload->>'lastActiveDate','') IN (today::TEXT,(today-1)::TEXT)
       AND coalesce(e.payload->>'streakDays','') ~ '^[1-9][0-9]{0,8}$'
-    ELSE s.current_streak>0 AND s.last_activity_date IN (today,today-1) END
   ) SELECT jsonb_build_object(
     'timezone','Asia/Tashkent','day',today,'total_users',(SELECT count(*) FROM population),
     'dau',(SELECT count(*) FROM public.admin_learning_days d JOIN population p ON p.id=d.user_id WHERE d.activity_day=today),
@@ -141,6 +140,17 @@ BEGIN
     'config',config.value,'books',(SELECT jsonb_agg(to_jsonb(books) ORDER BY book) FROM books),
     'generated_at',now()) INTO result FROM registrations r CROSS JOIN config;
   RETURN result;
+END $$;
+
+CREATE FUNCTION public.admin_configuration_snapshot()
+RETURNS JSONB LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $$
+BEGIN
+  IF auth.uid() IS NULL OR NOT ingly_private.has_permission('manage_settings') THEN
+    RAISE EXCEPTION 'Settings authorization required' USING ERRCODE='42501'; END IF;
+  RETURN jsonb_build_object('config',coalesce((SELECT jsonb_object_agg(setting_key,setting_value) FROM public.app_settings
+    WHERE setting_key IN ('premium_mode_enabled','ads_enabled','free_book_ids','free_books_count','videos_enabled',
+      'premium_monthly_price','premium_monthly_original_price','single_book_price','single_book_original_price')),'{}'::JSONB),
+    'books',(SELECT jsonb_agg(b ORDER BY book) FROM (SELECT book,min(title) title FROM public.admin_course_catalog GROUP BY book) b));
 END $$;
 
 CREATE FUNCTION public.admin_update_configuration(p_changes JSONB)
@@ -163,8 +173,10 @@ BEGIN
       IF item.value::TEXT !~ '^[1-9][0-9]{0,11}$' THEN RAISE EXCEPTION 'Invalid price' USING ERRCODE='22023'; END IF;
     ELSE RAISE EXCEPTION 'Unsupported configuration key' USING ERRCODE='22023'; END IF;
   END LOOP;
-  -- Atomic compatibility projection. No browser max-ID-as-count mistake.
-  IF changes ? 'free_book_ids' THEN changes := changes||jsonb_build_object('free_books_count',jsonb_array_length(changes->'free_book_ids')); END IF;
+  -- Mobile uses prefix OR explicit IDs: store only the contiguous prefix, never
+  -- the list length or max ID (both accidentally unlock holes in [1,3]).
+  IF changes ? 'free_book_ids' THEN changes := changes||jsonb_build_object('free_books_count',
+    (SELECT coalesce(min(n)-1,6) FROM generate_series(1,6) n WHERE NOT (changes->'free_book_ids' @> jsonb_build_array(n)))); END IF;
   INSERT INTO public.app_settings(setting_key,setting_value)
     SELECT key,value FROM jsonb_each(changes)
     ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value;
@@ -206,10 +218,10 @@ BEGIN
   IF request_id IS NULL THEN RAISE EXCEPTION 'Request ID required' USING ERRCODE='22023'; END IF;
   ref := p_entry->>'reference';
   INSERT INTO public.finance_ledger(id,type,amount,currency,category,title,description,payment_method,reference,
-    occurred_at,status,environment,source,created_by)
+    occurred_at,status,recorded_status,environment,source,created_by)
     VALUES(request_id,p_entry->>'type',(p_entry->>'amount')::BIGINT,'UZS',p_entry->>'category',btrim(p_entry->>'title'),
       coalesce(p_entry->>'description',''),p_entry->>'payment_method',ref,(p_entry->>'occurred_at')::TIMESTAMPTZ,
-      'completed',p_entry->>'environment','manual',auth.uid()) ON CONFLICT DO NOTHING RETURNING * INTO row;
+      'completed','completed',p_entry->>'environment','manual',auth.uid()) ON CONFLICT DO NOTHING RETURNING * INTO row;
   IF row.id IS NULL THEN
     SELECT * INTO row FROM public.finance_ledger WHERE id=request_id OR
       (source='manual' AND environment=p_entry->>'environment' AND reference=ref) FOR UPDATE;
@@ -242,7 +254,7 @@ BEGIN
 END $$;
 
 -- Future verified server callbacks only. No client execute grant or mock flow wiring.
--- Idempotency is per provider+environment+external event ID, independent of browser IDs.
+-- Idempotency is per provider+environment+settled transaction ID, independent of callback event IDs.
 CREATE FUNCTION public.record_verified_finance_purchase(p_event JSONB)
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE row public.finance_ledger%ROWTYPE;
@@ -250,21 +262,28 @@ BEGIN
   IF auth.role() IS DISTINCT FROM 'service_role' THEN RAISE EXCEPTION 'Trusted server required' USING ERRCODE='42501'; END IF;
   PERFORM ingly_private.validate_finance_input(p_event);
   IF p_event->>'type'<>'income' OR p_event->>'category' NOT IN ('vip','book')
-    OR coalesce(p_event->>'status','') NOT IN ('completed','pending','failed','cancelled')
+    OR coalesce(p_event->>'status','')<>'completed'
+    OR nullif(p_event->>'related_user_id','') IS NULL
     OR coalesce(p_event->>'payment_method','') NOT IN ('click','payme') THEN
     RAISE EXCEPTION 'Invalid verified purchase' USING ERRCODE='22023'; END IF;
-  -- Caller must verify provider signature, amount/product/user and status BEFORE invoking.
+  IF EXISTS(SELECT 1 FROM jsonb_object_keys(p_event) k WHERE k NOT IN
+    ('reference','type','amount','currency','category','title','description','payment_method','occurred_at','environment','status','related_user_id','book')) THEN
+    RAISE EXCEPTION 'Unsupported provider field' USING ERRCODE='22023'; END IF;
+  IF (p_event->>'category'='book' AND (p_event->>'book' IS NULL OR (p_event->>'book')::INT NOT BETWEEN 1 AND 6))
+    OR (p_event->>'category'='vip' AND p_event->>'book' IS NOT NULL) THEN
+    RAISE EXCEPTION 'Invalid purchase product' USING ERRCODE='22023'; END IF;
+  -- Caller must verify provider signature, amount/product/user and settlement BEFORE invoking.
   INSERT INTO public.finance_ledger(type,amount,currency,category,title,description,related_user_id,book,
-    payment_method,reference,occurred_at,status,environment,source,is_purchase)
+    payment_method,reference,occurred_at,status,recorded_status,environment,source,is_purchase)
     VALUES('income',(p_event->>'amount')::BIGINT,'UZS',p_event->>'category',btrim(p_event->>'title'),
       coalesce(p_event->>'description',''),(p_event->>'related_user_id')::UUID,(p_event->>'book')::INT,
       p_event->>'payment_method',p_event->>'payment_method'||':'||(p_event->>'reference'),
-      (p_event->>'occurred_at')::TIMESTAMPTZ,p_event->>'status',p_event->>'environment','verified_provider',true)
+      (p_event->>'occurred_at')::TIMESTAMPTZ,'completed','completed',p_event->>'environment','verified_provider',true)
     ON CONFLICT(source,environment,reference) DO NOTHING RETURNING * INTO row;
   IF row.id IS NULL THEN
     SELECT * INTO row FROM public.finance_ledger WHERE source='verified_provider' AND environment=p_event->>'environment'
       AND reference=(p_event->>'payment_method')||':'||(p_event->>'reference');
-    IF row.amount IS DISTINCT FROM (p_event->>'amount')::BIGINT OR row.status IS DISTINCT FROM p_event->>'status'
+    IF row.amount IS DISTINCT FROM (p_event->>'amount')::BIGINT OR row.recorded_status IS DISTINCT FROM p_event->>'status'
       OR row.category IS DISTINCT FROM p_event->>'category' OR row.related_user_id IS DISTINCT FROM (p_event->>'related_user_id')::UUID
       OR row.book IS DISTINCT FROM (p_event->>'book')::INT OR row.title IS DISTINCT FROM btrim(p_event->>'title')
       OR row.description IS DISTINCT FROM coalesce(p_event->>'description','')
@@ -281,11 +300,11 @@ CREATE FUNCTION public.admin_finance_snapshot(p_environment TEXT DEFAULT 'produc
 RETURNS JSONB LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $$
 DECLARE result JSONB;
 BEGIN
-  IF auth.uid() IS NULL OR NOT ingly_private.has_permission('view_finance') THEN
+  IF auth.uid() IS NULL OR NOT (ingly_private.has_permission('view_finance') OR ingly_private.has_permission('manage_finance')) THEN
     RAISE EXCEPTION 'Finance authorization required' USING ERRCODE='42501'; END IF;
   IF p_environment IS NULL OR p_environment NOT IN ('production','test','mock') OR p_filter IS NULL
     OR p_filter NOT IN ('all','income','expense','vip','book') OR p_search IS NULL OR length(p_search)>100
-    OR p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 200
+    OR p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 2000
     OR (p_before_date IS NULL)<>(p_before_id IS NULL) THEN RAISE EXCEPTION 'Invalid finance query' USING ERRCODE='22023'; END IF;
   WITH base AS (SELECT * FROM public.finance_ledger WHERE environment=p_environment),
   filtered AS (SELECT * FROM base WHERE (p_filter='all' OR type=p_filter OR category=p_filter)
@@ -307,11 +326,11 @@ BEGIN
   RETURN result;
 END $$;
 
-REVOKE ALL ON FUNCTION public.admin_dashboard_snapshot(),public.admin_update_configuration(JSONB),
+REVOKE ALL ON FUNCTION public.admin_dashboard_snapshot(),public.admin_configuration_snapshot(),public.admin_update_configuration(JSONB),
   public.admin_create_finance_entry(JSONB),public.admin_void_finance_entry(UUID,TEXT),
   public.admin_finance_snapshot(TEXT,TEXT,TEXT,TIMESTAMPTZ,UUID,INT),public.record_verified_finance_purchase(JSONB)
   FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.admin_dashboard_snapshot(),public.admin_update_configuration(JSONB),
+GRANT EXECUTE ON FUNCTION public.admin_dashboard_snapshot(),public.admin_configuration_snapshot(),public.admin_update_configuration(JSONB),
   public.admin_create_finance_entry(JSONB),public.admin_void_finance_entry(UUID,TEXT),
   public.admin_finance_snapshot(TEXT,TEXT,TEXT,TIMESTAMPTZ,UUID,INT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.record_verified_finance_purchase(JSONB) TO service_role;

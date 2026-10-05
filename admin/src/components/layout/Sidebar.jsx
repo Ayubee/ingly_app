@@ -23,19 +23,19 @@ export default function Sidebar({ currentTab, setCurrentTab }) {
       id: 'words',
       label: "So'zlar boshqaruvi",
       icon: BookOpen,
-      badge: '4000',
+      badge: null,
     },
     {
       id: 'users',
       label: 'Foydalanuvchilar',
       icon: Users,
-      badge: '14.8k',
+      badge: null,
     },
     {
       id: 'monetization',
       label: 'Reklama & Obuna',
       icon: DollarSign,
-      badge: 'OFF',
+      badge: null,
       badgeColor: 'bg-emerald-100 text-emerald-800',
     },
     {
@@ -44,6 +44,7 @@ export default function Sidebar({ currentTab, setCurrentTab }) {
       icon: ShieldCheck,
       badge: 'RBAC',
     },
+    { id: 'finances', label: 'Moliya va kirim-chiqimlar', icon: DollarSign, badge: null },
     {
       id: 'notifications',
       label: 'Push Bildirishnomalar',
@@ -120,10 +121,9 @@ export default function Sidebar({ currentTab, setCurrentTab }) {
         <div className="flex items-center gap-2 mb-2">
           <Database size={15} className="text-emerald-500" />
           <span className="text-xs font-semibold text-slate-800">Supabase DB</span>
-          <span className="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
         </div>
         <p className="text-[11px] text-slate-500 leading-snug">
-          PostgreSQL & Smart Cache ulanishi faol. Mobil ilova bilan sinxron.
+          Ulanish holati server so‘rovlari orqali tekshiriladi.
         </p>
         <div className="mt-2.5 pt-2 border-t border-slate-200/70 flex items-center justify-between text-[11px] text-brand-600 font-semibold cursor-pointer hover:underline">
           <span>Hujjatlar & API</span>

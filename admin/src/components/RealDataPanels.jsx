@@ -5,6 +5,8 @@ const panel = 'bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm spa
 const button = 'px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 disabled:opacity-50';
 const input = 'w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white';
 const model = () => window.inglyRealData;
+const categories = { other: 'Boshqa', vip: 'VIP obuna', book: 'Kitob', hosting: 'Server va hosting', sms: 'SMS', marketing: 'Marketing' };
+const methods = { cash: 'Naqd pul', bank_transfer: 'Bank o‘tkazmasi', click: 'Click', payme: 'Payme', other: 'Boshqa' };
 
 function useResource(fetcher, kinds) {
   const [data, setData] = React.useState(null);
@@ -68,7 +70,7 @@ export function Dashboard({ onNavigate = () => {} }) {
       <Metric label="Faol foydalanuvchilar (DAU)" value={data?.dau} note="Bugungi sinxronlangan o‘rganish faolligi. Oflayn navbatlar hali hisobga kirmaydi." />
       <Metric label="Jami foydalanuvchilar" value={data?.total_users} note="Auth bilan bog‘langan ilova profillari; adminlar kiritilmaydi." />
       <Metric label="O‘zlashtirilgan so‘zlar" value={data?.mastered_words} note="Har bir foydalanuvchi va darslik so‘zi bir marta. Shaxsiy lug‘at kiritilmaydi." />
-      <Metric label="Faol streak egalari" value={data?.active_streak_users} note="Musbat streak, oxirgi faollik bugun yoki kecha." />
+      <Metric label="Faol streak egalari" value={data?.active_streak_users} note="Sinxronlangan musbat streak, oxirgi faollik bugun yoki kecha. Eski UTC yozuvlari kiritilmaydi." />
     </div>
     <div className={panel}>
       <p className="font-semibold">Haftalik yangi foydalanuvchilar o‘sishi: {data?.weekly_growth_pct == null
@@ -94,6 +96,7 @@ export function Dashboard({ onNavigate = () => {} }) {
 }
 
 export function Finance() {
+  const renderGeneration = model().api.generation();
   const [environment, setEnvironment] = React.useState('production');
   const [filter, setFilter] = React.useState('all');
   const [searchInput, setSearchInput] = React.useState('');
@@ -112,7 +115,7 @@ export function Finance() {
     if (kind === 'session') { setForm(null); setMessage(''); pending.current = null; }
   }), []);
   const run = async action => {
-    if (lock.current) return;
+    if (lock.current || renderGeneration !== model().api.generation()) return;
     lock.current = true; setSaving(true); setMessage('');
     const generation = model().api.generation();
     try { await action(generation); }
@@ -135,13 +138,15 @@ export function Finance() {
   const openForm = () => {
     pending.current = null;
     setForm({ request_id: crypto.randomUUID(), type: 'income', amount: '', currency: 'UZS', category: 'other',
-      title: '', description: '', reference: '', payment_method: 'cash', environment: 'production', occurred_at: new Date().toISOString() });
+      title: '', description: '', reference: '', payment_method: 'cash', environment,
+      occurred_at: new Date(Date.now() + 5 * 3600000).toISOString().slice(0, 16) + '+05:00' });
   };
   const labels = { all: 'Barchasi', income: 'Kirimlar', expense: 'Chiqimlar', vip: 'VIP obunalar', book: 'Kitoblar' };
   return <div className={panel}>
     <div className="flex flex-wrap justify-between items-center gap-3">
       <div><h1 className="text-2xl font-extrabold">Moliya va kirim-chiqimlar boshqaruvi</h1>
-        <p className="text-sm text-slate-500">Qo‘lda kiritilgan yozuvlar va server tasdiqlagan xaridlar. Click/Payme integratsiyasi hali mavjud emas.</p></div>
+        <p className="text-sm text-slate-500">Qo‘lda kiritilgan yozuvlar va server tasdiqlagan xaridlar. Click/Payme integratsiyasi hali mavjud emas.</p>
+        <p className="text-xs text-amber-700">Bu yangi moliya reyestri. Eski transactions_data arxivi tekshirilmasdan ko‘chirilmagan va jami summalarga kirmaydi.</p></div>
       <div className="flex flex-wrap gap-2">
         <button className={button} disabled={busy || saving} onClick={load}>Qayta yuklash</button>
         <button className={button} disabled={busy || saving || !data} onClick={() => run(async generation => {
@@ -180,9 +185,9 @@ export function Finance() {
     {!!data?.rows.length && <div className="overflow-x-auto"><table className="w-full text-sm text-left">
       <thead><tr>{['Sarlavha / toifa', 'Summa', 'Usul / manba', 'Sana (Toshkent)', 'Holat', 'Amal'].map(title => <th key={title} className="p-3 border-b">{title}</th>)}</tr></thead>
       <tbody>{data.rows.map(row => <tr key={row.id} className="border-b border-slate-100">
-        <td className="p-3"><strong>{row.title}</strong><p className="text-xs text-slate-500">{row.category} • {row.reference}</p><p className="text-xs">{row.description}</p></td>
+        <td className="p-3"><strong>{row.title}</strong><p className="text-xs text-slate-500">{categories[row.category]} • {row.reference}</p><p className="text-xs">{row.description}</p></td>
         <td className={`p-3 whitespace-nowrap font-bold ${row.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>{row.type === 'income' ? '+' : '−'}{model().formatNumber(row.amount)} so‘m</td>
-        <td className="p-3">{row.payment_method}<p className="text-xs">{row.source === 'manual' ? 'Qo‘lda kiritilgan' : 'Server tasdiqlagan'} • {row.environment}</p></td>
+        <td className="p-3">{methods[row.payment_method]}<p className="text-xs">{row.source === 'manual' ? 'Qo‘lda kiritilgan' : 'Server tasdiqlagan'} • {row.environment}</p></td>
         <td className="p-3">{new Date(row.occurred_at).toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}</td>
         <td className="p-3">{{ completed: 'Yakunlangan', pending: 'Kutilmoqda', failed: 'Xato', cancelled: 'Bekor qilingan', voided: 'Hisobdan chiqarilgan' }[row.status]}{row.void_reason && <p className="text-xs">{row.void_reason}</p>}</td>
         <td className="p-3">{row.status !== 'voided' && <button className={button} disabled={saving} onClick={() => {
@@ -204,13 +209,14 @@ export function Finance() {
         <p className="text-xs text-slate-500">Qo‘lda kiritilgan yozuv. Xarid yoki VIP huquqi yaratmaydi. Karta ma’lumotlari va maxfiy ma’lumotlarni kiritmang.</p>
         <label className="block">Turi<select className={input} value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}><option value="income">Kirim</option><option value="expense">Chiqim</option></select></label>
         <label className="block">Muhit<select className={input} value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })}><option value="production">Real / production</option><option value="test">TEST</option><option value="mock">MOCK</option></select></label>
-        <label className="block">Toifa<select className={input} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>{['other','vip','book','hosting','sms','marketing'].map(key => <option key={key} value={key}>{key}</option>)}</select></label>
+        <label className="block">Toifa<select className={input} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>{Object.entries(categories).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         {['title','amount','reference','occurred_at','description'].map(key => <label key={key} className="block">
-          {{ title: 'Sarlavha', amount: 'Summa (UZS)', reference: 'Takrorlanmas hujjat raqami', occurred_at: 'Sana va vaqt (ISO, vaqt zonasi bilan)', description: 'Izoh' }[key]}
-          <input className={input} type={key === 'amount' ? 'number' : 'text'} min={key === 'amount' ? 1 : undefined} step={key === 'amount' ? 1 : undefined}
-            maxLength={key === 'description' ? 1000 : 200} required={key !== 'description'} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} /></label>)}
+          {{ title: 'Sarlavha', amount: 'Summa (so‘m)', reference: 'Takrorlanmas hujjat raqami', occurred_at: 'Sana va vaqt (Toshkent)', description: 'Izoh' }[key]}
+          <input className={input} type={key === 'amount' ? 'number' : key === 'occurred_at' ? 'datetime-local' : 'text'} min={key === 'amount' ? 1 : undefined} step={key === 'amount' ? 1 : undefined}
+            maxLength={key === 'description' ? 1000 : 200} required={key !== 'description'} value={key === 'occurred_at' ? form[key].slice(0, 16) : form[key]}
+            onChange={e => setForm({ ...form, [key]: key === 'occurred_at' ? e.target.value + '+05:00' : e.target.value })} /></label>)}
         <label className="block">To‘lov usuli<select className={input} value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value })}>
-          {['cash','bank_transfer','click','payme','other'].map(key => <option key={key} value={key}>{key}</option>)}</select></label>
+          {Object.entries(methods).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
         {message && <p role="alert" className="text-rose-700">{message}</p>}
         <div className="flex gap-2"><button type="submit" className={button} disabled={saving}>{saving ? 'Saqlanmoqda…' : 'Serverda saqlash'}</button>
           <button type="button" className={button} disabled={saving} onClick={() => setForm(null)}>Yopish</button></div>
@@ -220,7 +226,8 @@ export function Finance() {
 }
 
 export function Monetization() {
-  const fetcher = React.useCallback(() => model().api.dashboard(), []);
+  const renderGeneration = model().api.generation();
+  const fetcher = React.useCallback(() => model().api.configuration(), []);
   const { data, error, busy, load } = useResource(fetcher, dashboardKinds);
   const [draft, setDraft] = React.useState({});
   const [message, setMessage] = React.useState('');
@@ -229,7 +236,7 @@ export function Monetization() {
   const config = { ...data?.config, ...draft };
   React.useEffect(() => { setDraft({}); setMessage(''); }, [data]);
   const save = async () => {
-    if (lock.current || !data) return;
+    if (lock.current || !data || renderGeneration !== model().api.generation()) return;
     lock.current = true; setSaving(true); setMessage('');
     const generation = model().api.generation();
     try {
@@ -242,6 +249,8 @@ export function Monetization() {
   if (typeof ids === 'string') { try { ids = JSON.parse(ids); } catch { ids = null; } }
   if (!Array.isArray(ids) && config.free_books_count != null && Number.isInteger(Number(config.free_books_count)))
     ids = Array.from({ length: Math.min(6, Math.max(0, Number(config.free_books_count))) }, (_, i) => i + 1);
+  else if (Array.isArray(ids) && config.free_books_count != null && Number.isInteger(Number(config.free_books_count)))
+    ids = [...new Set([...ids.map(Number), ...Array.from({ length: Math.min(6, Math.max(0, Number(config.free_books_count))) }, (_, i) => i + 1)])];
   return <div className={panel}>
     <div className="flex justify-between gap-3"><h1 className="text-2xl font-extrabold">Monetizatsiya sozlamalari</h1><button className={button} onClick={load} disabled={busy || saving}>Qayta yuklash</button></div>
     <Feedback error={error} busy={busy} />

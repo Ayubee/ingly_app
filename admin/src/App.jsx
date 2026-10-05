@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Layout from './components/layout/Layout';
 import DashboardPage from './pages/DashboardPage';
+import FinancePage from './pages/FinancePage';
 import WordsPage from './pages/WordsPage';
 import UsersPage from './pages/UsersPage';
 import MonetizationPage from './pages/MonetizationPage';
@@ -16,6 +17,8 @@ export default function App() {
         return <DashboardPage setCurrentTab={setCurrentTab} />;
       case 'words':
         return <WordsPage />;
+      case 'finances':
+        return <FinancePage />;
       case 'users':
         return <UsersPage />;
       case 'monetization':

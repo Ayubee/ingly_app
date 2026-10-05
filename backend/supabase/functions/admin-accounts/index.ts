@@ -25,7 +25,7 @@ Deno.serve(async (req: Request) => {
   const permissions = Array.isArray(role.permissions) ? role.permissions : [];
   if (role.role !== 'super_admin' && (permission === 'manage_admins' || !permissions.includes(permission))) return failure('Forbidden', 403);
   const p = body.payload || {};
-  const validPermissions = ['manage_users','manage_words','manage_settings','view_analytics'];
+  const validPermissions = ['manage_users','manage_words','manage_settings','view_analytics','view_stats','view_finance','manage_finance'];
   let target = null;
   let result = null;
   try {

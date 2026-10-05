@@ -1,5 +1,7 @@
 # Ingly Web Admin Panel
 
+> Dashboard + Finance now use shared authorized real-data panels. The shipped entrypoints are `index.html` and `preview.html`; `src/` also contains alternate React wrappers. Run `npm.cmd run build` to regenerate `public/real-data-ui.js` and build both pages. See [the current audit/repair report](../docs/ADMIN_REAL_DATA_AUDIT_REPAIR.md) for exact metrics, finance rules and required migration. Missing server RPCs show unavailable; no demo fallback is used. Unrelated legacy page descriptions below do not establish deployed functionality.
+
 "Ingly - 4000 Essential English Words" loyihasining boshqaruv tizimi (Web Admin Panel).
 
 ## 🚀 Texnologiyalar

@@ -146,49 +146,17 @@
       };
 
       const [tab, setTab] = useState('dashboard');
-      const [adsEnabled, setAdsEnabled] = useState(() => {
-        const saved = localStorage.getItem('ingly_ads_enabled');
-        return saved !== null ? JSON.parse(saved) : false;
-      });
-      const [vipEnabled, setVipEnabled] = useState(() => {
-        const saved = localStorage.getItem('ingly_vip_enabled');
-        return saved !== null ? JSON.parse(saved) : false;
-      });
-      const [freeBooks, setFreeBooks] = useState(() => {
-        const saved = localStorage.getItem('ingly_free_books');
-        return saved !== null ? Number(saved) : 1;
-      });
-      const [freeBookIds, setFreeBookIds] = useState(() => {
-        const saved = localStorage.getItem('ingly_free_book_ids');
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed.map(Number);
-          } catch (e) {}
-        }
-        const count = Number(localStorage.getItem('ingly_free_books')) || 1;
-        return Array.from({ length: Math.max(1, count) }, (_, i) => i + 1);
-      });
-      const [vipMonthlyPrice, setVipMonthlyPrice] = useState(() => {
-        const saved = localStorage.getItem('ingly_vip_monthly_price');
-        return saved !== null ? Number(saved) : 29000;
-      });
-      const [vipMonthlyOriginalPrice, setVipMonthlyOriginalPrice] = useState(() => {
-        const saved = localStorage.getItem('ingly_vip_monthly_original_price');
-        return saved !== null ? Number(saved) : 59000;
-      });
-      const [singleBookPrice, setSingleBookPrice] = useState(() => {
-        const saved = localStorage.getItem('ingly_single_book_price');
-        return saved !== null ? Number(saved) : 19000;
-      });
-      const [singleBookOriginalPrice, setSingleBookOriginalPrice] = useState(() => {
-        const saved = localStorage.getItem('ingly_single_book_original_price');
-        return saved !== null ? Number(saved) : 35000;
-      });
       const [videosEnabled, setVideosEnabled] = useState(() => {
         const saved = localStorage.getItem('ingly_videos_enabled');
         return saved !== null ? JSON.parse(saved) : true;
       });
+      useEffect(() => {
+        if (!isAdminLoggedIn) return;
+        return window.inglyRealData.api.subscribe((kind, config) => {
+          if (kind === 'configuration' && config?.videos_enabled !== undefined)
+            setVideosEnabled(config.videos_enabled === true || config.videos_enabled === 'true');
+        });
+      }, [isAdminLoggedIn]);
       const [announcementForm, setAnnouncementForm] = useState({
         title: "Mening Lug'atim & Tarjimon",
         subtitle: "Istalgan so'zni yozing, tarjima qiling va kartochkalarda yodlang!",
@@ -201,7 +169,6 @@
         try { return saved ? JSON.parse(saved) : null; } catch (e) { return null; }
       });
 
-      const [isSavingPrices, setIsSavingPrices] = useState(false);
       const [selectedMovie, setSelectedMovie] = useState(null);
       const [videoTab, setVideoTab] = useState('youtube'); // 'youtube' yoki 'html5'
       const [videoMuted, setVideoMuted] = useState(true);
@@ -244,6 +211,9 @@
         { id: 'manage_words', label: 'So\'zlarni tahrirlash va qo\'shish', desc: '4000 ta so\'z bazasini boshqarish' },
         { id: 'manage_users', label: 'Foydalanuvchilarni boshqarish', desc: 'Foydalanuvchilarni ko\'rish, bloklash va ochish' },
         { id: 'manage_settings', label: 'Monetizatsiya va Sozlamalar', desc: 'AdMob reklama, VIP obuna va kalitlarni sozlash' },
+        { id: 'view_analytics', label: 'Statistika va tahlil', desc: 'Tasdiqlangan umumiy ko‘rsatkichlar' },
+        { id: 'view_finance', label: 'Moliyani ko‘rish', desc: 'Moliya reyestri va eksport' },
+        { id: 'manage_finance', label: 'Moliyani boshqarish', desc: 'Qo‘lda yozuv kiritish va hisobdan chiqarish' },
         { id: 'manage_admins', label: 'Adminlarni boshqarish (RBAC)', desc: 'Yangi adminlar tayinlash va huquq berish' },
         { id: 'all', label: 'Barcha Huquqlar (Cheklovlarsiz)', desc: 'Tizim bo\'yicha to\'liq Super Admin huquqi' }
       ];
@@ -347,50 +317,13 @@
             setSupabaseClient(client);
 
             // 1. App settings ni o'qish (ads, vip, free books)
-            client.from('app_settings').select('*').then(async ({ data, error }) => {
+            client.from('app_settings').select('setting_key,setting_value').in('setting_key', ['videos_enabled','latest_announcement']).then(async ({ data, error }) => {
               const currentAccess = await window.inglyAuth.authorize();
               if (currentAccess.id !== initiatingAccess.id) return;
               if (!error && Array.isArray(data)) {
                 setSupabaseConnected(true);
                 data.forEach(item => {
-                  if (item.setting_key === 'ads_enabled') {
-                    const val = item.setting_value === true || item.setting_value === 'true';
-                    setAdsEnabled(val);
-                    localStorage.setItem('ingly_ads_enabled', JSON.stringify(val));
-                  } else if (item.setting_key === 'premium_mode_enabled') {
-                    const val = item.setting_value === true || item.setting_value === 'true';
-                    setVipEnabled(val);
-                    localStorage.setItem('ingly_vip_enabled', JSON.stringify(val));
-                  } else if (item.setting_key === 'free_books_count') {
-                    const val = item.setting_value !== undefined ? Number(item.setting_value) : 1;
-                    setFreeBooks(val);
-                    localStorage.setItem('ingly_free_books', String(val));
-                  } else if (item.setting_key === 'free_book_ids') {
-                    try {
-                      const ids = Array.isArray(item.setting_value) ? item.setting_value : JSON.parse(item.setting_value);
-                      if (Array.isArray(ids)) {
-                        const numIds = ids.map(Number);
-                        setFreeBookIds(numIds);
-                        localStorage.setItem('ingly_free_book_ids', JSON.stringify(numIds));
-                      }
-                    } catch (e) {}
-                  } else if (item.setting_key === 'premium_monthly_price') {
-                    const val = Number(item.setting_value) || 29000;
-                    setVipMonthlyPrice(val);
-                    localStorage.setItem('ingly_vip_monthly_price', String(val));
-                  } else if (item.setting_key === 'premium_monthly_original_price') {
-                    const val = Number(item.setting_value) || 59000;
-                    setVipMonthlyOriginalPrice(val);
-                    localStorage.setItem('ingly_vip_monthly_original_price', String(val));
-                  } else if (item.setting_key === 'single_book_price') {
-                    const val = Number(item.setting_value) || 19000;
-                    setSingleBookPrice(val);
-                    localStorage.setItem('ingly_single_book_price', String(val));
-                  } else if (item.setting_key === 'single_book_original_price') {
-                    const val = Number(item.setting_value) || 35000;
-                    setSingleBookOriginalPrice(val);
-                    localStorage.setItem('ingly_single_book_original_price', String(val));
-                  } else if (item.setting_key === 'videos_enabled') {
+                  if (item.setting_key === 'videos_enabled') {
                     const val = item.setting_value === true || item.setting_value === 'true';
                     setVideosEnabled(val);
                     localStorage.setItem('ingly_videos_enabled', JSON.stringify(val));
@@ -473,7 +406,7 @@
         try {
           const config = await window.inglyRealData.api.configure({ videos_enabled: !videosEnabled });
           setVideosEnabled(config.videos_enabled === true);
-          showToast('Server configuration saved.');
+          showToast('Sozlamalar serverda saqlandi.');
         } catch (error) { showToast(error.message); }
       };
 
