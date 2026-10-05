@@ -167,7 +167,7 @@ export default function LearnScreen({ onNavigate }) {
             </Text>
             <Text style={styles.lockedNoticeText}>
               {isBookLockedByPayment
-                ? `Ushbu kitob pullik obunaga kiritilgan (${Number(appSettings.single_book_price || 19000).toLocaleString('uz-UZ')} so'm). Siz uni karta, Click yoki Payme orqali alohida xarid qilishingiz yoki VIP obuna bo'lishingiz mumkin.`
+                ? `Ushbu kitob pullik obunaga kiritilgan (${appSettings.single_book_original_price ? `${Number(appSettings.single_book_original_price).toLocaleString('uz-UZ')} so'm o'rniga chegirmada ` : ''}${Number(appSettings.single_book_price || 19000).toLocaleString('uz-UZ')} so'm). Siz uni karta, Click yoki Payme orqali alohida xarid qilishingiz yoki VIP obuna bo'lishingiz mumkin.`
                 : `Ushbu kitobni ochish uchun avval Book ${selectedBook - 1} ning barcha 30 ta unitini tugatishingiz kerak.`}
             </Text>
 
@@ -180,6 +180,7 @@ export default function LearnScreen({ onNavigate }) {
                     itemType: 'book',
                     itemTitle: `Book ${selectedBook} (To'liq ochish)`,
                     price: appSettings.single_book_price || 19000,
+                    originalPrice: appSettings.single_book_original_price || 35000,
                     bookId: selectedBook,
                   });
                 }}
@@ -272,6 +273,7 @@ export default function LearnScreen({ onNavigate }) {
         itemType={paymentModal.itemType}
         itemTitle={paymentModal.itemTitle}
         price={paymentModal.price}
+        originalPrice={paymentModal.originalPrice}
         bookId={paymentModal.bookId}
         onSuccess={handlePaymentSuccess}
         userPhone={user.phone}

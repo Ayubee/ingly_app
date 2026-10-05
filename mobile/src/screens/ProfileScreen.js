@@ -470,14 +470,29 @@ export default function ProfileScreen({ onNavigate }) {
                 <View style={{ flex: 1 }}>
                   <View style={styles.vipTitleRow}>
                     <Text style={styles.vipCardTitle}>Ingly VIP Obunasi</Text>
-                    <View style={styles.monthlyTag}>
-                      <Text style={styles.monthlyTagText}>OYLIK TO'LOV</Text>
-                    </View>
+                    {appSettings.premium_monthly_original_price > (appSettings.premium_monthly_price || 29000) ? (
+                      <View style={[styles.monthlyTag, { backgroundColor: '#DCFCE7' }]}>
+                        <Text style={[styles.monthlyTagText, { color: '#15803D', fontWeight: '900' }]}>
+                          -{Math.round(((appSettings.premium_monthly_original_price - (appSettings.premium_monthly_price || 29000)) / appSettings.premium_monthly_original_price) * 100)}% AKSIYA
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.monthlyTag}>
+                        <Text style={styles.monthlyTagText}>OYLIK TO'LOV</Text>
+                      </View>
+                    )}
                   </View>
-                  <Text style={styles.vipCardPrice}>
-                    {Number(appSettings.premium_monthly_price || 29000).toLocaleString('uz-UZ')} so'm
-                    <Text style={styles.vipPricePeriod}> / oy</Text>
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    {appSettings.premium_monthly_original_price > (appSettings.premium_monthly_price || 29000) && (
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#94A3B8', textDecorationLine: 'line-through' }}>
+                        {Number(appSettings.premium_monthly_original_price).toLocaleString('uz-UZ')}
+                      </Text>
+                    )}
+                    <Text style={styles.vipCardPrice}>
+                      {Number(appSettings.premium_monthly_price || 29000).toLocaleString('uz-UZ')} so'm
+                      <Text style={styles.vipPricePeriod}> / oy</Text>
+                    </Text>
+                  </View>
                 </View>
               </View>
 
@@ -505,6 +520,7 @@ export default function ProfileScreen({ onNavigate }) {
                       itemType: 'vip',
                       itemTitle: 'Ingly VIP Oylik Obuna (1 oy)',
                       price: appSettings.premium_monthly_price || 29000,
+                      originalPrice: appSettings.premium_monthly_original_price || 59000,
                       bookId: null,
                     });
                   }}
@@ -562,13 +578,21 @@ export default function ProfileScreen({ onNavigate }) {
                                 itemType: 'book',
                                 itemTitle: `${b.title} (To'liq ochish)`,
                                 price: appSettings.single_book_price || 19000,
+                                originalPrice: appSettings.single_book_original_price || 35000,
                                 bookId: b.id,
                               });
                             }}
                           >
-                            <Text style={styles.bookBuyBtnPrice}>
-                              {Number(appSettings.single_book_price || 19000).toLocaleString('uz-UZ')} so'm
-                            </Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
+                              {appSettings.single_book_original_price > (appSettings.single_book_price || 19000) && (
+                                <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textDecorationLine: 'line-through' }}>
+                                  {Number(appSettings.single_book_original_price).toLocaleString('uz-UZ')}
+                                </Text>
+                              )}
+                              <Text style={styles.bookBuyBtnPrice}>
+                                {Number(appSettings.single_book_price || 19000).toLocaleString('uz-UZ')} so'm
+                              </Text>
+                            </View>
                             <Text style={styles.bookBuyBtnLabel}>Sotib olish 💳</Text>
                           </TouchableOpacity>
                         )}
@@ -943,6 +967,7 @@ export default function ProfileScreen({ onNavigate }) {
         itemType={paymentModal.itemType}
         itemTitle={paymentModal.itemTitle}
         price={paymentModal.price}
+        originalPrice={paymentModal.originalPrice}
         bookId={paymentModal.bookId}
         onSuccess={handlePaymentSuccess}
         userPhone={user.phone}

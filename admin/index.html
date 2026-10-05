@@ -305,9 +305,17 @@
         const saved = localStorage.getItem('ingly_vip_monthly_price');
         return saved !== null ? Number(saved) : 29000;
       });
+      const [vipMonthlyOriginalPrice, setVipMonthlyOriginalPrice] = useState(() => {
+        const saved = localStorage.getItem('ingly_vip_monthly_original_price');
+        return saved !== null ? Number(saved) : 59000;
+      });
       const [singleBookPrice, setSingleBookPrice] = useState(() => {
         const saved = localStorage.getItem('ingly_single_book_price');
         return saved !== null ? Number(saved) : 19000;
+      });
+      const [singleBookOriginalPrice, setSingleBookOriginalPrice] = useState(() => {
+        const saved = localStorage.getItem('ingly_single_book_original_price');
+        return saved !== null ? Number(saved) : 35000;
       });
       const [cardReceiverNumber, setCardReceiverNumber] = useState(() => {
         return localStorage.getItem('ingly_card_receiver_number') || '8600 5304 1234 5678';
@@ -603,10 +611,18 @@
                     const val = Number(item.setting_value) || 29000;
                     setVipMonthlyPrice(val);
                     localStorage.setItem('ingly_vip_monthly_price', String(val));
+                  } else if (item.setting_key === 'premium_monthly_original_price') {
+                    const val = Number(item.setting_value) || 59000;
+                    setVipMonthlyOriginalPrice(val);
+                    localStorage.setItem('ingly_vip_monthly_original_price', String(val));
                   } else if (item.setting_key === 'single_book_price') {
                     const val = Number(item.setting_value) || 19000;
                     setSingleBookPrice(val);
                     localStorage.setItem('ingly_single_book_price', String(val));
+                  } else if (item.setting_key === 'single_book_original_price') {
+                    const val = Number(item.setting_value) || 35000;
+                    setSingleBookOriginalPrice(val);
+                    localStorage.setItem('ingly_single_book_original_price', String(val));
                   } else if (item.setting_key === 'videos_enabled') {
                     const val = item.setting_value === true || item.setting_value === 'true';
                     setVideosEnabled(val);
@@ -926,7 +942,9 @@
       const handleSavePrices = async () => {
         setIsSavingPrices(true);
         localStorage.setItem('ingly_vip_monthly_price', String(vipMonthlyPrice));
+        localStorage.setItem('ingly_vip_monthly_original_price', String(vipMonthlyOriginalPrice));
         localStorage.setItem('ingly_single_book_price', String(singleBookPrice));
+        localStorage.setItem('ingly_single_book_original_price', String(singleBookOriginalPrice));
         localStorage.setItem('ingly_card_receiver_number', cardReceiverNumber);
 
         if (supabaseClient) {
@@ -935,12 +953,22 @@
               supabaseClient.from('app_settings').upsert({
                 setting_key: 'premium_monthly_price',
                 setting_value: Number(vipMonthlyPrice),
-                description: 'VIP Oylik Obuna narxi (so\'m)'
+                description: 'VIP Oylik Obuna amaldagi to\'lov narxi (so\'m)'
+              }, { onConflict: 'setting_key' }),
+              supabaseClient.from('app_settings').upsert({
+                setting_key: 'premium_monthly_original_price',
+                setting_value: Number(vipMonthlyOriginalPrice),
+                description: 'VIP Oylik Obuna asl (haqiqiy) narxi (so\'m)'
               }, { onConflict: 'setting_key' }),
               supabaseClient.from('app_settings').upsert({
                 setting_key: 'single_book_price',
                 setting_value: Number(singleBookPrice),
-                description: 'Bitta kitob sotib olish narxi (so\'m)'
+                description: 'Bitta kitob amaldagi to\'lov narxi (so\'m)'
+              }, { onConflict: 'setting_key' }),
+              supabaseClient.from('app_settings').upsert({
+                setting_key: 'single_book_original_price',
+                setting_value: Number(singleBookOriginalPrice),
+                description: 'Bitta kitob asl (haqiqiy) narxi (so\'m)'
               }, { onConflict: 'setting_key' }),
               supabaseClient.from('app_settings').upsert({
                 setting_key: 'card_receiver_number',
@@ -948,13 +976,13 @@
                 description: 'To\'lovlarni qabul qilish bank karta raqami'
               }, { onConflict: 'setting_key' })
             ]);
-            showToast('Narxlar va to\'lov sozlamalari Supabase\'da saqlandi!');
+            showToast('Narxlar va to\'lov sozlamalari Supabase\'da saqlandi! 💾');
           } catch (e) {
             console.warn('Narxlarni saqlashda xatolik:', e);
             showToast('Lokal saqlandi, Supabase ulanishini tekshiring');
           }
         } else {
-          showToast('Narxlar muvaffaqiyatli saqlandi!');
+          showToast('Narxlar muvaffaqiyatli saqlandi! 💾');
         }
         setIsSavingPrices(false);
       };
@@ -2698,50 +2726,184 @@
                       </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* VIP Monthly Price */}
-                      <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
-                        <label class="block text-xs font-bold text-slate-700">👑 VIP Oylik Obuna narxi (so'm)</label>
-                        <div class="relative">
-                          <input
-                            type="number"
-                            value={vipMonthlyPrice}
-                            onChange={(e) => setVipMonthlyPrice(Number(e.target.value))}
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:border-brand-500"
-                            placeholder="29000"
-                          />
-                          <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold">so'm/oy</span>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* 1. VIP Monthly Price with Discount */}
+                      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="text-xl">👑</span>
+                            <h5 class="text-sm font-extrabold text-slate-900">VIP Oylik Obuna Narxlari</h5>
+                          </div>
+                          {vipMonthlyOriginalPrice > vipMonthlyPrice ? (
+                            <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              🔥 -{Math.round(((vipMonthlyOriginalPrice - vipMonthlyPrice) / vipMonthlyOriginalPrice) * 100)}% AKSIYA
+                            </span>
+                          ) : (
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Chegirmasiz</span>
+                          )}
                         </div>
-                        <p class="text-[10px] text-slate-400">Standart: 29 000 so'm / oy</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Asl (Haqiqiy) Narx */}
+                          <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                              Asl (Haqiqiy) Narxi:
+                            </label>
+                            <div class="relative">
+                              <input
+                                type="number"
+                                value={vipMonthlyOriginalPrice}
+                                onChange={(e) => setVipMonthlyOriginalPrice(Number(e.target.value))}
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 focus:outline-none focus:border-brand-500"
+                                placeholder="59000"
+                              />
+                              <span class="absolute right-3 top-2 text-xs text-slate-400 font-semibold">so'm</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">Usti chizib ko'rsatiladigan narx</p>
+                          </div>
+
+                          {/* Chegirmadagi (To'lov) Narxi */}
+                          <div>
+                            <label class="block text-xs font-bold text-brand-700 mb-1">
+                              Chegirmadagi Narxi (To'lov):
+                            </label>
+                            <div class="relative">
+                              <input
+                                type="number"
+                                value={vipMonthlyPrice}
+                                onChange={(e) => setVipMonthlyPrice(Number(e.target.value))}
+                                class="w-full bg-brand-50/50 border-2 border-brand-500 rounded-xl px-3 py-2 text-sm font-black text-brand-700 focus:outline-none"
+                                placeholder="29000"
+                              />
+                              <span class="absolute right-3 top-2 text-xs text-brand-600 font-bold">so'm/oy</span>
+                            </div>
+                            <p class="text-[10px] text-brand-600 font-semibold mt-1">Foydalanuvchi to'laydigan amaldagi narx</p>
+                          </div>
+                        </div>
+
+                        {/* Jonli Namuna (Live Preview) */}
+                        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-xl p-3 flex items-center justify-between">
+                          <div>
+                            <p class="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Ilovadagi ko'rinishi:</p>
+                            <div class="flex items-center gap-2 mt-0.5">
+                              {vipMonthlyOriginalPrice > vipMonthlyPrice && (
+                                <span class="text-xs text-slate-400 line-through font-semibold">
+                                  {Number(vipMonthlyOriginalPrice).toLocaleString('uz-UZ')} so'm
+                                </span>
+                              )}
+                              <span class="text-sm font-black text-purple-900">
+                                {Number(vipMonthlyPrice).toLocaleString('uz-UZ')} so'm
+                              </span>
+                              <span class="text-[11px] text-slate-500 font-semibold">/ oy</span>
+                            </div>
+                          </div>
+                          {vipMonthlyOriginalPrice > vipMonthlyPrice && (
+                            <div class="text-right">
+                              <span class="text-[11px] font-bold text-emerald-700 bg-white px-2 py-1 rounded-lg border border-emerald-200 shadow-xs">
+                                Foyda: {(vipMonthlyOriginalPrice - vipMonthlyPrice).toLocaleString('uz-UZ')} so'm
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Single Book Price */}
-                      <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
-                        <label class="block text-xs font-bold text-slate-700">📚 Bitta kitob sotib olish narxi (so'm)</label>
-                        <div class="relative">
-                          <input
-                            type="number"
-                            value={singleBookPrice}
-                            onChange={(e) => setSingleBookPrice(Number(e.target.value))}
-                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:border-brand-500"
-                            placeholder="19000"
-                          />
-                          <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold">so'm</span>
+                      {/* 2. Single Book Price with Discount */}
+                      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <span class="text-xl">📚</span>
+                            <h5 class="text-sm font-extrabold text-slate-900">Bitta Kitob Sotib Olish Narxlari</h5>
+                          </div>
+                          {singleBookOriginalPrice > singleBookPrice ? (
+                            <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              🔥 -{Math.round(((singleBookOriginalPrice - singleBookPrice) / singleBookOriginalPrice) * 100)}% AKSIYA
+                            </span>
+                          ) : (
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Chegirmasiz</span>
+                          )}
                         </div>
-                        <p class="text-[10px] text-slate-400">Standart: 19 000 so'm</p>
-                      </div>
 
-                      {/* Card Receiver Number */}
-                      <div class="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
-                        <label class="block text-xs font-bold text-slate-700">💳 Qabul qiluvchi Karta raqami</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Asl (Haqiqiy) Narx */}
+                          <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">
+                              Asl (Haqiqiy) Narxi:
+                            </label>
+                            <div class="relative">
+                              <input
+                                type="number"
+                                value={singleBookOriginalPrice}
+                                onChange={(e) => setSingleBookOriginalPrice(Number(e.target.value))}
+                                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 focus:outline-none focus:border-brand-500"
+                                placeholder="35000"
+                              />
+                              <span class="absolute right-3 top-2 text-xs text-slate-400 font-semibold">so'm</span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">Usti chizib ko'rsatiladigan narx</p>
+                          </div>
+
+                          {/* Chegirmadagi (To'lov) Narxi */}
+                          <div>
+                            <label class="block text-xs font-bold text-brand-700 mb-1">
+                              Chegirmadagi Narxi (To'lov):
+                            </label>
+                            <div class="relative">
+                              <input
+                                type="number"
+                                value={singleBookPrice}
+                                onChange={(e) => setSingleBookPrice(Number(e.target.value))}
+                                class="w-full bg-brand-50/50 border-2 border-brand-500 rounded-xl px-3 py-2 text-sm font-black text-brand-700 focus:outline-none"
+                                placeholder="19000"
+                              />
+                              <span class="absolute right-3 top-2 text-xs text-brand-600 font-bold">so'm</span>
+                            </div>
+                            <p class="text-[10px] text-brand-600 font-semibold mt-1">Foydalanuvchi to'laydigan amaldagi narx</p>
+                          </div>
+                        </div>
+
+                        {/* Jonli Namuna (Live Preview) */}
+                        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
+                          <div>
+                            <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Ilovadagi ko'rinishi:</p>
+                            <div class="flex items-center gap-2 mt-0.5">
+                              {singleBookOriginalPrice > singleBookPrice && (
+                                <span class="text-xs text-slate-400 line-through font-semibold">
+                                  {Number(singleBookOriginalPrice).toLocaleString('uz-UZ')} so'm
+                                </span>
+                              )}
+                              <span class="text-sm font-black text-amber-900">
+                                {Number(singleBookPrice).toLocaleString('uz-UZ')} so'm
+                              </span>
+                            </div>
+                          </div>
+                          {singleBookOriginalPrice > singleBookPrice && (
+                            <div class="text-right">
+                              <span class="text-[11px] font-bold text-emerald-700 bg-white px-2 py-1 rounded-lg border border-emerald-200 shadow-xs">
+                                Foyda: {(singleBookOriginalPrice - singleBookPrice).toLocaleString('uz-UZ')} so'm
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 3. Card Receiver Number */}
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center text-xl">💳</div>
+                        <div>
+                          <label class="block text-xs font-bold text-slate-800">Qabul qiluvchi Karta raqami (Uzcard / Humo / Visa)</label>
+                          <p class="text-xs text-slate-400">To'lovlar kelib tushadigan admin yoki kompaniya bank hisob raqami</p>
+                        </div>
+                      </div>
+                      <div class="w-full sm:w-72">
                         <input
                           type="text"
                           value={cardReceiverNumber}
                           onChange={(e) => setCardReceiverNumber(e.target.value)}
-                          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:border-brand-500"
+                          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-black text-slate-900 focus:outline-none focus:border-brand-500 tracking-wider"
                           placeholder="8600 5304 1234 5678"
                         />
-                        <p class="text-[10px] text-slate-400">To'lovlar kelib tushadigan hisob</p>
                       </div>
                     </div>
 
@@ -2749,9 +2911,9 @@
                       <button
                         onClick={handleSavePrices}
                         disabled={isSavingPrices}
-                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                        class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm px-7 py-3 rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                       >
-                        <span>{isSavingPrices ? 'Saqlanmoqda...' : 'Narxlar va To\'lov Sozlamalarini Saqlash 💾'}</span>
+                        <span>{isSavingPrices ? 'Saqlanmoqda...' : 'Narxlar va Chegirmalarni Saqlash 💾'}</span>
                       </button>
                     </div>
                   </div>

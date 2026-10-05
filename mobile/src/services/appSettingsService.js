@@ -19,14 +19,17 @@ let currentSettings = {
   videos_enabled: true, // Barcha kinolar va videolarni ilovada ko'rsatish/yashirish
   latest_announcement: null, // Admin paneldan yuborilgan yangi e'lon/yangilik
   daily_goal_default: 20,
-  premium_monthly_price: 29000, // VIP oylik obuna narxi (so'm)
-  single_book_price: 10000,     // Bitta kitob narxi (so'm)
+  premium_monthly_original_price: 59000, // VIP oylik obuna asl (haqiqiy) narxi (so'm)
+  premium_monthly_price: 29000,          // VIP oylik obuna chegirmadagi amaldagi narxi (so'm)
+  single_book_original_price: 35000,     // Bitta kitob asl (haqiqiy) narxi (so'm)
+  single_book_price: 19000,              // Bitta kitob chegirmadagi amaldagi narxi (so'm)
   card_receiver_number: '8600 5304 1234 5678', // To'lov kartasi
   click_service_id: 'ingly_click_main',
   payme_merchant_id: 'ingly_payme_main',
 };
 
 const listeners = new Set();
+let isRealtimeSubscribed = false;
 
 function notifyListeners() {
   listeners.forEach((fn) => {
@@ -87,10 +90,14 @@ export async function initAppSettings() {
           currentSettings.free_books_count = item.setting_value !== undefined ? Number(item.setting_value) : 1;
         } else if (item.setting_key === 'daily_goal_default') {
           currentSettings.daily_goal_default = Number(item.setting_value) || 20;
+        } else if (item.setting_key === 'premium_monthly_original_price') {
+          currentSettings.premium_monthly_original_price = Number(item.setting_value) || 59000;
         } else if (item.setting_key === 'premium_monthly_price') {
           currentSettings.premium_monthly_price = Number(item.setting_value) || 29000;
+        } else if (item.setting_key === 'single_book_original_price') {
+          currentSettings.single_book_original_price = Number(item.setting_value) || 35000;
         } else if (item.setting_key === 'single_book_price') {
-          currentSettings.single_book_price = Number(item.setting_value) || 10000;
+          currentSettings.single_book_price = Number(item.setting_value) || 19000;
         } else if (item.setting_key === 'videos_enabled') {
           currentSettings.videos_enabled = item.setting_value === true || item.setting_value === 'true';
         } else if (item.setting_key === 'latest_announcement') {
@@ -109,12 +116,14 @@ export async function initAppSettings() {
     }
 
     // 3. Supabase Realtime obunasi (Admin o'zgartirishi bilan sekundlar ichida yangilanishi uchun)
-    supabase
-      .channel('public:app_settings')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'app_settings' },
-        (payload) => {
+    if (!isRealtimeSubscribed) {
+      isRealtimeSubscribed = true;
+      supabase
+        .channel('public:app_settings')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'app_settings' },
+          (payload) => {
           const item = payload.new;
           if (!item) return;
 
@@ -132,10 +141,14 @@ export async function initAppSettings() {
                 : item.setting_value || null;
           } else if (item.setting_key === 'free_books_count') {
             currentSettings.free_books_count = item.setting_value !== undefined ? Number(item.setting_value) : 1;
+          } else if (item.setting_key === 'premium_monthly_original_price') {
+            currentSettings.premium_monthly_original_price = Number(item.setting_value) || 59000;
           } else if (item.setting_key === 'premium_monthly_price') {
             currentSettings.premium_monthly_price = Number(item.setting_value) || 29000;
+          } else if (item.setting_key === 'single_book_original_price') {
+            currentSettings.single_book_original_price = Number(item.setting_value) || 35000;
           } else if (item.setting_key === 'single_book_price') {
-            currentSettings.single_book_price = Number(item.setting_value) || 10000;
+            currentSettings.single_book_price = Number(item.setting_value) || 19000;
           } else if (item.setting_key === 'card_receiver_number') {
             currentSettings.card_receiver_number = String(item.setting_value || '8600 5304 1234 5678');
           }
@@ -145,6 +158,7 @@ export async function initAppSettings() {
         }
       )
       .subscribe();
+    }
   } catch (err) {
     console.warn('[AppSettings] Supabase load error:', err?.message);
   }

@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { colors } from '../theme.js';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../services/storage.js';
+import { getAppSettings } from '../services/appSettingsService.js';
 
 export default function PaymentModal({
   visible,
@@ -30,6 +31,7 @@ export default function PaymentModal({
   itemType = 'vip', // 'vip' | 'book'
   itemTitle = 'Ingly VIP Oylik Obuna',
   price = 29000,
+  originalPrice = null,
   bookId = null,
   onSuccess,
   userPhone = '',
@@ -218,7 +220,8 @@ export default function PaymentModal({
           onSuccess({
             itemType,
             itemTitle,
-            price,
+            price: effectivePrice,
+            originalPrice: effectiveOriginalPrice,
             bookId,
             method: selectedMethod,
             timestamp: new Date().toISOString(),
@@ -227,6 +230,20 @@ export default function PaymentModal({
       }, 1000);
     }, 1500);
   };
+
+  const appSettings = getAppSettings();
+  const effectiveOriginalPrice = originalPrice !== null && originalPrice !== undefined
+    ? Number(originalPrice)
+    : (itemType === 'vip'
+        ? Number(appSettings?.premium_monthly_original_price || 59000)
+        : Number(appSettings?.single_book_original_price || 35000));
+
+  const effectivePrice = Number(price || (itemType === 'vip' ? (appSettings?.premium_monthly_price || 29000) : (appSettings?.single_book_price || 19000)));
+  const hasDiscount = effectiveOriginalPrice > effectivePrice;
+  const discountPercent = hasDiscount
+    ? Math.round(((effectiveOriginalPrice - effectivePrice) / effectiveOriginalPrice) * 100)
+    : 0;
+  const savings = hasDiscount ? effectiveOriginalPrice - effectivePrice : 0;
 
   const cardMeta = getCardType(cardNumber);
 
@@ -255,14 +272,33 @@ export default function PaymentModal({
             </TouchableOpacity>
           </View>
 
-          {/* Price Tag */}
+          {/* Price Tag with Discount */}
           <View style={styles.priceContainer}>
-            <Text style={styles.priceLabel}>To'lov summasi:</Text>
-            <View style={styles.priceBadge}>
-              <Text style={styles.priceValue}>
-                {Number(price).toLocaleString('uz-UZ')} so'm
-              </Text>
-              {itemType === 'vip' && <Text style={styles.pricePeriod}>/ oy</Text>}
+            <View>
+              <Text style={styles.priceLabel}>To'lov summasi:</Text>
+              {hasDiscount && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                  <Text style={styles.originalPriceText}>
+                    {effectiveOriginalPrice.toLocaleString('uz-UZ')} so'm
+                  </Text>
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountBadgeText}>-{discountPercent}% AKSIYA</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <View style={styles.priceBadge}>
+                <Text style={styles.priceValue}>
+                  {effectivePrice.toLocaleString('uz-UZ')} so'm
+                </Text>
+                {itemType === 'vip' && <Text style={styles.pricePeriod}>/ oy</Text>}
+              </View>
+              {hasDiscount && (
+                <Text style={styles.savingsText}>
+                  Tejamkorlik: {savings.toLocaleString('uz-UZ')} so'm 🔥
+                </Text>
+              )}
             </View>
           </View>
 
@@ -633,20 +669,46 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#64748B',
   },
+  originalPriceText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#94A3B8',
+    textDecorationLine: 'line-through',
+  },
+  discountBadge: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#86EFAC',
+    marginLeft: 6,
+  },
+  discountBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#15803D',
+  },
   priceBadge: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   priceValue: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '900',
-    color: '#0F172A',
+    color: '#5B4DFF',
   },
   pricePeriod: {
     fontSize: 12,
     fontWeight: '700',
     color: '#64748B',
     marginLeft: 4,
+  },
+  savingsText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#16A34A',
+    marginTop: 2,
   },
   scrollBody: {
     maxHeight: 480,

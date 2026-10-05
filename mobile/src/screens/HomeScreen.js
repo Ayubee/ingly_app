@@ -274,6 +274,7 @@ export default function HomeScreen({ onNavigate }) {
             const progress = user.bookProgress[b.id] || 0;
             const isCompleted = progress === 100;
             const freeCount = appSettings.free_books_count !== undefined ? appSettings.free_books_count : 1;
+            const isBookPurchased = isVipActive || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(b.id)) || (Array.isArray(user.purchasedBooks) && user.purchasedBooks.includes(b.id));
             const isVipLocked = appSettings.premium_mode_enabled && b.id > freeCount && !isBookPurchased;
             // Book 1 har doim ochiq. Boshqa kitoblar oldingi kitob tugatilganda ochiladi.
             const isUnlocked = !isVipLocked && (b.id === 1 || (user.bookProgress[b.id - 1] || 0) >= 100);
@@ -281,6 +282,11 @@ export default function HomeScreen({ onNavigate }) {
 
             // Agar Admin tomonidan pullik rejimda yopilgan bo'lsa
             if (isVipLocked) {
+              const bookOrig = appSettings.single_book_original_price || 35000;
+              const bookCur = appSettings.single_book_price || 19000;
+              const hasBookDisc = bookOrig > bookCur;
+              const bookDiscPercent = hasBookDisc ? Math.round(((bookOrig - bookCur) / bookOrig) * 100) : 0;
+
               return (
                 <TouchableOpacity
                   key={b.id}
@@ -290,7 +296,8 @@ export default function HomeScreen({ onNavigate }) {
                       visible: true,
                       itemType: 'book',
                       itemTitle: `${b.title} (To'liq ochish)`,
-                      price: appSettings.single_book_price || 19000,
+                      price: bookCur,
+                      originalPrice: bookOrig,
                       bookId: b.id,
                     });
                   }}
@@ -303,9 +310,21 @@ export default function HomeScreen({ onNavigate }) {
                     </View>
                   </View>
                   <View style={styles.lockedBottom}>
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#D97706', marginBottom: 2 }}>
-                      {Number(appSettings.single_book_price || 19000).toLocaleString('uz-UZ')} so'm
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginBottom: 2 }}>
+                      {hasBookDisc && (
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: '#94A3B8', textDecorationLine: 'line-through' }}>
+                          {Number(bookOrig).toLocaleString('uz-UZ')}
+                        </Text>
+                      )}
+                      <Text style={{ fontSize: 11, fontWeight: '800', color: '#D97706' }}>
+                        {Number(bookCur).toLocaleString('uz-UZ')} so'm
+                      </Text>
+                      {hasBookDisc && (
+                        <View style={{ backgroundColor: '#DCFCE7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
+                          <Text style={{ fontSize: 9, fontWeight: '900', color: '#15803D' }}>-{bookDiscPercent}%</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.lockedDesc}>Sotib olish uchun bosing 💳</Text>
                   </View>
                 </TouchableOpacity>
@@ -421,6 +440,7 @@ export default function HomeScreen({ onNavigate }) {
         itemType={paymentModal.itemType}
         itemTitle={paymentModal.itemTitle}
         price={paymentModal.price}
+        originalPrice={paymentModal.originalPrice}
         bookId={paymentModal.bookId}
         onSuccess={handlePaymentSuccess}
         userPhone={user.phone}
