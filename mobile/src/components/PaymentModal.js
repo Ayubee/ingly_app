@@ -22,6 +22,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { colors } from '../theme.js';
+import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../services/storage.js';
 
 export default function PaymentModal({
   visible,
@@ -40,6 +41,11 @@ export default function PaymentModal({
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardHolder, setCardHolder] = useState('');
+
+  // Saved Cards State
+  const [savedCards, setSavedCards] = useState([]);
+  const [saveCard, setSaveCard] = useState(true);
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState(null);
   
   // Processing States
   const [isProcessing, setIsProcessing] = useState(false);
@@ -49,11 +55,61 @@ export default function PaymentModal({
     if (visible) {
       setIsProcessing(false);
       setIsSuccess(false);
+      loadSavedCards();
       if (userPhone && (!phoneInput || phoneInput === '+998 ')) {
         setPhoneInput(userPhone);
       }
     }
   }, [visible, userPhone]);
+
+  const loadSavedCards = async () => {
+    try {
+      const list = await getStorageItem(STORAGE_KEYS.SAVED_CARDS, []);
+      if (Array.isArray(list) && list.length > 0) {
+        setSavedCards(list);
+      } else {
+        setSavedCards([]);
+      }
+    } catch (e) {
+      console.warn('Failed to load saved cards:', e);
+    }
+  };
+
+  const handleSelectSavedCard = (sc) => {
+    setSelectedSavedCardId(sc.id);
+    setCardNumber(sc.cardNumber || '');
+    setCardExpiry(sc.cardExpiry || '');
+    setCardHolder(sc.cardHolder || '');
+  };
+
+  const handleAddNewCard = () => {
+    setSelectedSavedCardId(null);
+    setCardNumber('');
+    setCardExpiry('');
+    setCardHolder('');
+  };
+
+  const handleDeleteSavedCard = (cardId) => {
+    Alert.alert(
+      "Kartani o'chirish",
+      "Ushbu saqlangan kartani ro'yxatdan o'chirmoqchimisiz?",
+      [
+        { text: 'Bekor qilish', style: 'cancel' },
+        {
+          text: "O'chirish",
+          style: 'destructive',
+          onPress: async () => {
+            const updated = savedCards.filter((c) => c.id !== cardId);
+            setSavedCards(updated);
+            await setStorageItem(STORAGE_KEYS.SAVED_CARDS, updated);
+            if (selectedSavedCardId === cardId) {
+              handleAddNewCard();
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // Karta turini aniqlash (Uzcard: 8600, Humo: 9860, Visa: 4, Mastercard: 5)
   const getCardType = (digits) => {
@@ -67,6 +123,9 @@ export default function PaymentModal({
 
   // Karta raqamini formatlash: 8600 0000 0000 0000
   const handleCardNumberChange = (text) => {
+    if (selectedSavedCardId) {
+      setSelectedSavedCardId(null);
+    }
     const raw = text.replace(/\D/g, '').slice(0, 16);
     const parts = [];
     for (let i = 0; i < raw.length; i += 4) {
@@ -98,6 +157,46 @@ export default function PaymentModal({
       if (rawExp.length < 4) {
         Alert.alert('Xatolik', 'Iltimos, kartaning amal qilish muddatini (MM/YY) to\'g\'ri kiriting!');
         return;
+      }
+
+      // Agar "Kartani saqlab qo'yish" tanlangan bo'lsa
+      if (saveCard) {
+        try {
+          const meta = getCardType(cardNumber);
+          const masked = `${rawCard.slice(0, 4)} •••• •••• ${rawCard.slice(-4)}`;
+          const existingIdx = savedCards.findIndex((c) => c.rawNumber === rawCard);
+          let updatedList = [...savedCards];
+          if (existingIdx >= 0) {
+            updatedList[existingIdx] = {
+              ...updatedList[existingIdx],
+              cardNumber,
+              cardExpiry,
+              cardHolder: cardHolder || 'INGLY FOYDALANUVCHISI',
+              type: meta.name,
+              color: meta.color,
+              bg: meta.bg,
+              maskedNumber: masked,
+            };
+          } else {
+            const newCardObj = {
+              id: 'card_' + Date.now(),
+              rawNumber: rawCard,
+              cardNumber,
+              cardExpiry,
+              cardHolder: cardHolder || 'INGLY FOYDALANUVCHISI',
+              type: meta.name,
+              color: meta.color,
+              bg: meta.bg,
+              maskedNumber: masked,
+              savedAt: new Date().toISOString(),
+            };
+            updatedList = [newCardObj, ...updatedList];
+          }
+          setSavedCards(updatedList);
+          await setStorageItem(STORAGE_KEYS.SAVED_CARDS, updatedList);
+        } catch (saveErr) {
+          console.warn('Kartani saqlashda xatolik:', saveErr);
+        }
       }
     } else {
       const cleanPhone = phoneInput.replace(/\D/g, '');
@@ -234,6 +333,64 @@ export default function PaymentModal({
               {/* METHOD 1: BANK KARTA */}
               {selectedMethod === 'card' && (
                 <View style={styles.tabContent}>
+                  {/* Saved Cards Selector (if available) */}
+                  {savedCards.length > 0 && (
+                    <View style={styles.savedCardsWrapper}>
+                      <View style={styles.savedCardsHeaderRow}>
+                        <Text style={styles.savedCardsTitle}>💳 Saqlangan kartalar:</Text>
+                        <TouchableOpacity
+                          onPress={handleAddNewCard}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.newCardTextBtn}>
+                            {selectedSavedCardId ? '+ Yangi karta' : 'Tozalash'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.savedCardsScrollList}
+                      >
+                        {savedCards.map((sc) => {
+                          const isSelected = selectedSavedCardId === sc.id;
+                          return (
+                            <TouchableOpacity
+                              key={sc.id}
+                              style={[
+                                styles.savedCardChip,
+                                isSelected && styles.savedCardChipActive,
+                              ]}
+                              onPress={() => handleSelectSavedCard(sc)}
+                              activeOpacity={0.8}
+                            >
+                              <View style={[styles.savedCardTypePill, { backgroundColor: sc.bg || '#EFF6FF' }]}>
+                                <Text style={[styles.savedCardTypeText, { color: sc.color || '#1E40AF' }]}>
+                                  {sc.type || 'KARTA'}
+                                </Text>
+                              </View>
+                              <Text
+                                style={[
+                                  styles.savedCardMaskedNumber,
+                                  isSelected && styles.savedCardMaskedNumberActive,
+                                ]}
+                              >
+                                {sc.maskedNumber || sc.cardNumber}
+                              </Text>
+                              <TouchableOpacity
+                                onPress={() => handleDeleteSavedCard(sc.id)}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                style={styles.deleteCardBtn}
+                              >
+                                <Text style={styles.deleteCardBtnText}>✕</Text>
+                              </TouchableOpacity>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  )}
+
                   {/* Virtual Card Preview */}
                   <View style={styles.virtualCard}>
                     <View style={styles.cardHeaderRow}>
@@ -306,6 +463,25 @@ export default function PaymentModal({
                       />
                     </View>
                   </View>
+
+                  {/* Save Card Toggle Button */}
+                  <TouchableOpacity
+                    style={styles.saveCardToggleRow}
+                    onPress={() => setSaveCard(!saveCard)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[styles.checkboxBox, saveCard && styles.checkboxBoxActive]}>
+                      {saveCard && <Text style={styles.checkboxCheckmark}>✓</Text>}
+                    </View>
+                    <View style={styles.saveCardTexts}>
+                      <Text style={styles.saveCardTitle}>
+                        Kartani saqlab qo'yish 🔒
+                      </Text>
+                      <Text style={styles.saveCardSubtitle}>
+                        Keyingi to'lovlarda kartani qayta kiritmasdan 1 bosishda to'lash
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
 
                   <Text style={styles.securityNote}>
                     🔒 Barcha karta to'lovlari shifrlangan va xavfsiz himoyalangan.
@@ -542,6 +718,76 @@ const styles = StyleSheet.create({
   tabContent: {
     marginBottom: 16,
   },
+  savedCardsWrapper: {
+    marginBottom: 14,
+  },
+  savedCardsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  savedCardsTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  newCardTextBtn: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.primary.DEFAULT,
+  },
+  savedCardsScrollList: {
+    paddingVertical: 2,
+    gap: 8,
+  },
+  savedCardChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  savedCardChipActive: {
+    borderColor: colors.primary.DEFAULT,
+    backgroundColor: '#EEF2FF',
+  },
+  savedCardTypePill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  savedCardTypeText: {
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  savedCardMaskedNumber: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  savedCardMaskedNumberActive: {
+    color: colors.primary.DEFAULT,
+    fontWeight: '800',
+  },
+  deleteCardBtn: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 2,
+  },
+  deleteCardBtnText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+  },
   virtualCard: {
     backgroundColor: '#1E293B',
     borderRadius: 18,
@@ -626,6 +872,53 @@ const styles = StyleSheet.create({
   },
   inputRow: {
     flexDirection: 'row',
+  },
+  saveCardToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 6,
+    marginBottom: 8,
+    gap: 10,
+  },
+  checkboxBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#94A3B8',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxBoxActive: {
+    borderColor: colors.primary.DEFAULT,
+    backgroundColor: colors.primary.DEFAULT,
+  },
+  checkboxCheckmark: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+    marginTop: -1,
+  },
+  saveCardTexts: {
+    flex: 1,
+  },
+  saveCardTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  saveCardSubtitle: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+    lineHeight: 15,
   },
   securityNote: {
     fontSize: 11,

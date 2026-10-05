@@ -16,6 +16,7 @@ export const STORAGE_KEYS = {
   USER_PROFILE: '@ingly_user_profile',     // Foydalanuvchi profili kesh
   REGISTERED_USERS: '@ingly_registered_users', // Ro'yxatdan o'tgan barcha foydalanuvchilar bazasi
   CUSTOM_WORDS: '@ingly_custom_words',     // Foydalanuvchi o'zi qo'shgan shaxsiy so'zlar va kartochkalar
+  SAVED_CARDS: '@ingly_saved_cards',       // Foydalanuvchi saqlab qo'ygan bank kartalari
 };
 
 // In-memory fallback (agar AsyncStorage bo'lmasa yoki xatolik bersa)
