@@ -540,6 +540,18 @@
       const [vipDurationDays, setVipDurationDays] = useState(30);
       const [isSavingVip, setIsSavingVip] = useState(false);
 
+      // Yangi foydalanuvchi qo'shish modali (Add User)
+      const [showAddUserModal, setShowAddUserModal] = useState(false);
+      const [newUserForm, setNewUserForm] = useState({
+        name: '',
+        username: '',
+        phone: '',
+        password: '',
+        isVip: false,
+        vipDays: 30
+      });
+      const [isSavingNewUser, setIsSavingNewUser] = useState(false);
+
       const LIVE_SUPABASE_URL = 'https://lbsqxownrjfmjoojdsfk.supabase.co';
       const LIVE_SUPABASE_KEY = 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
 
@@ -1428,6 +1440,124 @@
           showToast('Parolni saqlashda xatolik yuz berdi!');
         } finally {
           setIsSavingPassword(false);
+        }
+      };
+
+      // Yangi foydalanuvchi yaratish (Add User)
+      const handleCreateUser = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const uname = (newUserForm.username || '').trim().toLowerCase().replace(/^@/, '').replace(/\s/g, '');
+        if (!uname) {
+          alert('Iltimos, login (username) kiriting!');
+          return;
+        }
+        if (users.some(u => (u.username || '').toLowerCase().replace(/^@/, '') === uname)) {
+          alert(`"${uname}" loginli foydalanuvchi allaqachon mavjud!`);
+          return;
+        }
+        if (!newUserForm.password || newUserForm.password.length < 4) {
+          alert('Parol kamida 4 ta belgidan iborat bo\'lishi kerak!');
+          return;
+        }
+
+        setIsSavingNewUser(true);
+        try {
+          const newId = Date.now().toString();
+          const createdDate = new Date().toISOString();
+          let premiumUntilDate = null;
+          if (newUserForm.isVip) {
+            if (newUserForm.vipDays === 'lifetime' || Number(newUserForm.vipDays) >= 36500) {
+              premiumUntilDate = new Date('2099-12-31T23:59:59.000Z').toISOString();
+            } else {
+              const numDays = Number(newUserForm.vipDays) || 30;
+              premiumUntilDate = new Date(Date.now() + numDays * 24 * 60 * 60 * 1000).toISOString();
+            }
+          }
+
+          const hashedPass = hashPassword(newUserForm.password.trim());
+
+          const newUserObj = {
+            id: newId,
+            name: newUserForm.name.trim() || uname,
+            username: uname,
+            phone: newUserForm.phone.trim() || '+998',
+            password: '',
+            password_hash: hashedPass,
+            words: 0,
+            streak: 1,
+            isBlocked: false,
+            isVip: Boolean(newUserForm.isVip),
+            premiumUntil: premiumUntilDate,
+            created_at: createdDate,
+            createdAt: createdDate
+          };
+
+          const updatedUsers = [newUserObj, ...users];
+          setUsers(updatedUsers);
+          localStorage.setItem('ingly_users', JSON.stringify(updatedUsers));
+
+          // Supabase'ga yozish
+          if (supabaseClient) {
+            try {
+              await supabaseClient.from('users').insert([{
+                full_name: newUserObj.name,
+                username: newUserObj.username,
+                phone: newUserObj.phone,
+                password_hash: hashedPass,
+                is_blocked: false,
+                is_premium: newUserObj.isVip,
+                premium_until: newUserObj.premiumUntil
+              }]);
+            } catch (err) {
+              console.warn('Supabase insert user error:', err);
+            }
+          }
+
+          setShowAddUserModal(false);
+          setNewUserForm({ name: '', username: '', phone: '', password: '', isVip: false, vipDays: 30 });
+          showToast(`Yangi foydalanuvchi "${uname}" muvaffaqiyatli qo'shildi! 🎉`);
+        } catch (err) {
+          console.error('Foydalanuvchi yaratish xatosi:', err);
+          alert('Foydalanuvchi qo\'shishda xatolik yuz berdi!');
+        } finally {
+          setIsSavingNewUser(false);
+        }
+      };
+
+      // Foydalanuvchini o'chirish (Delete User)
+      const handleDeleteUser = async (userId, username, name) => {
+        const displayName = name || username || 'Foydalanuvchi';
+        if (!confirm(`Haqiqatan ham "${displayName}" (@${username}) foydalanuvchisini tizimdan o'chirmoqchimisiz?\n\nUshbu amal uning barcha o'qigan so'zlari va natijalarini to'liq o'chiradi!`)) {
+          return;
+        }
+
+        const cleanUser = (username || '').replace(/^@/, '').toLowerCase();
+        const updated = users.filter(u => u.id !== userId && (u.username || '').replace(/^@/, '').toLowerCase() !== cleanUser);
+        setUsers(updated);
+        localStorage.setItem('ingly_users', JSON.stringify(updated));
+        showToast(`Foydalanuvchi "${cleanUser}" o'chirildi! 🗑️`);
+
+        if (cleanUser) {
+          try {
+            const patchHeaders = {
+              'apikey': supabaseKey || LIVE_SUPABASE_KEY,
+              'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`
+            };
+            await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(cleanUser)}`, {
+              method: 'DELETE',
+              headers: patchHeaders
+            });
+          } catch (err) {
+            console.warn('REST delete user error:', err);
+          }
+        }
+
+        if (supabaseClient && cleanUser) {
+          try {
+            await supabaseClient.from('users').delete().eq('username', cleanUser);
+          } catch (err) {
+            console.warn('Supabase client delete user error:', err);
+          }
         }
       };
 
@@ -2470,6 +2600,14 @@
                     </div>
                     <div class="flex items-center gap-3">
                       <button
+                        onClick={() => setShowAddUserModal(true)}
+                        class="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                        title="Yangi foydalanuvchi qo'shish"
+                      >
+                        <span class="text-sm">➕</span>
+                        <span>Yangi Foydalanuvchi</span>
+                      </button>
+                      <button
                         onClick={() => {
                           loadUsersFromSupabase();
                           showToast('Foydalanuvchilar ro\'yxati yangilanmoqda...');
@@ -2680,6 +2818,18 @@
                                 >
                                   <span>🔑</span>
                                   <span>Parol</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteUser(u.id, u.username, u.name);
+                                  }}
+                                  title="Foydalanuvchini tizimdan o'chirish"
+                                  class="text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-1.5 rounded-xl transition cursor-pointer inline-flex items-center gap-1 shadow-xs"
+                                >
+                                  <span>🗑️</span>
+                                  <span>O'chirish</span>
                                 </button>
                               </td>
                             </tr>
@@ -3431,6 +3581,17 @@
                             <span>⚙️</span>
                             <span>Ruxsatlarni Sozlash</span>
                           </button>
+                          {a.username !== 'Joji' && a.role !== 'super_admin' && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAdmin(a.id)}
+                              class="text-xs font-bold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3.5 py-2 rounded-xl transition cursor-pointer flex items-center gap-1 shadow-xs"
+                              title="Adminni tizimdan o'chirish"
+                            >
+                              <span>🗑️</span>
+                              <span>O'chirish</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -4154,6 +4315,145 @@
                         Saqlash
                       </button>
                     </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Yangi Foydalanuvchi Qo'shish Modali */}
+          {showAddUserModal && (
+            <div 
+              class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setShowAddUserModal(false);
+              }}
+            >
+              <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-200 relative z-[101] my-8">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                      ➕
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-bold text-slate-900">Yangi Foydalanuvchi Qo'shish</h3>
+                      <p class="text-xs text-slate-400">Tizimga yangi o'quvchi profilini kiritish</p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setShowAddUserModal(false)} 
+                    class="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateUser} class="space-y-4 text-xs">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">Ism & Familiya *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="Masalan: Nodirbek Olimov" 
+                      value={newUserForm.name}
+                      onChange={(e) => setNewUserForm({ ...newUserForm, name: e.target.value })}
+                      class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-semibold"
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Login (Username) *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        placeholder="nodirbek" 
+                        value={newUserForm.username}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, username: e.target.value.toLowerCase().replace(/s/g, '') })}
+                        class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label class="block font-bold text-slate-700 mb-1">Telefon Raqam</label>
+                      <input 
+                        type="text" 
+                        placeholder="+998 90 123 45 67" 
+                        value={newUserForm.phone}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, phone: e.target.value })}
+                        class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="block font-bold text-slate-700">Parol *</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const rand = 'Ingly_' + Math.floor(1000 + Math.random() * 9000);
+                          setNewUserForm({ ...newUserForm, password: rand });
+                        }}
+                        class="text-[11px] text-brand-600 hover:text-brand-800 font-bold cursor-pointer"
+                      >
+                        🎲 Tasodifiy parol
+                      </button>
+                    </div>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="Kamida 4 ta belgi" 
+                      value={newUserForm.password}
+                      onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                      class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-mono"
+                    />
+                  </div>
+
+                  <div class="bg-amber-50/70 p-3.5 rounded-2xl border border-amber-200/80 space-y-2.5">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newUserForm.isVip}
+                        onChange={(e) => setNewUserForm({ ...newUserForm, isVip: e.target.checked })}
+                        class="rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                      />
+                      <span class="font-bold text-amber-900">👑 Ushbu foydalanuvchiga birdan VIP Premium berilsin</span>
+                    </label>
+
+                    {newUserForm.isVip && (
+                      <div class="pt-2 border-t border-amber-200/60">
+                        <label class="block text-[11px] font-bold text-amber-800 mb-1">VIP Obuna muddati:</label>
+                        <select
+                          value={newUserForm.vipDays}
+                          onChange={(e) => setNewUserForm({ ...newUserForm, vipDays: e.target.value })}
+                          class="w-full border border-amber-200 rounded-xl px-3 py-2 text-xs bg-white text-slate-800 focus:outline-none focus:border-amber-500 cursor-pointer"
+                        >
+                          <option value="30">30 kun (1 oy)</option>
+                          <option value="90">90 kun (3 oy)</option>
+                          <option value="180">180 kun (6 oy)</option>
+                          <option value="365">365 kun (1 yil)</option>
+                          <option value="lifetime">Umrbod (Cheksiz) 💎</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button 
+                      type="button"
+                      onClick={() => setShowAddUserModal(false)}
+                      class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                    >
+                      Bekor qilish
+                    </button>
+                    <button 
+                      type="submit"
+                      disabled={isSavingNewUser}
+                      class="px-6 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl shadow-md transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      {isSavingNewUser ? 'Saqlanmoqda...' : 'Foydalanuvchini Qo'shish'}
+                    </button>
                   </div>
                 </form>
               </div>

@@ -435,3 +435,11 @@
 {"_e":"metro:bundling:done","_t":1791169587151,"id":"x","total":1,"ms":248.4313}
 {"_e":"metro:client_log","_t":1791169588068,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
 {"_e":"metro:client_log","_t":1791169610634,"level":"error","data":["[ReferenceError: Property 'KeyboardAvoidingView' doesn't exist]"]}
+{"_e":"metro:server_log","_t":1791171413415,"level":"error","data":["[timeout] connection terminated with Device for app='%s' on device='%s' after not responding for %s seconds.","host.exp.Exponent","iPhone","60"]}
+{"_e":"metro:bundling:started","_t":1791172161769,"id":"17","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791172162020,"id":"17","total":1,"ms":250.5007}
+{"_e":"metro:client_log","_t":1791172162907,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:bundling:started","_t":1791172175475,"id":"19","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791172175499,"id":"19","total":1,"ms":23.74}
+{"_e":"metro:client_log","_t":1791172176103,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
+{"_e":"metro:client_log","_t":1791172214198,"level":"error","data":["[ReferenceError: Property 'KeyboardAvoidingView' doesn't exist]"]}

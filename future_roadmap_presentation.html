@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <title>Ingly — Kelajak Strategiyasi, Takliflar va Rivojlanish Rejasi (v1.4.0)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #0f172a;
+      color: #334155;
+      line-height: 1.5;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      padding: 16mm 18mm;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Background decoration */
+    .bg-circle-1 {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(91, 77, 255, 0.12) 0%, rgba(91, 77, 255, 0) 70%);
+      top: -80px;
+      right: -80px;
+      pointer-events: none;
+    }
+
+    .bg-circle-2 {
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(56, 189, 248, 0) 70%);
+      bottom: -60px;
+      left: -60px;
+      pointer-events: none;
+    }
+
+    /* Header & Footer */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1.5px solid #f1f5f9;
+      margin-bottom: 16px;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #5B4DFF 0%, #38BDF8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 900;
+      font-size: 18px;
+      box-shadow: 0 4px 12px rgba(91, 77, 255, 0.3);
+    }
+
+    .brand-logo-text {
+      font-size: 18px;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+    }
+
+    .header-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: #5B4DFF;
+      background: #ede9fe;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid #ddd6fe;
+    }
+
+    .page-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1.5px solid #f1f5f9;
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .page-number {
+      background: #f8fafc;
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    /* Cards & Grids */
+    .hero-card {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #2563eb 100%);
+      border-radius: 24px;
+      padding: 28px;
+      color: #ffffff;
+      box-shadow: 0 12px 30px rgba(79, 70, 229, 0.25);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .hero-title {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-desc {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #e0e7ff;
+      max-width: 95%;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+
+    .section-title-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #ede9fe;
+      color: #5B4DFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+    }
+
+    .card-highlight {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+    }
+
+    .card-badge {
+      display: inline-block;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2.5px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .badge-primary { background: #ede9fe; color: #5B4DFF; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #ffe4e6; color: #9f1239; }
+    .badge-info { background: #e0f2fe; color: #075985; }
+
+    .card-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.55;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .feature-list li {
+      font-size: 10.5px;
+      color: #475569;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      line-height: 1.45;
+    }
+
+    .feature-list li::before {
+      content: '✓';
+      color: #5B4DFF;
+      font-weight: 900;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .stat-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 20px;
+      font-weight: 900;
+      color: #5B4DFF;
+      letter-spacing: -0.5px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      padding-left: 20px;
+      border-left: 2px dashed #cbd5e1;
+      margin-left: 8px;
+    }
+
+    .timeline-item {
+      position: relative;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -27px;
+      top: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #5B4DFF;
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 0 0 2px #5B4DFF;
+    }
+
+    .timeline-title {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .timeline-meta {
+      font-size: 10px;
+      font-weight: 700;
+      color: #5B4DFF;
+      margin-bottom: 3px;
+    }
+
+    .timeline-desc {
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .quote-box {
+      background: #faf5ff;
+      border-left: 4px solid #a855f7;
+      border-radius: 0 14px 14px 0;
+      padding: 12px 16px;
+      font-size: 11px;
+      color: #581c87;
+      font-style: italic;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== SAHIFA 1: MUQOVA & EXECUTIVE SUMMARY ==================== -->
+  <div class="page">
+    <div class="bg-circle-1"></div>
+    <div class="bg-circle-2"></div>
+
+    <div class="page-header">
+      <div class="brand-logo">
+        <div class="brand-logo-icon">I</div>
+        <div class="brand-logo-text">Ingly</div>
+      </div>
+      <div class="header-badge">Strategik Tahlil & Takliflar • v1.4.0</div>
+    </div>
+
+    <div>
+      <div class="hero-card">
+        <div class="hero-tag">🚀 Ekspert Strategiyasi & Kelajak Xaritasi</div>
+        <h1 class="hero-title">Ingly — Kelajak Strategiyasi,<br>Takliflar va Rivojlanish Rejasi</h1>
+        <p class="hero-desc">
+          O'zbekistonda ingliz tilini interaktiv video lavhalar, o'yinlashtirilgan testlar va zamonaviy mobil texnologiyalar yordamida o'rganish bo'yicha yetakchi milliy platforma ekotizimini kengaytirish konsepsiyasi.
+        </p>
+      </div>
+
+      <div class="grid-3" style="margin-bottom: 16px;">
+        <div class="stat-box">
+          <div class="stat-val">v1.4.0</div>
+          <div class="stat-label">Hozirgi Versiya</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">3,600+</div>
+          <div class="stat-label">Tasdiqlangan So'zlar</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val">12 Bosqich</div>
+          <div class="stat-label">Gamifikatsiya & XP</div>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <div class="section-title-icon">📋</div>
+        <span>Ushbu Hujjatning Maqsadi va Tuzilishi</span>
+      </div>
+
+      <div class="grid-2" style="margin-bottom: 14px;">
+        <div class="card">
+          <div class="card-badge badge-primary">1-QISM</div>
+          <div class="card-title">Hozirgi Yutuqlar (v1.4.0)</div>
+          <div class="card-desc">
+            Amalga oshirilgan 4000 ta so'z, Gollivud video parchalari, 3 tilda interfeys, Moliya jurnali va Leaderboard tahlili.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-badge badge-danger">2-QISM (SHART)</div>
+          <div class="card-title">Qo'shish Majburiy Bo'lganlar</div>
+          <div class="card-desc">
+            AI Speaking Coach (Ovozli AI talaffuz tekshiruvchisi), Oflayn rejim, Do'stona push xabarlar va Telegram WebApp.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-badge badge-warning">3-QISM</div>
+          <div class="card-title">Istiqbolli Yangi Modullar</div>
+          <div class="card-desc">
+            O'qituvchilar va o'quv markazlari kabineti, IELTS/CEFR paketlari, P2P onlayn so'z janglari va QR sertifikatlar.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-badge badge-success">4-QISM</div>
+          <div class="card-title">2026-2027 Yo'l Xaritasi</div>
+          <div class="card-desc">
+            Qisqa, o'rta va uzoq muddatli texnik rejalar, monetizatsiya modeli va ekspert xulosasi.
+          </div>
+        </div>
+      </div>
+
+      <div class="quote-box">
+        💡 <strong>Ekspert Fikri:</strong> "Ingly allaqachon kuchli bazaviy poydevorga ega. Keyingi qadam — uni oddiy so'z yodlash ilovasidan foydalanuvchining shaxsiy sun'iy intellektli ovozli repetitoriga va repetitorlar boshqaradigan ta'lim platformasiga aylantirishdir."
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>Ingly Educational Platform © 2026</span>
+      <span class="page-number">Sahifa 1 / 5</span>
+    </div>
+  </div>
+
+
+  <!-- ==================== SAHIFA 2: 1-QISM - HOZIRGI HOLAT ==================== -->
+  <div class="page">
+    <div class="bg-circle-1"></div>
+
+    <div class="page-header">
+      <div class="brand-logo">
+        <div class="brand-logo-icon">I</div>
+        <div class="brand-logo-text">Ingly</div>
+      </div>
+      <div class="header-badge">1-Qism: Hozirgi Imkoniyatlar (v1.4.0)</div>
+    </div>
+
+    <div>
+      <div class="section-title">
+        <div class="section-title-icon">💎</div>
+        <span>Ingly v1.4.0 Ekotizimining Hozirgi Holati</span>
+      </div>
+
+      <p style="font-size: 11.5px; color: #475569; margin-bottom: 14px; line-height: 1.6;">
+        Hozirgi kungacha Ingly loyihasida to'liq siklli, yuqori sifatli va xavfsiz mobil/web ta'lim infratuzilmasi qurildi. Quyidagi funksiyalar to'liq ishga tushirildi:
+      </p>
+
+      <div class="grid-2" style="gap: 12px; margin-bottom: 14px;">
+        <div class="card">
+          <div class="card-badge badge-primary">LUG'AT VA AUDIO</div>
+          <div class="card-title">4000 Essential English Words</div>
+          <div class="card-desc">
+            Book 1 dan Book 6 gacha 3600 dan ortiq so'z adabiy o'zbekcha tarjimasi, ta'rifi, misol gaplari va native audio talaffuzi bilan ta'minlandi.
+          </div>
+          <ul class="feature-list">
+            <li>To'g'ri transkripsiyalar (/əˈfreɪd/)</li>
+            <li>Misol gaplarning o'zbekcha tarjimalari</li>
+            <li>SpeechSynthesis audio talaffuz</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-badge badge-info">INTERAKTIV MEDYA</div>
+          <div class="card-title">🎬 Kino Kliplar & 3D Kartochkalar</div>
+          <div class="card-desc">
+            Har bir so'zning Gollivud blokbasterlaridagi real qo'llanilishi video parchalar orqali ko'rsatiladi. So'z xotirada 3 baravar mustahkam saqlanadi.
+          </div>
+          <ul class="feature-list">
+            <li>Kontekstual video treylerlar</li>
+            <li>3D aylantiriluvchi Flashcardlar</li>
+            <li>4 ta variantli tezkor Quiz (Test)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-badge badge-success">GAMIFIKATSIYA</div>
+          <div class="card-title">🏆 Leaderboard & 12 ta Daraja</div>
+          <div class="card-desc">
+            O'quvchilar o'rtasida o'zaro raqobat va o'qish motivatsiyasini oshiruvchi XP ballar va shohsupa (Top 1..3) tizimi yaratildi.
+          </div>
+          <ul class="feature-list">
+            <li>12 ta bosqich (Beginner 🌱 dan Legend 🚀 gacha)</li>
+            <li>Kunlik Streak (olovcha) uzluksizligi</li>
+            <li>Real-time Supabase reyting sinxronizatsiyasi</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-badge badge-warning">LOKALIZATSIYA VA SHAXSIY LUG'AT</div>
+          <div class="card-title">🌐 3 Ta Til & Mening So'zlarim</div>
+          <div class="card-desc">
+            Ilova O'zbek, Rus va Ingliz tillarida to'liq ishlaydi. Foydalanuvchi o'ziga kerakli so'zlarni kiritib, avtomatik tarjima bilan yodlashi mumkin.
+          </div>
+          <ul class="feature-list">
+            <li>O'zbekcha / Русский / English interfeys</li>
+            <li>Shaxsiy lug'at kartochkalari (MyWords)</li>
+            <li>Xato so'zlarni avtomatik to'g'irlash</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <div class="section-title-icon">⚙️</div>
+        <span>Web Admin Panel & Moliya Nazorati</span>
+      </div>
+
+      <div class="card card-highlight">
+        <div class="grid-3" style="gap: 10px;">
+          <div>
+            <div style="font-weight: 800; font-size: 12px; color: #0f172a; margin-bottom: 4px;">💰 Moliya Jurnali</div>
+            <div style="font-size: 10.5px; color: #64748b;">
+              Kirim va chiqimlar, qaysi o'quvchi qachon VIP yoki kitob olganligi, sof foyda hisobi.
+            </div>
+          </div>
+          <div>
+            <div style="font-weight: 800; font-size: 12px; color: #0f172a; margin-bottom: 4px;">🏷️ Chegirmali Narxlar</div>
+            <div style="font-size: 10.5px; color: #64748b;">
+              Haqiqiy narx va chegirmadagi narxni (asl narxi ustiga chizilgan holda) belgilash.
+            </div>
+          </div>
+          <div>
+            <div style="font-weight: 800; font-size: 12px; color: #0f172a; margin-bottom: 4px;">👥 Foydalanuvchilar Boshqaruvi</div>
+            <div style="font-size: 10.5px; color: #64748b;">
+              Foydalanuvchilarni qo'shish, parolini o'zgartirish, bloklash va tizimdan to'liq o'chirish.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>Ingly Educational Platform © 2026</span>
+      <span class="page-number">Sahifa 2 / 5</span>
+    </div>
+  </div>
+
+
+  <!-- ==================== SAHIFA 3: 2-QISM - QO'SHISH SHART BO'LGAN FUNKSIYALAR ==================== -->
+  <div class="page">
+    <div class="bg-circle-1"></div>
+
+    <div class="page-header">
+      <div class="brand-logo">
+        <div class="brand-logo-icon">I</div>
+        <div class="brand-logo-text">Ingly</div>
+      </div>
+      <div class="header-badge">2-Qism: Qo'shish Majburiy Bo'lganlar (Must-Have)</div>
+    </div>
+
+    <div>
+      <div class="section-title">
+        <div class="section-title-icon">🔥</div>
+        <span>Kelajakda Qo'shilishi SHART Bo'lgan 4 Ta Asosiy Modul</span>
+      </div>
+
+      <p style="font-size: 11.5px; color: #475569; margin-bottom: 14px; line-height: 1.6;">
+        Bozor talabi, foydalanuvchilarning kundalik odatlari va ilovaning raqobatbardoshligini ta'minlash uchun quyidagi 4 ta imkoniyatni kiritish eng ustuvor vazifa hisoblanadi:
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 11px;">
+        <!-- 1. AI Speaking -->
+        <div class="card" style="border-left: 4px solid #5B4DFF;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div class="card-title" style="margin-bottom: 0;">1. 🎙️ AI Speaking & Pronunciation Coach (Ovozli AI Repetitor)</div>
+            <span class="card-badge badge-danger">ENG MUHIM • SHART</span>
+          </div>
+          <div class="card-desc">
+            <strong>Nima uchun kerak?</strong> Ko'pchilik o'quvchilar so'zni ko'z bilan taniydi, ammo to'g'ri talaffuz qila olmaydi.
+          </div>
+          <ul class="feature-list" style="margin-top: 6px;">
+            <li><strong>Mikrofon orqali eshitish:</strong> O'quvchi so'zni aytadi, AI uning fonemasini tahlil qiladi (masalan, 87% to'g'ri).</li>
+            <li><strong>Xatoni aniq ko'rsatish:</strong> Qaysi tovush noto'g'ri aytilganini qizil rangda ko'rsatib, to'g'ri og'iz harakatini eslatadi.</li>
+            <li><strong>AI Suhbatdosh (Role-play):</strong> O'rganilgan so'zlar ishtirokida 2 daqiqalik qisqa suhbat (Restoranda, Aeroportda).</li>
+          </ul>
+        </div>
+
+        <!-- 2. Offline Mode -->
+        <div class="card" style="border-left: 4px solid #10b981;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div class="card-title" style="margin-bottom: 0;">2. 📶 Offline Rejim & SQLite Kesh (Internetsiz Ishlash)</div>
+            <span class="card-badge badge-success">AUDITORIYA TALABI</span>
+          </div>
+          <div class="card-desc">
+            <strong>Nima uchun kerak?</strong> O'zbekiston hududlarida, metroda yoki yo'lda internet tez-tez uzilib turadi.
+          </div>
+          <ul class="feature-list" style="margin-top: 6px;">
+            <li><strong>Lokal SQLite bazasi:</strong> Barcha so'zlar, tarjimalar va testlar internetsiz ham bir zumda ochiladi.</li>
+            <li><strong>Avtomatik sinxronizatsiya:</strong> Internet ulanganda yodlangan so'zlar va streak Supabase bulutiga avtomatik yuboriladi.</li>
+          </ul>
+        </div>
+
+        <!-- 3. Smart Notifications -->
+        <div class="card" style="border-left: 4px solid #f59e0b;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div class="card-title" style="margin-bottom: 0;">3. 🔔 Smart Push-Xabarlar va Do'stona Gamifikatsiya</div>
+            <span class="card-badge badge-warning">RETENTION (QAYTISH)</span>
+          </div>
+          <div class="card-desc">
+            <strong>Nima uchun kerak?</strong> O'quvchilar 3-kundan keyin ilovani unutib qo'ymasliklari uchun zerikarli emas, qiziqarli turtkilar kerak.
+          </div>
+          <ul class="feature-list" style="margin-top: 6px;">
+            <li><strong>Do'stona eslatmalar:</strong> "Sardor, bugun olovchang o'chib qolishiga 2 soat qoldi! 5 ta so'z yodlab ketasanmi? 🔥"</li>
+            <li><strong>Kunlik Missiyalar (Daily Quests):</strong> "Bugun 3 ta testdan 100% o't va 50 XP bonus ol!"</li>
+          </ul>
+        </div>
+
+        <!-- 4. Telegram WebApp -->
+        <div class="card" style="border-left: 4px solid #0284c7;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div class="card-title" style="margin-bottom: 0;">4. ✈️ Telegram WebApp / Mini App Integratsiyasi</div>
+            <span class="card-badge badge-info">VIRAL O'SISH</span>
+          </div>
+          <div class="card-desc">
+            <strong>Nima uchun kerak?</strong> O'zbekistonning 25 milliondan ortiq aholisi har kuni Telegramda yashaydi.
+          </div>
+          <ul class="feature-list" style="margin-top: 6px;">
+            <li><strong>Ilovani o'rnatmasdan kirish:</strong> Telegram bot ichida Ingly bitta bosishda ochiladi.</li>
+            <li><strong>Tezkor to'lov:</strong> Click va Payme orqali 3 soniyada VIP xarid qilish imkoniyati.</li>
+            <li><strong>Referral do'stlar:</strong> "Do'stingni taklif qil va har bir do'sting uchun 7 kunlik VIP bepul ol!"</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>Ingly Educational Platform © 2026</span>
+      <span class="page-number">Sahifa 3 / 5</span>
+    </div>
+  </div>
+
+
+  <!-- ==================== SAHIFA 4: 3-QISM - ISTIQBOLLI YANGI MODULLAR ==================== -->
+  <div class="page">
+    <div class="bg-circle-1"></div>
+
+    <div class="page-header">
+      <div class="brand-logo">
+        <div class="brand-logo-icon">I</div>
+        <div class="brand-logo-text">Ingly</div>
+      </div>
+      <div class="header-badge">3-Qism: Istiqbolli Yangi Modullar (High-Value)</div>
+    </div>
+
+    <div>
+      <div class="section-title">
+        <div class="section-title-icon">🌟</div>
+        <span>Platformani Yangi Darajaga Olib Chiquvchi Takliflar</span>
+      </div>
+
+      <p style="font-size: 11.5px; color: #475569; margin-bottom: 14px; line-height: 1.6;">
+        Ushbu modullar Ingly'ni oddiy yodlash ilovasidan O'zbekistondagi ta'lim markazlari va individual repetitorlar uchun ajralmas professional vositaga aylantiradi:
+      </p>
+
+      <div class="grid-2" style="gap: 12px; margin-bottom: 14px;">
+        <div class="card">
+          <div class="card-badge badge-primary">B2B & MONETIZATSIYA</div>
+          <div class="card-title">1. 👨‍🏫 O'qituvchi Kabineti (Teacher Mode)</div>
+          <div class="card-desc">
+            Repetitorlar o'z o'quvchi guruhlarini tuzadi, har kuni qaysi 20 ta so'zni yodlash kerakligini vazifa qilib belgilaydi.
+          </div>
+          <ul class="feature-list">
+            <li>Guruh o'quvchilarining test natijalari jadvali</li>
+            <li>Uyga vazifa bajarmaganlarni qizil belgilash</li>
+            <li>O'quv markazlari uchun maxsus korporativ tariflar</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-badge badge-warning">AKADEMIK DARAJA</div>
+          <div class="card-title">2. 🎯 IELTS & CEFR Lug'at Paketlari</div>
+          <div class="card-desc">
+            4000 ta umumiy so'zdan tashqari, aniq imtihonlarga tayyorlanuvchi o'quvchilar uchun ixtisoslashgan lug'at to'plamlari:
+          </div>
+          <ul class="feature-list">
+            <li>IELTS 7.0+ Akademik Collocations & Idioms</li>
+            <li>CEFR B1, B2 va C1 so'zlar to'plami</li>
+            <li>Phrasal Verbs (ibora fe'llari) maxsus trenajyori</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-badge badge-danger">KIBERSPORT TA'LIM</div>
+          <div class="card-title">3. ⚔️ P2P Word Battle (Onlayn Jang)</div>
+          <div class="card-desc">
+            Ikki o'quvchi o'rtasida 60 soniyalik tezkor onlayn bellashuv. Ekranda so'z chiqadi, kim birinchi to'g'ri topsa ball oladi.
+          </div>
+          <ul class="feature-list">
+            <li>Do'stini o'yinga taklif qilish (Duel linki)</li>
+            <li>Jonli taymer va tezlik bo'yicha hisob</li>
+            <li>Haftalik g'oliblarga sovg'alar va VIP status</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-badge badge-success">YUTUQ VA ISBOT</div>
+          <div class="card-title">4. 📜 QR-Kodli Rasmiy Sertifikatlar</div>
+          <div class="card-desc">
+            Har bir kitob (Book 1 - Book 6) yoki 12-darajani tugatgan o'quvchiga avtomatik generatsiya bo'luvchi Ingly sertifikati.
+          </div>
+          <ul class="feature-list">
+            <li>Haqiqiyligini tekshiruvchi maxsus QR-kod</li>
+            <li>Instagram Stories va Telegramga ulashish tugmasi</li>
+            <li>O'quvchida faxr va bitiruv hissini uyg'otish</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <div class="section-title-icon">💡</div>
+        <span>Gamifikatsiya Iqtisodiyoti: Ingly Coins</span>
+      </div>
+
+      <div class="card" style="background: #fffbeb; border: 1.5px solid #fde68a;">
+        <div style="font-size: 11.5px; color: #92400e; line-height: 1.6;">
+          🪙 <strong>Ingly Coins Tizimi:</strong> Foydalanuvchi har bir to'g'ri topshirilgan test, uzluksiz streak yoki yangi do'stini taklif qilgani uchun ilova ichidagi tangalarni yig'adi. Ushbu tangalarga u <em>yangi film lavhalarini ochishi</em>, <em>reklamasiz 3 kunlik rejim sotib olishi</em> yoki <em>o'z profiliga noyob ramkalar olishi</em> mumkin bo'ladi.
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>Ingly Educational Platform © 2026</span>
+      <span class="page-number">Sahifa 4 / 5</span>
+    </div>
+  </div>
+
+
+  <!-- ==================== SAHIFA 5: 4-QISM - YO'L XARITASI VA XULOSA ==================== -->
+  <div class="page">
+    <div class="bg-circle-1"></div>
+
+    <div class="page-header">
+      <div class="brand-logo">
+        <div class="brand-logo-icon">I</div>
+        <div class="brand-logo-text">Ingly</div>
+      </div>
+      <div class="header-badge">4-Qism: Yo'l Xaritasi (Roadmap 2026-2027)</div>
+    </div>
+
+    <div>
+      <div class="section-title">
+        <div class="section-title-icon">🗺️</div>
+        <span>Bosqichma-bosqich Rivojlanish Xaritasi</span>
+      </div>
+
+      <div class="timeline" style="margin-bottom: 18px;">
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-meta">1-BOSQICH (Qisqa Muddat • 1-3 Oy)</div>
+          <div class="timeline-title">Oflayn Rejim, Smart Push va Telegram WebApp</div>
+          <div class="timeline-desc">
+            SQLite orqali 100% oflayn kesh yaratish, foydalanuvchilar qatnovini oshirish uchun Telegram Mini App ishga tushirish, Click/Payme integratsiyasi.
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-meta">2-BOSQICH (O'rta Muddat • 3-6 Oy)</div>
+          <div class="timeline-title">AI Speaking Coach & O'qituvchilar Kabineti</div>
+          <div class="timeline-desc">
+            Ovozli talaffuzni baholash moduli (Microphone Speech Analysis), repetitorlar uchun guruh boshqaruvi va o'quvchilar progressini jonli kuzatish.
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-meta">3-BOSQICH (Uzoq Muddat • 6-12 Oy)</div>
+          <div class="timeline-title">IELTS/CEFR Paketlari, P2P Bellashuv va Xalqaro Eksport</div>
+          <div class="timeline-desc">
+            P2P onlayn o'yinlar, QR sertifikatlar va ilovani Markaziy Osiyo (Qozog'iston, Qirg'iziston) va Ozarbayjon bozoriga moslashtirish.
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">
+        <div class="section-title-icon">📊</div>
+        <span>Monetizatsiya va Biznes Modeli</span>
+      </div>
+
+      <div class="grid-3" style="margin-bottom: 16px;">
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 4px;">👑</div>
+          <div style="font-weight: 800; font-size: 12px; color: #0f172a;">B2C VIP Obuna</div>
+          <div style="font-size: 10px; color: #64748b; margin-top: 3px;">
+            Oylik 29,000 so'm / Umrbod 99,000 so'm (Reklamasiz, barcha kitoblar ochiq)
+          </div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 4px;">🏫</div>
+          <div style="font-weight: 800; font-size: 12px; color: #0f172a;">B2B O'quv Markazlar</div>
+          <div style="font-size: 10px; color: #64748b; margin-top: 3px;">
+            O'quv markazlari va maktablar uchun guruh litsenziyalari (har bir o'quvchiga arzonlashtirilgan narxda)
+          </div>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 20px; margin-bottom: 4px;">📺</div>
+          <div style="font-weight: 800; font-size: 12px; color: #0f172a;">AdMob & Bepul Foydalanuvchilar</div>
+          <div style="font-size: 10px; color: #64748b; margin-top: 3px;">
+            Bepul foydalanuvchilar uchun qisqa video reklamalar va kinolarni ko'rish bonuslari
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 16px; border-radius: 18px;">
+        <div style="font-weight: 900; font-size: 13px; color: #38bdf8; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+          <span>🎯</span>
+          <span>Yakuniy Xulosa:</span>
+        </div>
+        <div style="font-size: 10.5px; color: #cbd5e1; line-height: 1.6;">
+          Ingly ilovasi o'zbek tili segmentida o'xshashi yo'q innovatsion ta'lim mahsulotiga aylandi. v1.4.0 versiyasi bilan mustahkam poydevor qo'yildi. Yuqorida tavsiya etilgan <strong>AI Speaking Coach</strong>, <strong>Oflayn rejim</strong> va <strong>Telegram WebApp</strong> qo'shilishi orqali Ingly nafaqat O'zbekistonda #1 ta'lim ilovasiga aylanadi, balki oylik yuz minglab faol o'quvchilarga ega yirik biznes loyihaga aylanadi.
+        </div>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>Ingly Educational Platform © 2026</span>
+      <span class="page-number">Sahifa 5 / 5</span>
+    </div>
+  </div>
+
+</body>
+</html>

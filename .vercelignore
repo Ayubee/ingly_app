@@ -1,0 +1,26 @@
+# Node modules - Vercel o'zi npm install qiladi
+node_modules
+mobile/node_modules
+admin/node_modules
+
+# Mobile ilova - Vercel'ga kerak emas
+mobile
+.expo
+
+# Scratch va data
+scratch_repo
+data
+docs
+
+# Dev fayllar
+.env
+.env.local
+*.log
+.DS_Store
+
+# Git
+.git
+
+# Large files
+*.pdf
+Ingly_App_Prezentatsiya.pdf

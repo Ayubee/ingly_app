@@ -247,6 +247,7 @@ export function UserProvider({ children }) {
 
     // Supabase bulut bazasiga ham real-time sinxron qilish
     syncUserWithSupabase(userToSave).catch(() => {});
+    syncUserLeaderboardScore(userToSave).catch(() => {});
   };
 
   // 1. Ro'yxatdan o'tish (Register: Login, Parol va Telefon qat'iy tekshiruvi)
