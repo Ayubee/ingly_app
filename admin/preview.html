@@ -239,16 +239,9 @@
         if (cleanLogin.toLowerCase() === 'joji' && inputHash === SUPER_ADMIN_HASH) {
           authenticatedAdmin = { name: 'Joji (Super Admin)', username: 'Joji', role: 'super_admin' };
         } else {
-          // 2. adminList ro'yxatidagi boshqa adminlarni tekshirish
-          const found = adminList.find(a => 
-            (a.username || '').toLowerCase() === cleanLogin.toLowerCase() && a.isActive
-          );
-          if (found) {
-            const expectedHash = found.password_hash || hashPassword(found.password || 'admin123');
-            if (inputHash === expectedHash || cleanPass === found.password) {
-              authenticatedAdmin = found;
-            }
-          }
+          // Secondary admin login stays disabled until trusted server authentication.
+          setAuthError("Bu admin uchun kirish server autentifikatsiyasi joriy etilguncha yopiq.");
+          return;
         }
 
         if (authenticatedAdmin) {
@@ -1612,7 +1605,7 @@
         setAdminList(updated);
         localStorage.setItem('ingly_admin_list', JSON.stringify(updated));
         setShowAdminModal(false);
-        showToast(`Yangi admin: "${cleanUsername}" muvaffaqiyatli qo'shildi!`);
+        showToast(`Admin yozuvi yaratildi: "${cleanUsername}". Bu hisob orqali kirish hozircha yopiq.`);
 
         if (supabaseClient) {
           try {

@@ -239,16 +239,9 @@
         if (cleanLogin.toLowerCase() === 'joji' && inputHash === SUPER_ADMIN_HASH) {
           authenticatedAdmin = { name: 'Joji (Super Admin)', username: 'Joji', role: 'super_admin' };
         } else {
-          // 2. adminList ro'yxatidagi boshqa adminlarni tekshirish
-          const found = adminList.find(a => 
-            (a.username || '').toLowerCase() === cleanLogin.toLowerCase() && a.isActive
-          );
-          if (found) {
-            const expectedHash = found.password_hash || hashPassword(found.password || 'admin123');
-            if (inputHash === expectedHash || cleanPass === found.password) {
-              authenticatedAdmin = found;
-            }
-          }
+          // Secondary admin login stays disabled until trusted server authentication.
+          setAuthError("Bu admin uchun kirish server autentifikatsiyasi joriy etilguncha yopiq.");
+          return;
         }
 
         if (authenticatedAdmin) {
@@ -1443,121 +1436,92 @@
         }
       };
 
+      useEffect(() => {
+        try { localStorage.setItem('ingly_users', JSON.stringify(users)); }
+        catch (err) { console.warn('User list cache unavailable'); }
+      }, [users]);
+
       // Yangi foydalanuvchi yaratish (Add User)
       const handleCreateUser = async (e) => {
-        if (e && e.preventDefault) e.preventDefault();
-        const uname = (newUserForm.username || '').trim().toLowerCase().replace(/^@/, '').replace(/\s/g, '');
-        if (!uname) {
-          alert('Iltimos, login (username) kiriting!');
+        if (e) e.preventDefault();
+        if (isSavingNewUser) return;
+        const uname = String(newUserForm.username || '').trim().toLowerCase().replace(/^@/, '');
+        const password = String(newUserForm.password || '').trim();
+        const phoneInput = String(newUserForm.phone || '').trim();
+        const phoneDigits = phoneInput.replace(/\D/g, '');
+        if (uname.length < 3 || /\s/.test(uname)) {
+          alert("Login kamida 3 ta belgi; bo'sh joy mumkin emas.");
           return;
         }
         if (users.some(u => (u.username || '').toLowerCase().replace(/^@/, '') === uname)) {
-          alert(`"${uname}" loginli foydalanuvchi allaqachon mavjud!`);
+          alert("Bu login allaqachon mavjud.");
           return;
         }
-        if (!newUserForm.password || newUserForm.password.length < 4) {
-          alert('Parol kamida 4 ta belgidan iborat bo\'lishi kerak!');
+        if (password.length < 6) {
+          alert("Parol kamida 6 ta belgidan iborat bo'lishi kerak.");
           return;
         }
-
+        if (phoneInput && (!/^[+\d\s()\-]+$/.test(phoneInput) ||
+            !(/^[0-9]{9}$/.test(phoneDigits) || /^998[0-9]{9}$/.test(phoneDigits)))) {
+          alert("Telefon: 9 ta raqam yoki +998 va 9 ta raqam kiriting.");
+          return;
+        }
+        if (!supabaseClient) {
+          alert("Supabase ulanmagan. Foydalanuvchi yaratilmadi.");
+          return;
+        }
         setIsSavingNewUser(true);
         try {
-          const newId = Date.now().toString();
-          const createdDate = new Date().toISOString();
-          let premiumUntilDate = null;
+          let premiumUntil = null;
           if (newUserForm.isVip) {
-            if (newUserForm.vipDays === 'lifetime' || Number(newUserForm.vipDays) >= 36500) {
-              premiumUntilDate = new Date('2099-12-31T23:59:59.000Z').toISOString();
-            } else {
-              const numDays = Number(newUserForm.vipDays) || 30;
-              premiumUntilDate = new Date(Date.now() + numDays * 24 * 60 * 60 * 1000).toISOString();
-            }
+            premiumUntil = newUserForm.vipDays === 'lifetime' || Number(newUserForm.vipDays) >= 36500
+              ? new Date('2099-12-31T23:59:59Z').toISOString()
+              : new Date(Date.now() + (Number(newUserForm.vipDays) || 30) * 86400000).toISOString();
           }
-
-          const hashedPass = hashPassword(newUserForm.password.trim());
-
-          const newUserObj = {
-            id: newId,
-            name: newUserForm.name.trim() || uname,
+          const { data, error } = await supabaseClient.from('users').insert([{
+            full_name: String(newUserForm.name || '').trim() || uname,
             username: uname,
-            phone: newUserForm.phone.trim() || '+998',
-            password: '',
-            password_hash: hashedPass,
-            words: 0,
-            streak: 1,
-            isBlocked: false,
-            isVip: Boolean(newUserForm.isVip),
-            premiumUntil: premiumUntilDate,
-            created_at: createdDate,
-            createdAt: createdDate
+            phone: phoneInput ? '+' + (phoneDigits.length === 9 ? '998' : '') + phoneDigits : null,
+            password_hash: hashPassword(password),
+            is_blocked: false,
+            is_premium: Boolean(newUserForm.isVip),
+            premium_until: premiumUntil
+          }]).select('id, full_name, username, phone, is_blocked, is_premium, premium_until, created_at').single();
+          if (error) throw error;
+          if (!data || !data.id) throw new Error("Server foydalanuvchi ID sini qaytarmadi; ro'yxatni yangilang.");
+          const created = {
+            id: data.id, name: data.full_name, username: data.username,
+            phone: data.phone || '', words: 0, streak: 0,
+            isBlocked: !!data.is_blocked, isVip: !!data.is_premium,
+            premiumUntil: data.premium_until, created_at: data.created_at, createdAt: data.created_at
           };
-
-          const updatedUsers = [newUserObj, ...users];
-          setUsers(updatedUsers);
-          localStorage.setItem('ingly_users', JSON.stringify(updatedUsers));
-
-          // Supabase'ga yozish
-          if (supabaseClient) {
-            try {
-              await supabaseClient.from('users').insert([{
-                full_name: newUserObj.name,
-                username: newUserObj.username,
-                phone: newUserObj.phone,
-                password_hash: hashedPass,
-                is_blocked: false,
-                is_premium: newUserObj.isVip,
-                premium_until: newUserObj.premiumUntil
-              }]);
-            } catch (err) {
-              console.warn('Supabase insert user error:', err);
-            }
-          }
-
+          setUsers(prev => [created, ...prev.filter(u => u.id !== created.id)]);
           setShowAddUserModal(false);
           setNewUserForm({ name: '', username: '', phone: '', password: '', isVip: false, vipDays: 30 });
-          showToast(`Yangi foydalanuvchi "${uname}" muvaffaqiyatli qo'shildi! 🎉`);
+          showToast(`Foydalanuvchi "${uname}" serverda yaratildi.`);
         } catch (err) {
-          console.error('Foydalanuvchi yaratish xatosi:', err);
-          alert('Foydalanuvchi qo\'shishda xatolik yuz berdi!');
+          alert("Foydalanuvchi yaratish tasdiqlanmadi: " + (err.message || 'Server xatosi'));
         } finally {
           setIsSavingNewUser(false);
         }
       };
 
-      // Foydalanuvchini o'chirish (Delete User)
       const handleDeleteUser = async (userId, username, name) => {
-        const displayName = name || username || 'Foydalanuvchi';
-        if (!confirm(`Haqiqatan ham "${displayName}" (@${username}) foydalanuvchisini tizimdan o'chirmoqchimisiz?\n\nUshbu amal uning barcha o'qigan so'zlari va natijalarini to'liq o'chiradi!`)) {
+        if (!confirm(`"${name || username}" foydalanuvchisi va uning serverdagi natijalari o'chirilsinmi?`)) return;
+        if (!supabaseClient || !userId) {
+          alert("Supabase yoki server ID mavjud emas. Foydalanuvchi o'chirilmadi.");
           return;
         }
-
-        const cleanUser = (username || '').replace(/^@/, '').toLowerCase();
-        const updated = users.filter(u => u.id !== userId && (u.username || '').replace(/^@/, '').toLowerCase() !== cleanUser);
-        setUsers(updated);
-        localStorage.setItem('ingly_users', JSON.stringify(updated));
-        showToast(`Foydalanuvchi "${cleanUser}" o'chirildi! 🗑️`);
-
-        if (cleanUser) {
-          try {
-            const patchHeaders = {
-              'apikey': supabaseKey || LIVE_SUPABASE_KEY,
-              'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`
-            };
-            await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(cleanUser)}`, {
-              method: 'DELETE',
-              headers: patchHeaders
-            });
-          } catch (err) {
-            console.warn('REST delete user error:', err);
+        try {
+          const { data, error } = await supabaseClient.from('users').delete().eq('id', userId).select('id');
+          if (error) throw error;
+          if (!Array.isArray(data) || !data.some(u => u.id === userId)) {
+            throw new Error("Server o'chirishni tasdiqlamadi; ro'yxatni yangilang.");
           }
-        }
-
-        if (supabaseClient && cleanUser) {
-          try {
-            await supabaseClient.from('users').delete().eq('username', cleanUser);
-          } catch (err) {
-            console.warn('Supabase client delete user error:', err);
-          }
+          setUsers(prev => prev.filter(u => u.id !== userId));
+          showToast(`Foydalanuvchi "${username}" serverdan o'chirildi.`);
+        } catch (err) {
+          alert("Foydalanuvchi o'chirish tasdiqlanmadi: " + (err.message || 'Server xatosi'));
         }
       };
 
@@ -1742,7 +1706,7 @@
         setAdminList(updated);
         localStorage.setItem('ingly_admin_list', JSON.stringify(updated));
         setShowAdminModal(false);
-        showToast(`Yangi admin: "${cleanUsername}" muvaffaqiyatli qo'shildi!`);
+        showToast(`Admin yozuvi yaratildi: "${cleanUsername}". Bu hisob orqali kirish hozircha yopiq.`);
 
         if (supabaseClient) {
           try {
@@ -4452,7 +4416,7 @@
                       disabled={isSavingNewUser}
                       class="px-6 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-xl shadow-md transition cursor-pointer flex items-center gap-1.5"
                     >
-                      {isSavingNewUser ? 'Saqlanmoqda...' : 'Foydalanuvchini Qo'shish'}
+                      {isSavingNewUser ? 'Saqlanmoqda...' : "Foydalanuvchini Qo'shish"}
                     </button>
                   </div>
                 </form>

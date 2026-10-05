@@ -38,11 +38,9 @@ import {
 } from '../services/storage.js';
 import { translateText } from '../services/translatorService.js';
 import { speak } from '../services/ttsService.js';
-import { useUser } from '../context/UserContext.js';
 import { useLanguage } from '../context/LanguageContext.js';
 
 export default function MyWordsScreen({ onNavigate }) {
-  const { recordWordLearned } = useUser();
   const { t } = useLanguage();
 
   // Holatlar (State)
@@ -75,45 +73,6 @@ export default function MyWordsScreen({ onNavigate }) {
 
   const loadWords = async () => {
     let list = await getCustomWords();
-    if (!list || list.length === 0) {
-      const initialSamples = [
-        {
-          id: 'custom_sample_1',
-          original: 'Kitob',
-          translated: 'Book',
-          phonetic: '/bʊk/',
-          example: 'I am reading an interesting book.',
-          learned: false,
-          created_at: new Date().toISOString(),
-          review_count: 0,
-        },
-        {
-          id: 'custom_sample_2',
-          original: 'Maktab',
-          translated: 'School',
-          phonetic: '/skuːl/',
-          example: 'Children go to school every morning.',
-          learned: false,
-          created_at: new Date().toISOString(),
-          review_count: 0,
-        },
-        {
-          id: 'custom_sample_3',
-          original: 'Muvaffaqiyat',
-          translated: 'Success',
-          phonetic: '/səkˈses/',
-          example: 'Hard work brings great success.',
-          learned: true,
-          learned_at: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          review_count: 1,
-        },
-      ];
-      for (const s of initialSamples) {
-        await addCustomWord(s);
-      }
-      list = initialSamples;
-    }
     setWordsList(list);
   };
 
@@ -254,10 +213,8 @@ export default function MyWordsScreen({ onNavigate }) {
     const updated = await setCustomWordLearnedStatus(cardId, true);
     setWordsList(updated);
 
-    // Kundalik progress va streak hisobiga qo'shish
-    if (recordWordLearned) {
-      recordWordLearned();
-    }
+    // Custom mastery is counted from CUSTOM_WORDS by the leaderboard.
+    // Do not increment textbook totals or book progress here.
 
     // Modalni yopish
     setActiveCard(null);
