@@ -64,11 +64,17 @@ export async function syncUserWithSupabase(userData) {
         .limit(1);
 
       if (existingUser && existingUser.length > 0) {
-        // Mavjud bo'lsa yangilash (is_blocked tegilmaydi)
+        // Mavjud bo'lsa yangilash (is_blocked tegilmaydi, serverdagi VIP saqlanadi)
         const targetId = existingUser[0].id;
+        const finalPayload = { ...userPayload };
+        if (existingUser[0].is_premium && !userData.isPremium) {
+          finalPayload.is_premium = true;
+          finalPayload.premium_until = existingUser[0].premium_until || userPayload.premium_until;
+        }
+
         const { data: updated, error: updateErr } = await supabase
           .from('users')
-          .update(userPayload)
+          .update(finalPayload)
           .eq('id', targetId)
           .select('id, full_name, username, phone, daily_goal, is_premium, is_blocked, created_at');
 
@@ -98,16 +104,22 @@ export async function syncUserWithSupabase(userData) {
 
     const encodedUser = encodeURIComponent(cleanUsername);
     // Tekshirish (password_hash so'ralmaydi!)
-    const checkQuery = `${SUPABASE_REST_URL}/users?username=eq.${encodedUser}&select=id,is_blocked,is_premium,created_at`;
+    const checkQuery = `${SUPABASE_REST_URL}/users?username=eq.${encodedUser}&select=id,is_blocked,is_premium,premium_until,created_at`;
     const checkRes = await fetch(checkQuery, { headers: restHeaders });
     const existingList = checkRes.ok ? await checkRes.json() : [];
 
     if (Array.isArray(existingList) && existingList.length > 0) {
       const uId = encodeURIComponent(existingList[0].id);
+      const finalRestPayload = { ...userPayload };
+      if (existingList[0].is_premium && !userData.isPremium) {
+        finalRestPayload.is_premium = true;
+        finalRestPayload.premium_until = existingList[0].premium_until || userPayload.premium_until;
+      }
+
       const patchRes = await fetch(`${SUPABASE_REST_URL}/users?id=eq.${uId}`, {
         method: 'PATCH',
         headers: restHeaders,
-        body: JSON.stringify(userPayload),
+        body: JSON.stringify(finalRestPayload),
       });
       if (patchRes.ok) {
         const patchData = await patchRes.json();

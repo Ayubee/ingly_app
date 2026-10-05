@@ -16,6 +16,7 @@ let currentSettings = {
   ads_enabled: false,
   premium_mode_enabled: true,
   free_books_count: 1, // Faqat Book 1 bepul, Book 2-6 lar VIP / pullik
+  free_book_ids: [1], // Qaysi kitoblar bepul ekanligi ro'yxati (masalan: [1], [1, 3])
   videos_enabled: true, // Barcha kinolar va videolarni ilovada ko'rsatish/yashirish
   latest_announcement: null, // Admin paneldan yuborilgan yangi e'lon/yangilik
   daily_goal_default: 20,
@@ -88,6 +89,17 @@ export async function initAppSettings() {
           currentSettings.premium_mode_enabled = item.setting_value === true || item.setting_value === 'true';
         } else if (item.setting_key === 'free_books_count') {
           currentSettings.free_books_count = item.setting_value !== undefined ? Number(item.setting_value) : 1;
+        } else if (item.setting_key === 'free_book_ids') {
+          try {
+            const val = Array.isArray(item.setting_value)
+              ? item.setting_value
+              : typeof item.setting_value === 'string'
+                ? JSON.parse(item.setting_value)
+                : [1];
+            currentSettings.free_book_ids = Array.isArray(val) ? val.map(Number) : [1];
+          } catch (e) {
+            currentSettings.free_book_ids = [1];
+          }
         } else if (item.setting_key === 'daily_goal_default') {
           currentSettings.daily_goal_default = Number(item.setting_value) || 20;
         } else if (item.setting_key === 'premium_monthly_original_price') {
@@ -141,6 +153,17 @@ export async function initAppSettings() {
                 : item.setting_value || null;
           } else if (item.setting_key === 'free_books_count') {
             currentSettings.free_books_count = item.setting_value !== undefined ? Number(item.setting_value) : 1;
+          } else if (item.setting_key === 'free_book_ids') {
+            try {
+              const val = Array.isArray(item.setting_value)
+                ? item.setting_value
+                : typeof item.setting_value === 'string'
+                  ? JSON.parse(item.setting_value)
+                  : [1];
+              currentSettings.free_book_ids = Array.isArray(val) ? val.map(Number) : [1];
+            } catch (e) {
+              currentSettings.free_book_ids = [1];
+            }
           } else if (item.setting_key === 'premium_monthly_original_price') {
             currentSettings.premium_monthly_original_price = Number(item.setting_value) || 59000;
           } else if (item.setting_key === 'premium_monthly_price') {

@@ -62,10 +62,12 @@ export default function LearnScreen({ onNavigate }) {
   };
 
   // Tanlangan kitob ochiqmi?
-  const isBookPurchased = isVipActive || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(selectedBook));
   const freeCount = appSettings.free_books_count !== undefined ? appSettings.free_books_count : 1;
-  const isBookLockedByPayment = appSettings.premium_mode_enabled && selectedBook > freeCount && !isBookPurchased;
-  const isBookProgressionLocked = !isBookLockedByPayment && selectedBook !== 1 && (user.bookProgress[selectedBook - 1] || 0) < 100;
+  const freeBookIds = Array.isArray(appSettings.free_book_ids) ? appSettings.free_book_ids : [1];
+  const isFreeBook = selectedBook <= freeCount || freeBookIds.includes(selectedBook);
+  const isBookPurchased = isVipActive || isFreeBook || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(selectedBook));
+  const isBookLockedByPayment = appSettings.premium_mode_enabled && !isFreeBook && !isBookPurchased;
+  const isBookProgressionLocked = !isBookLockedByPayment && !isFreeBook && selectedBook !== 1 && (user.bookProgress[selectedBook - 1] || 0) < 100;
   const isBookUnlocked = !isBookLockedByPayment && !isBookProgressionLocked;
 
   // Foydalanuvchining ushbu kitobdagi o'rganilgan so'zlari

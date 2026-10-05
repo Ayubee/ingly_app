@@ -274,10 +274,12 @@ export default function HomeScreen({ onNavigate }) {
             const progress = user.bookProgress[b.id] || 0;
             const isCompleted = progress === 100;
             const freeCount = appSettings.free_books_count !== undefined ? appSettings.free_books_count : 1;
-            const isBookPurchased = isVipActive || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(b.id)) || (Array.isArray(user.purchasedBooks) && user.purchasedBooks.includes(b.id));
-            const isVipLocked = appSettings.premium_mode_enabled && b.id > freeCount && !isBookPurchased;
-            // Book 1 har doim ochiq. Boshqa kitoblar oldingi kitob tugatilganda ochiladi.
-            const isUnlocked = !isVipLocked && (b.id === 1 || (user.bookProgress[b.id - 1] || 0) >= 100);
+            const freeBookIds = Array.isArray(appSettings.free_book_ids) ? appSettings.free_book_ids : [1];
+            const isFreeBook = b.id <= freeCount || freeBookIds.includes(b.id);
+            const isBookPurchased = isVipActive || isFreeBook || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(b.id)) || (Array.isArray(user.purchasedBooks) && user.purchasedBooks.includes(b.id));
+            const isVipLocked = appSettings.premium_mode_enabled && !isFreeBook && !isBookPurchased;
+            // Bepul kitoblar yoki oldingi kitob tugatilganda ochiladi.
+            const isUnlocked = !isVipLocked && (isFreeBook || b.id === 1 || (user.bookProgress[b.id - 1] || 0) >= 100);
             const isCurrentActive = isUnlocked && !isCompleted;
 
             // Agar Admin tomonidan pullik rejimda yopilgan bo'lsa

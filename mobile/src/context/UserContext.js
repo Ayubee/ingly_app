@@ -885,13 +885,14 @@ export function UserProvider({ children }) {
     (!user.premiumUntil || new Date(user.premiumUntil).getTime() > Date.now())
   );
 
-  // Kitob ochilganmi yoki bepulmi? (Faqat Book 1 bepul, qolganlari VIP yoki xarid qilingan bo'lishi shart)
-  const isBookPurchasedOrFree = (bookId, freeBooksCount = 1, premiumModeEnabled = true) => {
+  // Kitob ochilganmi yoki bepulmi? (Admin tomonidan bepul qilingan kitoblar, VIP yoki xarid qilingan bo'lishi shart)
+  const isBookPurchasedOrFree = (bookId, freeBooksCount = 1, premiumModeEnabled = true, freeBookIds = null) => {
     if (!premiumModeEnabled) return true; // Agar admin pullik rejimni o'chirsa, hamma kitob ochiq
     if (isVipActive) return true;          // VIP obunachi uchun barcha kitoblar ochiq
     const num = Number(bookId);
-    if (num <= freeBooksCount) return true; // Faqat bepul kitoblar (Book 1)
-    if (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(num)) return true; // Ushbu foydalanuvchi sotib olgan kitob
+    if (Array.isArray(freeBookIds) && freeBookIds.includes(num)) return true; // Admin alohida tekin qilgan kitob
+    if (num <= freeBooksCount) return true; // Bepul kitoblar soni bo'yicha
+    if (Array.isArray(user?.unlockedBooks) && user.unlockedBooks.includes(num)) return true; // Ushbu foydalanuvchi sotib olgan kitob
     return false;
   };
 

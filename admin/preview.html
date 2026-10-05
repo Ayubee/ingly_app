@@ -301,6 +301,17 @@
         const saved = localStorage.getItem('ingly_free_books');
         return saved !== null ? Number(saved) : 1;
       });
+      const [freeBookIds, setFreeBookIds] = useState(() => {
+        const saved = localStorage.getItem('ingly_free_book_ids');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed.map(Number);
+          } catch (e) {}
+        }
+        const count = Number(localStorage.getItem('ingly_free_books')) || 1;
+        return Array.from({ length: Math.max(1, count) }, (_, i) => i + 1);
+      });
       const [vipMonthlyPrice, setVipMonthlyPrice] = useState(() => {
         const saved = localStorage.getItem('ingly_vip_monthly_price');
         return saved !== null ? Number(saved) : 29000;
@@ -524,6 +535,11 @@
       const [showNewPassword, setShowNewPassword] = useState(false);
       const [isSavingPassword, setIsSavingPassword] = useState(false);
 
+      // Foydalanuvchiga VIP / Premium berish modali
+      const [vipModalUser, setVipModalUser] = useState(null);
+      const [vipDurationDays, setVipDurationDays] = useState(30);
+      const [isSavingVip, setIsSavingVip] = useState(false);
+
       const LIVE_SUPABASE_URL = 'https://lbsqxownrjfmjoojdsfk.supabase.co';
       const LIVE_SUPABASE_KEY = 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
 
@@ -607,6 +623,15 @@
                     const val = item.setting_value !== undefined ? Number(item.setting_value) : 1;
                     setFreeBooks(val);
                     localStorage.setItem('ingly_free_books', String(val));
+                  } else if (item.setting_key === 'free_book_ids') {
+                    try {
+                      const ids = Array.isArray(item.setting_value) ? item.setting_value : JSON.parse(item.setting_value);
+                      if (Array.isArray(ids)) {
+                        const numIds = ids.map(Number);
+                        setFreeBookIds(numIds);
+                        localStorage.setItem('ingly_free_book_ids', JSON.stringify(numIds));
+                      }
+                    } catch (e) {}
                   } else if (item.setting_key === 'premium_monthly_price') {
                     const val = Number(item.setting_value) || 29000;
                     setVipMonthlyPrice(val);
@@ -919,22 +944,162 @@
         }
       };
 
-      // Bepul kitoblar soni
+      // Bepul kitoblar soni (Eski rejim)
       const handleSetFreeBooks = async (num) => {
         setFreeBooks(num);
         localStorage.setItem('ingly_free_books', String(num));
+        const updated = Array.from({ length: num }, (_, i) => i + 1);
+        setFreeBookIds(updated);
+        localStorage.setItem('ingly_free_book_ids', JSON.stringify(updated));
         showToast(`Bepul kitoblar: ${num} ta etib belgilandi`);
 
-        if (supabaseClient) {
-          try {
-            await supabaseClient.from('app_settings').upsert({
+        try {
+          const patchHeaders = {
+            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
+            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          };
+          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
+            method: 'POST',
+            headers: patchHeaders,
+            body: JSON.stringify({
+              setting_key: 'free_book_ids',
+              setting_value: updated,
+              description: 'Admin tomonidan bepul qilingan kitoblar ID ro\'yxati'
+            })
+          });
+          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
+            method: 'POST',
+            headers: patchHeaders,
+            body: JSON.stringify({
               setting_key: 'free_books_count',
               setting_value: num,
-              description: 'Foydalanuvchilarga bepul beriladigan kitoblar soni.'
-            }, { onConflict: 'setting_key' });
-          } catch (e) {
-            console.warn('Supabase free books save error:', e);
+              description: 'Bepul kitoblar soni'
+            })
+          });
+          if (supabaseClient) {
+            await supabaseClient.from('app_settings').upsert([
+              { setting_key: 'free_book_ids', setting_value: updated, description: 'Bepul kitoblar ID ro\'yxati' },
+              { setting_key: 'free_books_count', setting_value: num, description: 'Bepul kitoblar soni' }
+            ], { onConflict: 'setting_key' });
           }
+        } catch (e) {
+          console.warn('Supabase free books save error:', e);
+        }
+      };
+
+      // Qaysidir alohida kitobni tekin (bepul) yoki pullik qilish
+      const toggleBookFree = async (bookNum, forceState = null) => {
+        const num = Number(bookNum);
+        const currentlyFree = freeBookIds.includes(num);
+        const shouldBeFree = forceState !== null ? forceState : !currentlyFree;
+
+        let updated;
+        if (shouldBeFree) {
+          updated = Array.from(new Set([...freeBookIds, num])).sort((a, b) => a - b);
+        } else {
+          updated = freeBookIds.filter(id => id !== num);
+        }
+
+        setFreeBookIds(updated);
+        localStorage.setItem('ingly_free_book_ids', JSON.stringify(updated));
+
+        // Backward-compatibility: free_books_count
+        const maxFree = updated.length > 0 ? Math.max(...updated) : 0;
+        setFreeBooks(maxFree);
+        localStorage.setItem('ingly_free_books', String(maxFree));
+
+        const statusMsg = shouldBeFree ? `Book ${num}: TEKIN (Bepul ochiq) qilindi 🟢` : `Book ${num}: PULLIK (VIP) qilindi 🔒`;
+        showToast(statusMsg);
+
+        // Supabase ga saqlash
+        try {
+          const patchHeaders = {
+            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
+            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          };
+          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
+            method: 'POST',
+            headers: patchHeaders,
+            body: JSON.stringify({
+              setting_key: 'free_book_ids',
+              setting_value: updated,
+              description: 'Admin tomonidan bepul qilingan kitoblar ID ro\'yxati'
+            })
+          });
+          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
+            method: 'POST',
+            headers: patchHeaders,
+            body: JSON.stringify({
+              setting_key: 'free_books_count',
+              setting_value: maxFree,
+              description: 'Bepul kitoblar soni'
+            })
+          });
+          if (supabaseClient) {
+            await supabaseClient.from('app_settings').upsert([
+              { setting_key: 'free_book_ids', setting_value: updated, description: 'Bepul kitoblar ID ro\'yxati' },
+              { setting_key: 'free_books_count', setting_value: maxFree, description: 'Bepul kitoblar soni' }
+            ], { onConflict: 'setting_key' });
+          }
+        } catch (err) {
+          console.warn('Kitob holatini saqlash xatosi:', err);
+        }
+      };
+
+      // Kitoblar uchun tezkor presetlar
+      const applyFreeBooksPreset = async (presetType) => {
+        let updated = [1];
+        if (presetType === 'only_book_1') updated = [1];
+        else if (presetType === 'books_1_2') updated = [1, 2];
+        else if (presetType === 'books_1_2_3') updated = [1, 2, 3];
+        else if (presetType === 'all_free') updated = [1, 2, 3, 4, 5, 6];
+        else if (presetType === 'all_locked') updated = [];
+
+        setFreeBookIds(updated);
+        localStorage.setItem('ingly_free_book_ids', JSON.stringify(updated));
+        const maxFree = updated.length > 0 ? Math.max(...updated) : 0;
+        setFreeBooks(maxFree);
+        localStorage.setItem('ingly_free_books', String(maxFree));
+
+        showToast(`Kitoblar holati yangilandi! (${updated.length} ta kitob bepul)`);
+
+        try {
+          const patchHeaders = {
+            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
+            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          };
+          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
+            method: 'POST',
+            headers: patchHeaders,
+            body: JSON.stringify({
+              setting_key: 'free_book_ids',
+              setting_value: updated,
+              description: 'Admin tomonidan bepul qilingan kitoblar ID ro\'yxati'
+            })
+          });
+          await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/app_settings`, {
+            method: 'POST',
+            headers: patchHeaders,
+            body: JSON.stringify({
+              setting_key: 'free_books_count',
+              setting_value: maxFree,
+              description: 'Bepul kitoblar soni'
+            })
+          });
+          if (supabaseClient) {
+            await supabaseClient.from('app_settings').upsert([
+              { setting_key: 'free_book_ids', setting_value: updated, description: 'Bepul kitoblar ID ro\'yxati' },
+              { setting_key: 'free_books_count', setting_value: maxFree, description: 'Bepul kitoblar soni' }
+            ], { onConflict: 'setting_key' });
+          }
+        } catch (e) {
+          console.warn('Preset saqlash xatosi:', e);
         }
       };
 
@@ -1040,6 +1205,143 @@
           }
         } catch (e) {
           console.warn('Supabase block user error:', e);
+        }
+      };
+
+      // Foydalanuvchiga VIP / Premium berish yoki bekor qilish
+      const handleSaveUserVip = async (targetDurationDays = null) => {
+        if (!vipModalUser) return;
+        setIsSavingVip(true);
+
+        const days = targetDurationDays !== null ? targetDurationDays : vipDurationDays;
+        const isRevoke = days === 0 || days === 'revoke';
+        const newIsVip = !isRevoke;
+
+        let premiumUntilDate = null;
+        let durationLabel = '';
+
+        if (newIsVip) {
+          if (days === 'lifetime' || days >= 36500) {
+            premiumUntilDate = new Date('2099-12-31T23:59:59.000Z').toISOString();
+            durationLabel = 'Umrbod (Cheksiz) 💎';
+          } else {
+            const numDays = Number(days) || 30;
+            const targetMs = Date.now() + numDays * 24 * 60 * 60 * 1000;
+            premiumUntilDate = new Date(targetMs).toISOString();
+            durationLabel = `${numDays} kunlik ⏳`;
+          }
+        } else {
+          durationLabel = 'Bekor qilindi ❌';
+        }
+
+        try {
+          const rawUser = vipModalUser.username || '';
+          const cleanUser = rawUser.replace(/^@/, '').trim().toLowerCase();
+          const targetId = vipModalUser.id;
+
+          const patchHeaders = {
+            'apikey': supabaseKey || LIVE_SUPABASE_KEY,
+            'Authorization': `Bearer ${supabaseKey || LIVE_SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          };
+
+          const patchPayload = {
+            is_premium: newIsVip,
+            premium_until: premiumUntilDate,
+            updated_at: new Date().toISOString()
+          };
+
+          // 1. Supabase REST API orqali PATCH qilish (username bo'yicha)
+          if (cleanUser) {
+            try {
+              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(cleanUser)}`, {
+                method: 'PATCH',
+                headers: patchHeaders,
+                body: JSON.stringify(patchPayload)
+              });
+            } catch (err) {
+              console.warn('REST API username bo\'yicha VIP yangilash xatosi:', err);
+            }
+          }
+
+          // 2. Supabase REST API orqali PATCH qilish (UUID id bo'yicha)
+          if (targetId && String(targetId).length > 10) {
+            try {
+              await fetch(`${supabaseUrl || LIVE_SUPABASE_URL}/rest/v1/users?id=eq.${encodeURIComponent(targetId)}`, {
+                method: 'PATCH',
+                headers: patchHeaders,
+                body: JSON.stringify(patchPayload)
+              });
+            } catch (err) {
+              console.warn('REST API id bo\'yicha VIP yangilash xatosi:', err);
+            }
+          }
+
+          // 3. SupabaseClient orqali yangilash
+          if (supabaseClient) {
+            try {
+              if (cleanUser) {
+                await supabaseClient.from('users').update(patchPayload).eq('username', cleanUser);
+              }
+              if (targetId && String(targetId).length > 10) {
+                await supabaseClient.from('users').update(patchPayload).eq('id', targetId);
+              }
+            } catch (err) {
+              console.warn('supabaseClient VIP update xatosi:', err);
+            }
+          }
+
+          // 4. Moliya audit jurnaliga (transactions) yozish
+          const newTx = {
+            id: 'tx_vip_' + Date.now(),
+            created_at: new Date().toISOString(),
+            user_id: targetId,
+            user_name: vipModalUser.name,
+            user_phone: vipModalUser.phone,
+            username: cleanUser,
+            item_type: 'vip_monthly',
+            item_title: newIsVip ? `Admin tomonidan berildi: VIP Premium (${durationLabel})` : `Admin tomonidan bekor qilindi: VIP Obuna`,
+            amount: 0,
+            payment_method: 'admin_grant',
+            status: 'completed',
+            is_manual: true
+          };
+
+          const updatedTxList = [newTx, ...(Array.isArray(transactions) ? transactions : [])];
+          setTransactions(updatedTxList);
+          localStorage.setItem('ingly_transactions', JSON.stringify(updatedTxList));
+
+          // 5. Local users state ni yangilash
+          const updatedUsers = users.map(u => {
+            const matchesId = u.id === targetId;
+            const matchesUser = cleanUser && (u.username || '').replace(/^@/, '').toLowerCase() === cleanUser;
+            if (matchesId || matchesUser) {
+              return {
+                ...u,
+                isVip: newIsVip,
+                premiumUntil: premiumUntilDate,
+                updated_at: new Date().toISOString()
+              };
+            }
+            return u;
+          });
+
+          setUsers(updatedUsers);
+          localStorage.setItem('ingly_users', JSON.stringify(updatedUsers));
+
+          if (newIsVip) {
+            showToast(`👑 "${vipModalUser.name}" ga VIP Premium (${durationLabel}) berildi!`);
+          } else {
+            showToast(`⚠️ "${vipModalUser.name}" ning VIP obunasi bekor qilindi!`);
+          }
+
+          setVipModalUser(null);
+        } catch (err) {
+          console.error('VIP saqlash xatosi:', err);
+          showToast('VIP statusini o\'zgartirishda xatolik yuz berdi!');
+        } finally {
+          setIsSavingVip(false);
         }
       };
 
@@ -1651,18 +1953,37 @@
                         { num: 4, title: 'Book 4 - Upper-Intermediate', words: 600, status: 'Kutilmoqda', color: 'from-emerald-500 to-teal-500', active: false },
                         { num: 5, title: 'Book 5 - Advanced', words: 600, status: 'Kutilmoqda', color: 'from-amber-500 to-orange-500', active: false },
                         { num: 6, title: 'Book 6 - Mastery', words: 600, status: 'Kutilmoqda', color: 'from-rose-500 to-red-500', active: false },
-                      ].map(b => (
-                        <div key={b.num} class="border border-slate-200/80 rounded-2xl p-5 hover:border-brand-500/40 transition">
-                          <div class="flex items-center justify-between mb-3">
-                            <span class={`text-xs font-bold px-2.5 py-1 rounded-lg text-white bg-gradient-to-r ${b.color}`}>
-                              Book {b.num}
-                            </span>
-                            <span class={`text-xs font-bold ${b.active ? 'text-emerald-600' : 'text-slate-400'}`}>{b.status}</span>
+                      ].map(b => {
+                        const isFree = freeBookIds.includes(b.num);
+                        return (
+                          <div key={b.num} class={`border rounded-2xl p-5 transition ${isFree ? 'border-emerald-300 bg-emerald-50/30' : 'border-slate-200/80 bg-white hover:border-brand-500/40'}`}>
+                            <div class="flex items-center justify-between mb-3">
+                              <span class={`text-xs font-bold px-2.5 py-1 rounded-lg text-white bg-gradient-to-r ${b.color}`}>
+                                Book {b.num}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => toggleBookFree(b.num)}
+                                title={isFree ? "Ushbu kitobni pullik (VIP) qilish" : "Ushbu kitobni tekin (bepul) qilish"}
+                                class={`text-[11px] font-black px-2.5 py-1 rounded-lg transition cursor-pointer flex items-center gap-1 shadow-xs ${
+                                  isFree
+                                    ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                                    : 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100'
+                                }`}
+                              >
+                                <span>{isFree ? '🟢 TEKIN' : '🔒 PULLIK'}</span>
+                              </button>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-sm mb-1">{b.title}</h4>
+                            <div class="flex items-center justify-between text-xs mt-2 pt-2 border-t border-slate-100">
+                              <span class="text-slate-400">30 Unit • {b.words} ta so'z</span>
+                              <span class={`font-bold ${isFree ? 'text-emerald-700' : 'text-amber-800'}`}>
+                                {isFree ? 'Ochiq bepul' : 'Xarid talab'}
+                              </span>
+                            </div>
                           </div>
-                          <h4 class="font-bold text-slate-800 text-sm mb-1">{b.title}</h4>
-                          <p class="text-xs text-slate-400">30 Unit • {b.words} ta so'z • Audio & Rasmlar</p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -2158,7 +2479,11 @@
                         <span>🔄</span>
                         <span>Yangilash</span>
                       </button>
-                      <span class="text-xs font-bold bg-slate-100 text-slate-600 px-3 py-1.5 rounded-xl">Jami: {users.length} ta foydalanuvchi</span>
+                      <span class="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl">Jami: {users.length} ta</span>
+                      <span class="text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1.5 rounded-xl inline-flex items-center gap-1 shadow-xs">
+                        <span>👑 VIP:</span>
+                        <span>{users.filter(u => u.isVip).length} ta</span>
+                      </span>
                     </div>
                   </div>
 
@@ -2217,7 +2542,19 @@
                             <tr key={u.id} class="hover:bg-slate-50/80 transition">
                               <td class="py-3.5 px-4 font-bold text-slate-900">
                                 <span>{u.name}</span>
-                                {u.isVip && <span class="ml-1 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">VIP</span>}
+                                {u.isVip && (
+                                  <span 
+                                    class="ml-1.5 text-[11px] bg-gradient-to-r from-amber-500 to-amber-600 text-white font-black px-2 py-0.5 rounded-full inline-flex items-center gap-0.5 shadow-xs"
+                                    title={u.premiumUntil ? `VIP amal qilish muddati: ${new Date(u.premiumUntil).toLocaleDateString('uz-UZ')}` : 'Doimiy VIP (Cheksiz)'}
+                                  >
+                                    <span>👑 VIP</span>
+                                    {u.premiumUntil && (
+                                      <span class="text-[9px] opacity-90 font-normal">
+                                        ({Math.max(0, Math.ceil((new Date(u.premiumUntil).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}k)
+                                      </span>
+                                    )}
+                                  </span>
+                                )}
                                 {isUserAdmin && (
                                   <span class="ml-1.5 text-[11px] bg-purple-100 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-extrabold inline-flex items-center gap-0.5">
                                     <span>👑</span>
@@ -2307,6 +2644,23 @@
                                     <span>Admin Qilish</span>
                                   </button>
                                 )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setVipModalUser(u);
+                                    setVipDurationDays(30);
+                                  }}
+                                  title={u.isVip ? "VIP obunani boshqarish / muddatini uzaytirish / bekor qilish" : "Foydalanuvchiga VIP / Premium berish"}
+                                  class={`text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer inline-flex items-center gap-1 shadow-xs ${
+                                    u.isVip
+                                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-extrabold'
+                                      : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20'
+                                  }`}
+                                >
+                                  <span>👑</span>
+                                  <span>{u.isVip ? 'VIP Boshqarish' : 'VIP Berish'}</span>
+                                </button>
                                 <button
                                   onClick={() => toggleBlockUser(u.id, u.username)}
                                   class={`text-xs font-bold px-3 py-1.5 rounded-xl transition cursor-pointer ${u.isBlocked ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}
@@ -2690,20 +3044,127 @@
                     </div>
                   </div>
 
-                  {/* Free Books Selector */}
-                  <div class="border border-slate-200 rounded-3xl p-6 space-y-3">
-                    <h4 class="font-bold text-slate-900 text-sm">Hamma uchun Ochiq (Bepul) Kitoblar Soni</h4>
-                    <p class="text-xs text-slate-400">Agar obuna yoqilsa, qaysi kitoblar bepul bo'lishini belgilang:</p>
-                    <div class="flex gap-3">
-                      {[1, 2, 3, 4, 5, 6].map(num => (
-                        <button
-                          key={num}
-                          onClick={() => handleSetFreeBooks(num)}
-                          class={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${freeBooks === num ? 'bg-brand-600 text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                        >
-                          {num} ta kitob bepul
-                        </button>
-                      ))}
+                  {/* Kitoblarni Tekin / Pullik Qilish Boshqaruvi */}
+                  <div class="border border-emerald-200 bg-emerald-50/20 rounded-3xl p-6 space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <span class="text-2xl">📚</span>
+                          <h4 class="font-black text-slate-900 text-base">Kitoblarni Tekin (Bepul) yoki Pullik Qilish Boshqaruvi</h4>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">
+                          Istalgan kitobni alohida tanlab, uni barcha foydalanuvchilarga bepul yoki faqat VIP/pullik xarid qilib belgilashingiz mumkin.
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          🟢 Bepul: {freeBookIds.length} ta kitob
+                        </span>
+                        <span class="text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300">
+                          🔒 Pullik: {6 - freeBookIds.length} ta kitob
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Tezkor Presetlar */}
+                    <div class="flex items-center gap-2 flex-wrap pt-1">
+                      <span class="text-xs font-bold text-slate-500 mr-1">Tezkor shablonlar:</span>
+                      <button
+                        type="button"
+                        onClick={() => applyFreeBooksPreset('only_book_1')}
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 transition cursor-pointer"
+                      >
+                        📕 Faqat Book 1 bepul
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyFreeBooksPreset('books_1_2')}
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 transition cursor-pointer"
+                      >
+                        🎁 Book 1 & 2 bepul
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyFreeBooksPreset('books_1_2_3')}
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 transition cursor-pointer"
+                      >
+                        ✨ Book 1, 2, 3 bepul
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyFreeBooksPreset('all_free')}
+                        class="px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white transition cursor-pointer shadow-xs"
+                      >
+                        🎉 Barchasini TEKIN qilish (Aksiya)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyFreeBooksPreset('all_locked')}
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition cursor-pointer"
+                      >
+                        🔒 Barchasi pullik (Faqat VIP)
+                      </button>
+                    </div>
+
+                    {/* 6 Ta Kitob Kartochkalari */}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                      {[
+                        { num: 1, title: 'Book 1 - Elementary', icon: '📕', desc: 'A1 daraja • 600 so\'z' },
+                        { num: 2, title: 'Book 2 - Pre-Intermediate', icon: '🎓', desc: 'A2 daraja • 600 so\'z' },
+                        { num: 3, title: 'Book 3 - Intermediate', icon: '📘', desc: 'B1 daraja • 600 so\'z' },
+                        { num: 4, title: 'Book 4 - Upper-Intermediate', icon: '📙', desc: 'B2 daraja • 600 so\'z' },
+                        { num: 5, title: 'Book 5 - Advanced', icon: '📓', desc: 'C1 daraja • 600 so\'z' },
+                        { num: 6, title: 'Book 6 - Mastery', icon: '🏆', desc: 'C2 daraja • 600 so\'z' },
+                      ].map(b => {
+                        const isFree = freeBookIds.includes(b.num);
+                        return (
+                          <div
+                            key={b.num}
+                            class={`p-4 rounded-2xl border transition flex flex-col justify-between ${
+                              isFree
+                                ? 'bg-white border-emerald-300 shadow-xs ring-1 ring-emerald-200'
+                                : 'bg-white border-slate-200 opacity-95'
+                            }`}
+                          >
+                            <div>
+                              <div class="flex items-center justify-between mb-2">
+                                <span class="text-xl">{b.icon}</span>
+                                <span class={`text-[11px] font-black px-2.5 py-1 rounded-full ${
+                                  isFree
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                    : 'bg-amber-100 text-amber-900 border border-amber-300'
+                                }`}>
+                                  {isFree ? '🟢 TEKIN (BEPUL)' : '🔒 VIP / PULLIK'}
+                                </span>
+                              </div>
+                              <h5 class="font-black text-slate-900 text-sm">{b.title}</h5>
+                              <p class="text-xs text-slate-500 mt-0.5">{b.desc}</p>
+                              <p class="text-[11px] mt-2 font-medium text-slate-600">
+                                {isFree 
+                                  ? '✅ Hamma foydalanuvchilar to\'lovsiz o\'rgana oladi.' 
+                                  : '⚠️ Faqat VIP foydalanuvchilar yoki xarid qilganlar o\'qiy oladi.'}
+                              </p>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                              <span class="text-[11px] font-bold text-slate-400">
+                                Status: <strong class={isFree ? 'text-emerald-700' : 'text-amber-800'}>{isFree ? 'Ochiq' : 'Qulflangan'}</strong>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => toggleBookFree(b.num)}
+                                class={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center gap-1 shadow-xs ${
+                                  isFree
+                                    ? 'bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-200 hover:border-rose-200'
+                                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
+                                }`}
+                              >
+                                <span>{isFree ? '🔒 Pullik qilish' : '🟢 Tekin qilish'}</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -3819,6 +4280,160 @@
                   </div>
                 </form>
               </div>
+            </div>
+          )}
+
+          {/* Foydalanuvchiga VIP / Premium Berish Modali */}
+          {vipModalUser && (
+            <div 
+              class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setVipModalUser(null);
+              }}
+            >
+              <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-amber-200/80 space-y-5 animate-in fade-in zoom-in-95 duration-200 relative z-[101]">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white flex items-center justify-center text-xl font-bold shadow-md shadow-amber-500/20">
+                      👑
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-black text-slate-900">VIP / Premium Boshqaruvi</h3>
+                      <p class="text-xs text-slate-500">
+                        Foydalanuvchi: <span class="font-bold text-slate-800">{vipModalUser.name}</span> (@{vipModalUser.username})
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setVipModalUser(null)} 
+                    class="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Joriy VIP holati */}
+                <div class={`p-4 rounded-2xl border ${
+                  vipModalUser.isVip 
+                    ? 'bg-amber-50/70 border-amber-200 text-amber-900' 
+                    : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`}>
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-600">Joriy Obuna Holati:</span>
+                    <span class={`text-xs font-black px-2.5 py-1 rounded-full inline-flex items-center gap-1 ${
+                      vipModalUser.isVip 
+                        ? 'bg-amber-500 text-white shadow-xs' 
+                        : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      <span>{vipModalUser.isVip ? '👑 VIP FAOL' : '⚪ Oddiy (Bepul)'}</span>
+                    </span>
+                  </div>
+                  {vipModalUser.isVip && (
+                    <div class="mt-2.5 pt-2.5 border-t border-amber-200/60 text-xs flex items-center justify-between text-amber-800">
+                      <span>Tugash muddati:</span>
+                      <span class="font-mono font-bold">
+                        {vipModalUser.premiumUntil 
+                          ? new Date(vipModalUser.premiumUntil).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' })
+                          : 'Doimiy (Cheksiz)'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* VIP Muddati Tanlash */}
+                <div class="space-y-2.5">
+                  <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                    VIP Muddati / Ta'rifi:
+                  </label>
+                  <div class="grid grid-cols-2 gap-2">
+                    {[
+                      { days: 30, title: '1 Oy', desc: '30 kunlik', badge: 'Standart', icon: '⚡' },
+                      { days: 90, title: '3 Oy', desc: '90 kunlik', badge: 'Tavsiya', icon: '🌟' },
+                      { days: 365, title: '1 Yil', desc: '365 kunlik', badge: 'Katta sovg\'a', icon: '🏆' },
+                      { days: 'lifetime', title: 'Umrbod', desc: 'Cheksiz VIP', badge: 'Doimiy', icon: '💎' },
+                    ].map(opt => (
+                      <button
+                        type="button"
+                        key={opt.days}
+                        onClick={() => setVipDurationDays(opt.days)}
+                        class={`p-3 rounded-2xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                          vipDurationDays === opt.days 
+                            ? 'border-amber-500 bg-amber-50/50 shadow-sm ring-1 ring-amber-300' 
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}
+                      >
+                        <div class="flex items-center justify-between w-full mb-1">
+                          <span class="text-base">{opt.icon}</span>
+                          <span class={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                            vipDurationDays === opt.days ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'
+                          }`}>
+                            {opt.badge}
+                          </span>
+                        </div>
+                        <div>
+                          <div class="font-black text-slate-900 text-sm">{opt.title}</div>
+                          <div class="text-[11px] text-slate-500">{opt.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div class="text-[11px] text-slate-500 bg-blue-50/70 p-3 rounded-2xl border border-blue-200/80 flex items-start gap-2">
+                  <span class="text-base leading-none">💡</span>
+                  <span>
+                    VIP berilishi bilan foydalanuvchining mobil ilovasida barcha 6 ta kitob, testlar, audio va so'zlar to'liq ochiladi.
+                  </span>
+                </div>
+
+                {/* Tugmalar */}
+                <div class="flex flex-col gap-2 pt-2 border-t border-slate-100">
+                  <div class="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setVipModalUser(null)}
+                      class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                    >
+                      Yopish
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveUserVip(vipDurationDays)}
+                      disabled={isSavingVip}
+                      class="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
+                    >
+                      {isSavingVip ? (
+                        <span>Saqlanmoqda...</span>
+                      ) : (
+                        <>
+                          <span>👑</span>
+                          <span>VIP / Premium Berish</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {vipModalUser.isVip && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm(`Rostdan ham "${vipModalUser.name}" ning VIP obunasini bekor qilmoqchimisiz?`)) {
+                          handleSaveUserVip(0);
+                        }
+                      }}
+                      disabled={isSavingVip}
+                      class="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <span>🚫</span>
+                      <span>VIP Obunani Bekor Qilish (Olib tashlash)</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Yangi Kirim / Chiqim Qo'shish Modali */}
           {showTxModal && (
             <div class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
