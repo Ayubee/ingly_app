@@ -12,6 +12,7 @@ import { Alert } from 'react-native';
 import { getStorageItem, setStorageItem, removeStorageItem, STORAGE_KEYS } from '../services/storage.js';
 import { syncUserWithSupabase, syncAllLocalUsersToSupabase, fetchUserRemoteStatus, verifyUserCredentialsRemote } from '../services/userService.js';
 import { recordTransaction } from '../services/appSettingsService.js';
+import { syncUserLeaderboardScore } from '../services/leaderboardService.js';
 import { hashPassword, verifyPassword } from '../utils/crypto.js';
 
 const UserContext = createContext();

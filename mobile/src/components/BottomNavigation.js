@@ -9,9 +9,10 @@ export default function BottomNavigation({ currentTab, onSelectTab }) {
   const tabs = [
     { id: 'Home', label: t('nav_home', 'Home'), icon: '🏠' },
     { id: 'Learn', label: t('nav_learn', 'Learn'), icon: '📖' },
+    { id: 'Leaderboard', label: t('nav_leaderboard', 'Reyting'), icon: '🏆' },
     { id: 'MyWords', label: t('nav_my_words', 'Lug\'atim'), icon: '✍️' },
     { id: 'Flashcards', label: t('nav_cards', 'Kartalar'), icon: '🎴' },
-    { id: 'Quiz', label: t('nav_quiz', 'Quiz'), icon: '🏆' },
+    { id: 'Quiz', label: t('nav_quiz', 'Test'), icon: '🎯' },
     { id: 'Profile', label: t('nav_profile', 'Profil'), icon: '👤' },
   ];
 
@@ -34,6 +35,7 @@ export default function BottomNavigation({ currentTab, onSelectTab }) {
                 styles.tabLabel,
                 isActive ? styles.activeLabel : styles.inactiveLabel,
               ]}
+              numberOfLines={1}
             >
               {tab.label}
             </Text>
@@ -46,13 +48,13 @@ export default function BottomNavigation({ currentTab, onSelectTab }) {
 
 const styles = StyleSheet.create({
   navBar: {
-    height: Platform.OS === 'ios' ? 82 : 66,
+    height: Platform.OS === 'ios' ? 82 : 64,
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
-    paddingBottom: Platform.OS === 'ios' ? 22 : 8,
-    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 6,
+    paddingTop: 6,
     justifyContent: 'space-around',
     alignItems: 'center',
     shadowColor: '#000',
@@ -65,18 +67,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 2,
-    paddingHorizontal: 1,
+    paddingVertical: 1,
+    paddingHorizontal: 0,
   },
   tabIcon: {
-    fontSize: 20,
+    fontSize: 18,
     marginBottom: 2,
   },
   activeIcon: {
-    transform: [{ scale: 1.12 }],
+    transform: [{ scale: 1.15 }],
   },
   tabLabel: {
-    fontSize: 9.5,
+    fontSize: 8.8,
     fontWeight: '700',
     textAlign: 'center',
   },

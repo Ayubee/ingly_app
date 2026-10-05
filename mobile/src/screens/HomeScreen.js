@@ -23,6 +23,7 @@ import { useUser } from '../context/UserContext.js';
 import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 import { getStorageItem, setStorageItem, STORAGE_KEYS } from '../services/storage.js';
+import { getUserLevelInfo } from '../services/leaderboardService.js';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 44) / 2;
@@ -194,6 +195,35 @@ export default function HomeScreen({ onNavigate }) {
             </View>
           </View>
         </View>
+
+        {/* 2.1. Top O'quvchilar Reytingi & Daraja Vidjeti */}
+        <TouchableOpacity
+          style={styles.leaderboardWidget}
+          activeOpacity={0.85}
+          onPress={() => onNavigate && onNavigate('Leaderboard')}
+        >
+          <View style={styles.leaderboardWidgetLeft}>
+            <View style={styles.leaderboardTrophyBox}>
+              <Text style={{ fontSize: 24 }}>🏆</Text>
+            </View>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.leaderboardWidgetTitle}>
+                  {t('leaderboard_title', "Top O'quvchilar Reytingi")}
+                </Text>
+                <View style={[styles.homeLevelBadge, { backgroundColor: (getUserLevelInfo(user.totalWordsLearned || 0).color) + '22' }]}>
+                  <Text style={[styles.homeLevelBadgeText, { color: getUserLevelInfo(user.totalWordsLearned || 0).color }]}>
+                    {getUserLevelInfo(user.totalWordsLearned || 0).icon} Lvl {getUserLevelInfo(user.totalWordsLearned || 0).level}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.leaderboardWidgetSub} numberOfLines={1}>
+                {user.totalWordsLearned || 0} ta so'z yodlandi • Reytingni ko'rish ➔
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.leaderboardWidgetArrow}>➔</Text>
+        </TouchableOpacity>
 
         {/* Yangiliklar va Yangi Funksiyalar Banneri (Bir marta bosganda yo'qoladi, yangisi qo'shilsa yana chiqadi) */}
         {isAnnouncementVisible && (
@@ -940,5 +970,64 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: colors.primary.DEFAULT,
+  },
+  leaderboardWidget: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1.5,
+    borderColor: '#FEF08A',
+    borderLeftWidth: 4.5,
+    borderLeftColor: '#EAB308',
+    marginBottom: 12,
+    shadowColor: '#EAB308',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  leaderboardWidgetLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  leaderboardTrophyBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#FEF9C3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leaderboardWidgetTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  homeLevelBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  homeLevelBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+  },
+  leaderboardWidgetSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  leaderboardWidgetRight: {
+    marginLeft: 8,
+  },
+  leaderboardWidgetArrow: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#B45309',
   },
 });

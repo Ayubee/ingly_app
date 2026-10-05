@@ -26,6 +26,7 @@ import { useUser } from '../context/UserContext.js';
 import { useLanguage } from '../context/LanguageContext.js';
 import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 import PaymentModal from '../components/PaymentModal.js';
+import { getUserLevelInfo, LEVELS_CONFIG } from '../services/leaderboardService.js';
 
 const AVAILABLE_AVATARS = ['👨‍🎓', '👩‍🎓', '🦁', '🦊', '🚀', '⚡️', '👑', '🎯', '🦉', '🌟'];
 const REMINDER_TIMES = ['08:00', '13:00', '19:00', '21:00'];
@@ -277,6 +278,15 @@ export default function ProfileScreen({ onNavigate }) {
     );
   };
 
+  // Daraja va Reyting ma'lumotlari
+  const myLevelInfo = getUserLevelInfo(user?.totalWordsLearned || 0);
+  const getLocalizedLevelTitle = (levelNum) => {
+    const cfg = LEVELS_CONFIG.find(c => c.level === levelNum) || LEVELS_CONFIG[0];
+    if (language === 'ru') return cfg.titleRu;
+    if (language === 'en') return cfg.titleEn;
+    return cfg.titleUz;
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -314,6 +324,37 @@ export default function ProfileScreen({ onNavigate }) {
               </Text>
             </View>
           </View>
+
+          {/* Quick Level & Leaderboard Badge */}
+          <View style={styles.profileLevelRow}>
+            <View style={[styles.profileLevelBadge, { backgroundColor: myLevelInfo.color + '22', borderColor: myLevelInfo.color }]}>
+              <Text style={[styles.profileLevelBadgeText, { color: myLevelInfo.color }]}>
+                {myLevelInfo.icon} Level {myLevelInfo.level} • {getLocalizedLevelTitle(myLevelInfo.level)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => onNavigate && onNavigate('Leaderboard')}
+              style={styles.profileLeaderboardBtn}
+            >
+              <Text style={styles.profileLeaderboardBtnText}>🏆 {t('nav_leaderboard', 'Reyting')} ➔</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Level Progress */}
+          <View style={styles.profileLevelProgressTrack}>
+            <View
+              style={[
+                styles.profileLevelProgressFill,
+                { width: `${myLevelInfo.progressPercent}%`, backgroundColor: myLevelInfo.color }
+              ]}
+            />
+          </View>
+          <Text style={styles.profileLevelProgressSub}>
+            {myLevelInfo.isMaxLevel
+              ? 'Eng yuqori daraja! 🚀'
+              : `${t('leaderboard_to_next_level', 'Keyingi darajagacha')}: ${myLevelInfo.wordsToNext} ${t('leaderboard_words_left', 'ta so\'z qoldi')} (${myLevelInfo.progressPercent}%)`}
+          </Text>
 
           {/* Quick Action: Tahrirlash tugmasi */}
           <TouchableOpacity
@@ -1143,8 +1184,57 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#475569',
   },
-  editProfileBtn: {
+  profileLevelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
     marginTop: 14,
+    marginBottom: 8,
+  },
+  profileLevelBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  profileLevelBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  profileLeaderboardBtn: {
+    backgroundColor: '#FEF9C3',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FEF08A',
+  },
+  profileLeaderboardBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#B45309',
+  },
+  profileLevelProgressTrack: {
+    width: '100%',
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#F1F5F9',
+    overflow: 'hidden',
+  },
+  profileLevelProgressFill: {
+    height: '100%',
+    borderRadius: 3.5,
+  },
+  profileLevelProgressSub: {
+    fontSize: 10,
+    color: '#64748B',
+    marginTop: 4,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  editProfileBtn: {
+    marginTop: 8,
     backgroundColor: '#EEF0FF',
     paddingHorizontal: 16,
     paddingVertical: 8,

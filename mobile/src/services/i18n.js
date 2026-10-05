@@ -21,10 +21,27 @@ export const translations = {
     // Navigation
     nav_home: "Bosh sahifa",
     nav_learn: "Darslar",
+    nav_leaderboard: "Reyting",
     nav_my_words: "Lug'atim",
     nav_cards: "Kartalar",
     nav_quiz: "Test",
     nav_profile: "Profil",
+
+    // Leaderboard & Levels
+    leaderboard_title: "Top O'quvchilar Reytingi",
+    leaderboard_subtitle: "Eng ko'p so'z yodlagan faol talabalar jadvali",
+    leaderboard_my_rank: "Sizning O'rningiz",
+    leaderboard_my_level: "Sizning Darajangiz",
+    leaderboard_to_next_level: "Keyingi darajagacha",
+    leaderboard_words_left: "ta so'z qoldi",
+    leaderboard_tab_all: "🏆 Barchasi",
+    leaderboard_tab_books: "📖 Kitob So'zlari",
+    leaderboard_tab_custom: "✍️ Shaxsiy Lug'at",
+    leaderboard_rank: "O'rin",
+    leaderboard_words_count: "ta so'z",
+    leaderboard_xp_label: "XP",
+    leaderboard_empty: "Hozircha reyting jadvali shakllanmoqda...",
+    leaderboard_refresh: "Yangilash",
 
     // Profile Screen
     profile_title: "Shaxsiy Profil",
@@ -170,10 +187,27 @@ export const translations = {
     // Navigation
     nav_home: "Главная",
     nav_learn: "Уроки",
+    nav_leaderboard: "Рейтинг",
     nav_my_words: "Словарь",
     nav_cards: "Карточки",
     nav_quiz: "Тест",
     nav_profile: "Профиль",
+
+    // Leaderboard & Levels
+    leaderboard_title: "Рейтинг Учеников",
+    leaderboard_subtitle: "Таблица лидеров по количеству выученных слов",
+    leaderboard_my_rank: "Ваше Место",
+    leaderboard_my_level: "Ваш Уровень",
+    leaderboard_to_next_level: "До следующего уровня",
+    leaderboard_words_left: "слов осталось",
+    leaderboard_tab_all: "🏆 Все",
+    leaderboard_tab_books: "📖 Из Книг",
+    leaderboard_tab_custom: "✍️ Мой Словарь",
+    leaderboard_rank: "Место",
+    leaderboard_words_count: "слов",
+    leaderboard_xp_label: "XP",
+    leaderboard_empty: "Таблица лидеров формируется...",
+    leaderboard_refresh: "Обновить",
 
     // Profile Screen
     profile_title: "Личный Профиль",
@@ -319,10 +353,27 @@ export const translations = {
     // Navigation
     nav_home: "Home",
     nav_learn: "Learn",
+    nav_leaderboard: "Ranking",
     nav_my_words: "My Words",
     nav_cards: "Flashcards",
     nav_quiz: "Quiz",
     nav_profile: "Profile",
+
+    // Leaderboard & Levels
+    leaderboard_title: "Student Leaderboard",
+    leaderboard_subtitle: "Rankings of students by words learned",
+    leaderboard_my_rank: "Your Rank",
+    leaderboard_my_level: "Your Level",
+    leaderboard_to_next_level: "To next level",
+    leaderboard_words_left: "words left",
+    leaderboard_tab_all: "🏆 All Words",
+    leaderboard_tab_books: "📖 Book Words",
+    leaderboard_tab_custom: "✍️ Custom Words",
+    leaderboard_rank: "Rank",
+    leaderboard_words_count: "words",
+    leaderboard_xp_label: "XP",
+    leaderboard_empty: "Leaderboard is being updated...",
+    leaderboard_refresh: "Refresh",
 
     // Profile Screen
     profile_title: "Personal Profile",
