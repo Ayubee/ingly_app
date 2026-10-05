@@ -21,6 +21,7 @@ import { colors, srsModes } from '../theme.js';
 import MovieClipModal from '../components/MovieClipModal.js';
 import allWordsData from '../data/all_words.json';
 import { useUser } from '../context/UserContext.js';
+import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 
 const { width } = Dimensions.get('window');
 
@@ -38,6 +39,17 @@ export default function FlashcardScreen({ onNavigate }) {
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const [isUnitFinished, setIsUnitFinished] = useState(false);
+  const [videosEnabled, setVideosEnabled] = useState(
+    () => getAppSettings()?.videos_enabled !== false
+  );
+
+  // Admin paneldan videolarni yoqish/o'chirish flagini tinglash
+  useEffect(() => {
+    const unsub = onSettingsChange((settings) => {
+      setVideosEnabled(settings?.videos_enabled !== false);
+    });
+    return unsub;
+  }, []);
 
   // Faol kitob va unit bo'yicha so'zlarni filterlash (har unitda 20 ta so'z)
   const currentUnitWords = useMemo(() => {
@@ -363,17 +375,19 @@ export default function FlashcardScreen({ onNavigate }) {
             </Text>
           </View>
 
-          {/* Movie Context Button (3-5 soniyalik video lavha / iqtibos) */}
-          <TouchableOpacity
-            style={styles.movieClipButton}
-            activeOpacity={0.8}
-            onPress={() => setIsClipModalVisible(true)}
-          >
-            <Text style={styles.movieClipEmoji}>🎬</Text>
-            <Text style={styles.movieClipText}>
-              Kino kontekstini ko'rish ({currentWord.movieTitle})
-            </Text>
-          </TouchableOpacity>
+          {/* Movie Context Button (3-5 soniyalik video lavha / iqtibos) - Admin ruxsat bergan bo'lsa */}
+          {videosEnabled && (
+            <TouchableOpacity
+              style={styles.movieClipButton}
+              activeOpacity={0.8}
+              onPress={() => setIsClipModalVisible(true)}
+            >
+              <Text style={styles.movieClipEmoji}>🎬</Text>
+              <Text style={styles.movieClipText}>
+                Kino kontekstini ko'rish ({currentWord.movieTitle})
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Feedback Alert Toast */}
@@ -433,11 +447,13 @@ export default function FlashcardScreen({ onNavigate }) {
       </ScrollView>
 
       {/* Movie Clip Modal */}
-      <MovieClipModal
-        visible={isClipModalVisible}
-        onClose={() => setIsClipModalVisible(false)}
-        wordData={currentWord}
-      />
+      {videosEnabled && (
+        <MovieClipModal
+          visible={isClipModalVisible}
+          onClose={() => setIsClipModalVisible(false)}
+          wordData={currentWord}
+        />
+      )}
 
       {/* Quick Unit Selector Modal (1 to 30) */}
       <Modal

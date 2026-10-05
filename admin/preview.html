@@ -312,6 +312,10 @@
       const [cardReceiverNumber, setCardReceiverNumber] = useState(() => {
         return localStorage.getItem('ingly_card_receiver_number') || '8600 5304 1234 5678';
       });
+      const [videosEnabled, setVideosEnabled] = useState(() => {
+        const saved = localStorage.getItem('ingly_videos_enabled');
+        return saved !== null ? JSON.parse(saved) : true;
+      });
       const [isSavingPrices, setIsSavingPrices] = useState(false);
       const [selectedMovie, setSelectedMovie] = useState(null);
       const [videoTab, setVideoTab] = useState('youtube'); // 'youtube' yoki 'html5'
@@ -496,6 +500,10 @@
                     const val = Number(item.setting_value) || 19000;
                     setSingleBookPrice(val);
                     localStorage.setItem('ingly_single_book_price', String(val));
+                  } else if (item.setting_key === 'videos_enabled') {
+                    const val = item.setting_value === true || item.setting_value === 'true';
+                    setVideosEnabled(val);
+                    localStorage.setItem('ingly_videos_enabled', JSON.stringify(val));
                   } else if (item.setting_key === 'card_receiver_number') {
                     const val = String(item.setting_value || '8600 5304 1234 5678');
                     setCardReceiverNumber(val);
@@ -605,6 +613,26 @@
             }, { onConflict: 'setting_key' });
           } catch (e) {
             console.warn('Supabase vip save error:', e);
+          }
+        }
+      };
+
+      // Barcha videolarni ko'rsatish/yashirish switchi (Global Feature Flag)
+      const handleToggleVideos = async () => {
+        const newVal = !videosEnabled;
+        setVideosEnabled(newVal);
+        localStorage.setItem('ingly_videos_enabled', JSON.stringify(newVal));
+        showToast(`Kinolar: ${newVal ? 'YOQILDI (Ilovada ko\'rinadi)' : 'O\'CHIRILDI (Foydalanuvchilardan yashirildi)'}`);
+
+        if (supabaseClient) {
+          try {
+            await supabaseClient.from('app_settings').upsert({
+              setting_key: 'videos_enabled',
+              setting_value: newVal,
+              description: 'Barcha kinolarni/videolarni mobil ilovada foydalanuvchilarga ko\'rsatish yoki yashirish.'
+            }, { onConflict: 'setting_key' });
+          } catch (e) {
+            console.warn('Supabase videos save error:', e);
           }
         }
       };
@@ -1388,6 +1416,39 @@
                       </div>
                     </div>
 
+                    {/* Global Videos Toggle Banner (Umumiy Kinolarni Ko'rsatish/Yashirish) */}
+                    <div class={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition ${videosEnabled ? 'bg-indigo-50/70 border-indigo-200' : 'bg-amber-50/80 border-amber-200'}`}>
+                      <div class="flex items-center gap-3">
+                        <span class="text-3xl">{videosEnabled ? '🎬' : '🙈'}</span>
+                        <div>
+                          <div class="flex items-center gap-2">
+                            <h4 class="font-extrabold text-sm text-slate-900">
+                              Kinolarni Ilovada Ko'rsatish:
+                            </h4>
+                            <span class={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ${videosEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                              {videosEnabled ? '✓ YOQILGAN (Ko\'rinmoqda)' : '✕ O\'CHIRILGAN (Yashirilgan)'}
+                            </span>
+                          </div>
+                          <p class="text-xs text-slate-500 mt-0.5">
+                            {videosEnabled 
+                              ? 'Mobil ilovadagi barcha foydalanuvchilar kinolardan parcha va video lavhalarni ko\'ra oladi.' 
+                              : 'Barcha foydalanuvchilardan video parchalari butunlay yashirildi (tugma ko\'rinmaydi).'}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleToggleVideos}
+                        class={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-xs cursor-pointer shrink-0 ${
+                          videosEnabled 
+                            ? 'bg-rose-600 hover:bg-rose-700 text-white' 
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        }`}
+                      >
+                        <span>{videosEnabled ? '🚫 Kinolarni Ilovadan Yashirish' : '🎬 Kinolarni Ilovada Ko\'rsatish'}</span>
+                      </button>
+                    </div>
+
                     {/* Book & Unit Filters */}
                     <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100">
                       {/* Books Selector */}
@@ -1639,57 +1700,112 @@
                             );
                           })()}
 
-                          {/* Context & Explanation */}
-                          <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1">
+                          {/* So'z Tarjimasini Tahrirlash va Kontekst */}
+                          <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
                             <div class="flex items-center justify-between">
-                              <span class="text-xs font-bold text-slate-700">O'zbekcha tarjimasi:</span>
-                              <span class="text-xs font-extrabold text-brand-600">{selectedMovie.uzbek}</span>
+                              <label class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <span>🇺🇿</span>
+                                <span>O'zbekcha Tarjimasi:</span>
+                              </label>
+                              <span class="text-[10px] text-slate-400 font-medium">To'g'ridan-to'g'ri o'zgartirish</span>
                             </div>
-                            <p class="text-xs text-slate-500 italic">Ta'rif: "{selectedMovie.desc || 'Bu so\'z kinoda real kontekstda qo\'llanilgan.'}"</p>
+                            <input
+                              type="text"
+                              value={selectedMovie.uzbek || ''}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setSelectedMovie(prev => ({ ...prev, uzbek: val }));
+                              }}
+                              placeholder="O'zbekcha tarjimasini kiriting..."
+                              class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 bg-white focus:outline-none focus:border-brand-500 shadow-2xs"
+                            />
+                            <p class="text-[11px] text-slate-500 italic mt-1">Ta'rif: "{selectedMovie.desc || 'Bu so\'z kinoda real kontekstda qo\'llanilgan.'}"</p>
                           </div>
 
-                          {/* Video havolasini boshqarish / tahrirlash */}
-                          <div class="bg-indigo-50/60 p-3 rounded-2xl border border-indigo-100 space-y-2">
+                          {/* Video Havolasini Boshqarish (Qo'yish / O'chirish) */}
+                          <div class="bg-indigo-50/60 p-4 rounded-2xl border border-indigo-100 space-y-2.5">
                             <div class="flex items-center justify-between">
                               <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                                 <span>🎬</span>
-                                <span>Ushbu so'z uchun alohida video havolasi (MP4 yoki YouTube):</span>
+                                <span>Ushbu so'z uchun video havolasi (MP4 yoki YouTube):</span>
                               </span>
-                              <span class="text-[10px] font-medium text-brand-600">Maxsus havola</span>
+                              {selectedMovie.video_clip_url ? (
+                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  ✓ Video ulangan
+                                </span>
+                              ) : (
+                                <span class="text-[10px] font-semibold text-slate-400">
+                                  Standart treyler
+                                </span>
+                              )}
                             </div>
-                            <div class="flex gap-2">
+                            <div class="flex flex-col sm:flex-row gap-2">
                               <input
                                 type="text"
-                                placeholder="Masalan: https://example.com/clip.mp4 yoki https://youtube.com/watch?v=..."
+                                placeholder="Masalan: https://storage.ingly.uz/clip.mp4 yoki https://youtube.com/watch?v=..."
                                 value={selectedMovie.video_clip_url || selectedMovie.video || ''}
                                 onChange={(e) => {
                                   const val = e.target.value;
                                   setSelectedMovie(prev => ({ ...prev, video_clip_url: val }));
                                 }}
-                                class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 bg-white focus:outline-none focus:border-brand-500 font-mono"
+                                class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 bg-white focus:outline-none focus:border-brand-500 font-mono shadow-2xs"
                               />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const val = selectedMovie.video_clip_url || '';
-                                  const updated = allWords.map(w => w.id === selectedMovie.id ? { ...w, video_clip_url: val } : w);
-                                  setAllWords(updated);
-                                  try {
-                                    const customWordsStr = localStorage.getItem('ingly_custom_words');
-                                    let customList = customWordsStr ? JSON.parse(customWordsStr) : [];
-                                    customList = customList.map(cw => cw.id === selectedMovie.id ? { ...cw, video_clip_url: val } : cw);
-                                    if (!customList.some(cw => cw.id === selectedMovie.id)) customList.push({ ...selectedMovie, video_clip_url: val });
-                                    localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
-                                  } catch (e) {}
-                                  if (supabaseClient) {
-                                    supabaseClient.from('words').update({ video_clip_url: val }).eq('word', selectedMovie.word).then(() => {});
-                                  }
-                                  showToast(`"${selectedMovie.word}" uchun video saqlandi!`);
-                                }}
-                                class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-xs transition cursor-pointer shadow-xs shrink-0"
-                              >
-                                Saqlash
-                              </button>
+                              <div class="flex items-center gap-2 shrink-0">
+                                {/* Saqlash tugmasi */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const val = (selectedMovie.video_clip_url || '').trim();
+                                    const uzbekVal = (selectedMovie.uzbek || '').trim();
+                                    const updated = allWords.map(w => w.id === selectedMovie.id ? { ...w, video_clip_url: val, uzbek: uzbekVal || w.uzbek } : w);
+                                    setAllWords(updated);
+                                    try {
+                                      const customWordsStr = localStorage.getItem('ingly_custom_words');
+                                      let customList = customWordsStr ? JSON.parse(customWordsStr) : [];
+                                      customList = customList.map(cw => cw.id === selectedMovie.id ? { ...cw, video_clip_url: val, uzbek: uzbekVal || cw.uzbek } : cw);
+                                      if (!customList.some(cw => cw.id === selectedMovie.id)) {
+                                        customList.push({ ...selectedMovie, video_clip_url: val, uzbek: uzbekVal || selectedMovie.uzbek });
+                                      }
+                                      localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
+                                    } catch (e) {}
+                                    if (supabaseClient) {
+                                      const updatePayload = { video_clip_url: val || null };
+                                      if (uzbekVal) updatePayload.uzbek = uzbekVal;
+                                      supabaseClient.from('words').update(updatePayload).eq('word', selectedMovie.word).then(() => {});
+                                    }
+                                    showToast(`"${selectedMovie.word}" ma'lumotlari muvaffaqiyatli saqlandi!`);
+                                  }}
+                                  class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-xs transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                                >
+                                  <span>💾</span>
+                                  <span>Saqlash</span>
+                                </button>
+
+                                {/* Videoni o'chirish tugmasi */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedMovie(prev => ({ ...prev, video_clip_url: '' }));
+                                    const updated = allWords.map(w => w.id === selectedMovie.id ? { ...w, video_clip_url: '' } : w);
+                                    setAllWords(updated);
+                                    try {
+                                      const customWordsStr = localStorage.getItem('ingly_custom_words');
+                                      let customList = customWordsStr ? JSON.parse(customWordsStr) : [];
+                                      customList = customList.map(cw => cw.id === selectedMovie.id ? { ...cw, video_clip_url: '' } : cw);
+                                      localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
+                                    } catch (e) {}
+                                    if (supabaseClient) {
+                                      supabaseClient.from('words').update({ video_clip_url: null }).eq('word', selectedMovie.word).then(() => {});
+                                    }
+                                    showToast(`"${selectedMovie.word}" uchun maxsus video o'chirildi! 🗑️`);
+                                  }}
+                                  class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl font-bold text-xs transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                                  title="Videoni o'chirish va tozalash"
+                                >
+                                  <span>🗑️</span>
+                                  <span>Videoni O'chirish</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
 
@@ -1934,7 +2050,7 @@
                     <p class="text-sm text-slate-500">Ilovani Play Marketda yangilamasdan, darhol admin paneldan turib reklama va obunani yoqish yoki o'chirish</p>
                   </div>
 
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* AdMob Switch */}
                     <div class="border border-slate-200 rounded-3xl p-6 space-y-4">
                       <div class="flex items-center justify-between">
@@ -1976,6 +2092,28 @@
                       </div>
                       <div class={`text-xs font-bold px-3 py-2 rounded-xl ${vipEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
                         Holat: {vipEnabled ? 'Pullik obuna tizimi yoqildi' : 'Hamma 6 ta kitob mutlaqo bepul (O\'chiq)'}
+                      </div>
+                    </div>
+
+                    {/* Global Cinema & Videos Switch */}
+                    <div class="border border-slate-200 rounded-3xl p-6 space-y-4">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          <span class="text-3xl">🎬</span>
+                          <div>
+                            <h4 class="font-bold text-slate-900">Kinolarni Ilovada Ko'rsatish</h4>
+                            <p class="text-xs text-slate-400">Barcha videolarni yashirish yoki ko'rsatish</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleToggleVideos}
+                          class={`w-14 h-8 rounded-full transition-colors relative cursor-pointer ${videosEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                        >
+                          <span class={`w-6 h-6 bg-white rounded-full absolute top-1 transition-transform ${videosEnabled ? 'left-7' : 'left-1'}`}></span>
+                        </button>
+                      </div>
+                      <div class={`text-xs font-bold px-3 py-2 rounded-xl ${videosEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                        Holat: {videosEnabled ? 'Kinolar ilovada foydalanuvchilarga ochiq' : 'Kinolar va video lavhalar yashirilgan (O\'chiq)'}
                       </div>
                     </div>
                   </div>
@@ -2419,11 +2557,23 @@
 
                   {/* Row 5: Kino lavhasi */}
                   <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kinodan Video Klip Havolasi (MP4)</label>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="block font-bold text-slate-700">Kinodan Video Klip Havolasi (MP4 yoki YouTube)</label>
+                      {wordForm.video_clip_url ? (
+                        <button
+                          type="button"
+                          onClick={() => setWordForm({ ...wordForm, video_clip_url: '' })}
+                          class="text-xs text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>🗑️</span>
+                          <span>Videoni tozalash</span>
+                        </button>
+                      ) : null}
+                    </div>
                     <input 
                       type="url" 
-                      placeholder="https://.../clip.mp4" 
-                      value={wordForm.video_clip_url}
+                      placeholder="https://.../clip.mp4 yoki https://youtube.com/watch?v=..." 
+                      value={wordForm.video_clip_url || ''}
                       onChange={(e) => setWordForm({ ...wordForm, video_clip_url: e.target.value })}
                       class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-brand-500 font-mono"
                     />
