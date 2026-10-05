@@ -14,11 +14,11 @@ const STORAGE_KEY_SETTINGS = 'ingly_cached_app_settings';
 // Boshlang'ich standart parametrlar (TZ.txt bo'yicha)
 let currentSettings = {
   ads_enabled: false,
-  premium_mode_enabled: false,
-  free_books_count: 6,
+  premium_mode_enabled: true,
+  free_books_count: 1, // Faqat Book 1 bepul, Book 2-6 lar VIP / pullik
   daily_goal_default: 20,
   premium_monthly_price: 29000, // VIP oylik obuna narxi (so'm)
-  single_book_price: 19000,     // Bitta kitob narxi (so'm)
+  single_book_price: 10000,     // Bitta kitob narxi (so'm)
   card_receiver_number: '8600 5304 1234 5678', // To'lov kartasi
   click_service_id: 'ingly_click_main',
   payme_merchant_id: 'ingly_payme_main',
@@ -82,13 +82,13 @@ export async function initAppSettings() {
         } else if (item.setting_key === 'premium_mode_enabled') {
           currentSettings.premium_mode_enabled = item.setting_value === true || item.setting_value === 'true';
         } else if (item.setting_key === 'free_books_count') {
-          currentSettings.free_books_count = Number(item.setting_value) || 6;
+          currentSettings.free_books_count = item.setting_value !== undefined ? Number(item.setting_value) : 1;
         } else if (item.setting_key === 'daily_goal_default') {
           currentSettings.daily_goal_default = Number(item.setting_value) || 20;
         } else if (item.setting_key === 'premium_monthly_price') {
           currentSettings.premium_monthly_price = Number(item.setting_value) || 29000;
         } else if (item.setting_key === 'single_book_price') {
-          currentSettings.single_book_price = Number(item.setting_value) || 19000;
+          currentSettings.single_book_price = Number(item.setting_value) || 10000;
         } else if (item.setting_key === 'card_receiver_number') {
           currentSettings.card_receiver_number = String(item.setting_value || '8600 5304 1234 5678');
         }
@@ -113,11 +113,11 @@ export async function initAppSettings() {
           } else if (item.setting_key === 'premium_mode_enabled') {
             currentSettings.premium_mode_enabled = item.setting_value === true || item.setting_value === 'true';
           } else if (item.setting_key === 'free_books_count') {
-            currentSettings.free_books_count = Number(item.setting_value) || 6;
+            currentSettings.free_books_count = item.setting_value !== undefined ? Number(item.setting_value) : 1;
           } else if (item.setting_key === 'premium_monthly_price') {
             currentSettings.premium_monthly_price = Number(item.setting_value) || 29000;
           } else if (item.setting_key === 'single_book_price') {
-            currentSettings.single_book_price = Number(item.setting_value) || 19000;
+            currentSettings.single_book_price = Number(item.setting_value) || 10000;
           } else if (item.setting_key === 'card_receiver_number') {
             currentSettings.card_receiver_number = String(item.setting_value || '8600 5304 1234 5678');
           }

@@ -299,7 +299,7 @@
       });
       const [freeBooks, setFreeBooks] = useState(() => {
         const saved = localStorage.getItem('ingly_free_books');
-        return saved !== null ? Number(saved) : 6;
+        return saved !== null ? Number(saved) : 1;
       });
       const [vipMonthlyPrice, setVipMonthlyPrice] = useState(() => {
         const saved = localStorage.getItem('ingly_vip_monthly_price');
@@ -485,7 +485,7 @@
                     setVipEnabled(val);
                     localStorage.setItem('ingly_vip_enabled', JSON.stringify(val));
                   } else if (item.setting_key === 'free_books_count') {
-                    const val = Number(item.setting_value) || 6;
+                    const val = item.setting_value !== undefined ? Number(item.setting_value) : 1;
                     setFreeBooks(val);
                     localStorage.setItem('ingly_free_books', String(val));
                   } else if (item.setting_key === 'premium_monthly_price') {

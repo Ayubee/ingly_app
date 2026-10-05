@@ -20,7 +20,7 @@ import { colors } from '../theme.js';
 import CircularProgress from '../components/CircularProgress.js';
 import PaymentModal from '../components/PaymentModal.js';
 import { useUser } from '../context/UserContext.js';
-import { onSettingsChange } from '../services/appSettingsService.js';
+import { onSettingsChange, getAppSettings } from '../services/appSettingsService.js';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 44) / 2;
@@ -36,13 +36,7 @@ const BOOKS_METADATA = [
 
 export default function HomeScreen({ onNavigate }) {
   const { user, isPasswordExpired, subscribeVipMonthly, purchaseBook, isVipActive } = useUser();
-  const [appSettings, setAppSettings] = useState({
-    ads_enabled: false,
-    premium_mode_enabled: false,
-    free_books_count: 6,
-    premium_monthly_price: 29000,
-    single_book_price: 19000,
-  });
+  const [appSettings, setAppSettings] = useState(getAppSettings());
 
   const [paymentModal, setPaymentModal] = useState({
     visible: false,
@@ -222,8 +216,8 @@ export default function HomeScreen({ onNavigate }) {
           {BOOKS_METADATA.map((b) => {
             const progress = user.bookProgress[b.id] || 0;
             const isCompleted = progress === 100;
-            const isBookPurchased = isVipActive || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(b.id));
-            const isVipLocked = appSettings.premium_mode_enabled && b.id > appSettings.free_books_count && !isBookPurchased;
+            const freeCount = appSettings.free_books_count !== undefined ? appSettings.free_books_count : 1;
+            const isVipLocked = appSettings.premium_mode_enabled && b.id > freeCount && !isBookPurchased;
             // Book 1 har doim ochiq. Boshqa kitoblar oldingi kitob tugatilganda ochiladi.
             const isUnlocked = !isVipLocked && (b.id === 1 || (user.bookProgress[b.id - 1] || 0) >= 100);
             const isCurrentActive = isUnlocked && !isCompleted;

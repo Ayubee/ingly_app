@@ -67,7 +67,8 @@ export const INITIAL_USER = {
   activeUnit: 1,
   isPremium: false,
   premiumUntil: null, // VIP obuna tugash sanasi (ISO)
-  unlockedBooks: [1], // Sotib olingan yoki ochiq kitoblar ro'yxati [1, 2, ...]
+  unlockedBooks: [1], // Foydalanuvchi uchun ochiq kitoblar (Book 1 har doim bepul)
+  purchasedBooks: [], // Foydalanuvchi alohida xarid qilgan kitoblar ID lari [2, 3...]
   reminderTime: '20:00',
   notificationsEnabled: true,
   soundEnabled: true,
@@ -112,14 +113,21 @@ export function UserProvider({ children }) {
           const userCreatedAt = saved.createdAt || saved.created_at || new Date().toISOString();
           const userPassChanged = saved.passwordChangedAt || saved.password_changed_at || userCreatedAt;
 
+          const userIsPrem = !!saved.isPremium;
+          const userPurchased = Array.isArray(saved.purchasedBooks) ? saved.purchasedBooks : [];
+          const effectiveUnlocked = userIsPrem
+            ? [1, 2, 3, 4, 5, 6]
+            : [1, ...userPurchased.filter((b) => b > 1)];
+
           setUser({
             ...INITIAL_USER,
             ...saved,
             createdAt: userCreatedAt,
             passwordChangedAt: userPassChanged,
-            isPremium: !!saved.isPremium,
+            isPremium: userIsPrem,
             premiumUntil: saved.premiumUntil || null,
-            unlockedBooks: Array.isArray(saved.unlockedBooks) && saved.unlockedBooks.length > 0 ? saved.unlockedBooks : [1],
+            unlockedBooks: effectiveUnlocked,
+            purchasedBooks: userPurchased,
             dailyGoal: Number(saved.dailyGoal) || 20,
             streakDays: streak,
             wordsLearnedToday: wordsToday,
@@ -138,11 +146,16 @@ export function UserProvider({ children }) {
                 return;
               }
               if (remote.is_premium !== undefined) {
-                setUser((prev) => ({
-                  ...prev,
-                  isPremium: !!remote.is_premium,
-                  premiumUntil: remote.premium_until || prev.premiumUntil,
-                }));
+                const isPrem = !!remote.is_premium;
+                setUser((prev) => {
+                  const purchased = Array.isArray(prev.purchasedBooks) ? prev.purchasedBooks : [];
+                  return {
+                    ...prev,
+                    isPremium: isPrem,
+                    premiumUntil: isPrem ? (remote.premium_until || prev.premiumUntil) : null,
+                    unlockedBooks: isPrem ? [1, 2, 3, 4, 5, 6] : [1, ...purchased.filter((b) => b > 1)],
+                  };
+                });
               }
             }
           } catch (e) {}
@@ -173,11 +186,16 @@ export function UserProvider({ children }) {
                 'Administrator sizning profilingizni blokladi. Ilovadan foydalanish to\'xtatildi.'
               );
             } else if (remote.is_premium !== undefined && (remote.is_premium !== active.isPremium || remote.premium_until !== active.premiumUntil)) {
-              setUser(prev => ({
-                ...prev,
-                isPremium: !!remote.is_premium,
-                premiumUntil: remote.premium_until || prev.premiumUntil,
-              }));
+              const isPrem = !!remote.is_premium;
+              setUser((prev) => {
+                const purchased = Array.isArray(prev.purchasedBooks) ? prev.purchasedBooks : [];
+                return {
+                  ...prev,
+                  isPremium: isPrem,
+                  premiumUntil: isPrem ? (remote.premium_until || prev.premiumUntil) : null,
+                  unlockedBooks: isPrem ? [1, 2, 3, 4, 5, 6] : [1, ...purchased.filter((b) => b > 1)],
+                };
+              });
             }
           }
         } catch (e) {}
@@ -443,7 +461,18 @@ export function UserProvider({ children }) {
 
     if (remote && remote.is_premium !== undefined) {
       matchedUser.isPremium = !!remote.is_premium;
+      if (remote.premium_until) {
+        matchedUser.premiumUntil = remote.premium_until;
+      }
+    } else {
+      matchedUser.isPremium = !!matchedUser.isPremium;
     }
+
+    const userPurchased = Array.isArray(matchedUser.purchasedBooks) ? matchedUser.purchasedBooks : [];
+    matchedUser.purchasedBooks = userPurchased;
+    matchedUser.unlockedBooks = matchedUser.isPremium
+      ? [1, 2, 3, 4, 5, 6]
+      : [1, ...userPurchased.filter((b) => b > 1)];
 
     const userCreatedAt = matchedUser.createdAt || matchedUser.created_at || remote?.created_at || new Date().toISOString();
     const userPassChanged = matchedUser.passwordChangedAt || matchedUser.password_changed_at || userCreatedAt;
@@ -503,11 +532,22 @@ export function UserProvider({ children }) {
         activeUnit: 1,
         lastActiveDate: null,
         bookProgress: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+        isPremium: !!remote?.is_premium,
+        premiumUntil: remote?.premium_until || null,
+        unlockedBooks: remote?.is_premium ? [1, 2, 3, 4, 5, 6] : [1],
+        purchasedBooks: [],
       };
       allUsers.push(existing);
       await setStorageItem(STORAGE_KEYS.REGISTERED_USERS, allUsers);
     } else {
       existing.isLoggedIn = true;
+      if (remote && remote.is_premium !== undefined) {
+        existing.isPremium = !!remote.is_premium;
+        existing.premiumUntil = remote.premium_until || null;
+      }
+      const gPurchased = Array.isArray(existing.purchasedBooks) ? existing.purchasedBooks : [];
+      existing.purchasedBooks = gPurchased;
+      existing.unlockedBooks = existing.isPremium ? [1, 2, 3, 4, 5, 6] : [1, ...gPurchased.filter((b) => b > 1)];
     }
 
     await setStorageItem(STORAGE_KEYS.USER_PROFILE, existing);
@@ -781,14 +821,19 @@ export function UserProvider({ children }) {
   // 13. Bitta kitobni doimiy sotib olish (Click, Payme yoki Bank Karta)
   const purchaseBook = async (bookId, paymentDetails = {}) => {
     const numId = Number(bookId);
-    const current = Array.isArray(user.unlockedBooks) ? [...user.unlockedBooks] : [1];
-    if (!current.includes(numId)) {
-      current.push(numId);
+    const currentPurchased = Array.isArray(user.purchasedBooks) ? [...user.purchasedBooks] : [];
+    if (!currentPurchased.includes(numId)) {
+      currentPurchased.push(numId);
+    }
+    const currentUnlocked = Array.isArray(user.unlockedBooks) ? [...user.unlockedBooks] : [1];
+    if (!currentUnlocked.includes(numId)) {
+      currentUnlocked.push(numId);
     }
 
     const updated = {
       ...user,
-      unlockedBooks: current,
+      unlockedBooks: currentUnlocked,
+      purchasedBooks: currentPurchased,
     };
 
     await saveUserData(updated);
@@ -807,13 +852,13 @@ export function UserProvider({ children }) {
     (!user.premiumUntil || new Date(user.premiumUntil).getTime() > Date.now())
   );
 
-  // Kitob ochilganmi yoki bepulmi?
-  const isBookPurchasedOrFree = (bookId, freeBooksCount = 6, premiumModeEnabled = false) => {
-    if (!premiumModeEnabled) return true; // Bepul rejimda hamma kitob ochiq
-    if (isVipActive) return true;          // VIP obunachi uchun hamma kitob ochiq
+  // Kitob ochilganmi yoki bepulmi? (Faqat Book 1 bepul, qolganlari VIP yoki xarid qilingan bo'lishi shart)
+  const isBookPurchasedOrFree = (bookId, freeBooksCount = 1, premiumModeEnabled = true) => {
+    if (!premiumModeEnabled) return true; // Agar admin pullik rejimni o'chirsa, hamma kitob ochiq
+    if (isVipActive) return true;          // VIP obunachi uchun barcha kitoblar ochiq
     const num = Number(bookId);
-    if (num <= freeBooksCount) return true; // Bepul etib belgilangan kitoblar
-    if (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(num)) return true; // Sotib olingan
+    if (num <= freeBooksCount) return true; // Faqat bepul kitoblar (Book 1)
+    if (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(num)) return true; // Ushbu foydalanuvchi sotib olgan kitob
     return false;
   };
 

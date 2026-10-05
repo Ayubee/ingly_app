@@ -63,7 +63,8 @@ export default function LearnScreen({ onNavigate }) {
 
   // Tanlangan kitob ochiqmi?
   const isBookPurchased = isVipActive || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(selectedBook));
-  const isBookLockedByPayment = appSettings.premium_mode_enabled && selectedBook > appSettings.free_books_count && !isBookPurchased;
+  const freeCount = appSettings.free_books_count !== undefined ? appSettings.free_books_count : 1;
+  const isBookLockedByPayment = appSettings.premium_mode_enabled && selectedBook > freeCount && !isBookPurchased;
   const isBookProgressionLocked = !isBookLockedByPayment && selectedBook !== 1 && (user.bookProgress[selectedBook - 1] || 0) < 100;
   const isBookUnlocked = !isBookLockedByPayment && !isBookProgressionLocked;
 

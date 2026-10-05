@@ -167,9 +167,10 @@ export async function fetchUserRemoteStatus(loginOrPhone) {
   const encodedDigits = encodeURIComponent(digits.slice(-9));
 
   try {
+    const isPhoneNumber = raw.startsWith('+') || /^\d+$/.test(raw);
     let query = `${SUPABASE_REST_URL}/users?username=eq.${encodedUsername}&select=id,username,full_name,phone,is_blocked,is_premium,premium_until,password_hash,created_at`;
-    if (digits.length >= 9) {
-      query = `${SUPABASE_REST_URL}/users?or=(username.eq.${encodedUsername},phone.like.*${encodedDigits})&select=id,username,full_name,phone,is_blocked,is_premium,premium_until,password_hash,created_at`;
+    if (isPhoneNumber && digits.length >= 9) {
+      query = `${SUPABASE_REST_URL}/users?phone=like.*${encodedDigits}&select=id,username,full_name,phone,is_blocked,is_premium,premium_until,password_hash,created_at`;
     }
 
     const res = await fetch(query, {

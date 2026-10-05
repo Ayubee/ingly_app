@@ -530,7 +530,7 @@ export default function ProfileScreen({ onNavigate }) {
                   { id: 5, title: 'Book 5 - Advanced', icon: '📓' },
                   { id: 6, title: 'Book 6 - Mastery', icon: '🏆' },
                 ].map((b) => {
-                  const isFree = b.id <= (appSettings.free_books_count || 6);
+                  const isFree = b.id <= (appSettings.free_books_count !== undefined ? appSettings.free_books_count : 1);
                   const isPurchased = isVipActive || (Array.isArray(user.unlockedBooks) && user.unlockedBooks.includes(b.id));
 
                   return (
