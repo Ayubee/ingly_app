@@ -1,10 +1,13 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { createRequire } from 'node:module';
+const loadConfigTools = createRequire(path.resolve(process.cwd(), 'package.json'));
+const environmentTools = loadConfigTools('./scripts/environment-config.cjs');
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), environmentTools.environmentPlugin(environmentTools.adminConfig(loadEnv(mode, process.cwd(), ''), mode))],
   build: {
     rollupOptions: {
       input: {
@@ -21,6 +24,6 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true,
+    open: false,
   },
-});
+}));

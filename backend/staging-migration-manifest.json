@@ -1,0 +1,67 @@
+{
+  "formatVersion": 1,
+  "planOnly": true,
+  "projectRef": null,
+  "executionApproved": false,
+  "logicalOrder": [
+    "Security Phase 2",
+    "Repair Phase 3 Offline/Sync",
+    "Admin Real Data"
+  ],
+  "migrations": [
+    {
+      "file": "backend/migrations/20261005_security_phase2.sql",
+      "sourceVersion": "20261005",
+      "proposedUniqueVersion": "20261005000100",
+      "sha256": "88fd6af71859538680d11111b34f6c7ef76a5a8999ed4a736894890d0badd87d"
+    },
+    {
+      "file": "backend/migrations/20261005_repair_phase3_offline_sync.sql",
+      "sourceVersion": "20261005",
+      "proposedUniqueVersion": "20261005000200",
+      "sha256": "044543136b4bec06abf6b2677c1b950841b3991b3acd48c91120a1be842610a7"
+    },
+    {
+      "file": "backend/migrations/20261006_admin_real_data.sql",
+      "sourceVersion": "20261006",
+      "proposedUniqueVersion": "20261006000100",
+      "sha256": "76dec4200b5fd0940fcf88bce95d74986e594a62754e4024660e2b8835c3d581"
+    }
+  ],
+  "duplicateSourceVersions": [
+    "20261005"
+  ],
+  "automaticCliDeploymentAllowed": false,
+  "warning": "Duplicate source prefixes require reviewed unique-version mapping; originals/history are unchanged. Checksums bind exact bytes, including line endings.",
+  "freshBaseline": {
+    "file": "backend/schema.sql",
+    "containsSecurityPhase2": true,
+    "proposedUniqueVersion": "20261005000000"
+  },
+  "supportingFiles": [
+    {
+      "file": "backend/schema.sql",
+      "sha256": "b4d3ff2d4aef93240c5f330325d9afca22ffdec32f936c0dc829ef418034d113"
+    },
+    {
+      "file": "backend/supabase_fresh_preflight.sql",
+      "sha256": "5e088fadb4e4d789c68134f989fa4d560f71c9d128e2e65d5b7585eda005751d"
+    },
+    {
+      "file": "backend/supabase_migration_preflight.sql",
+      "sha256": "436381267c460cc347383cc598c51157a84982dd66c1703fbc082ce4214a184e"
+    },
+    {
+      "file": "backend/verify_security_phase2.sql",
+      "sha256": "27f904fdc601532f5623453411f516b34688fbd9c2d2d029c7eb9d29efb3c8ad"
+    },
+    {
+      "file": "backend/verify_migration_readiness.sql",
+      "sha256": "ea7d34215f21b1e6ec12c822b1e205ea48ac4f2999f78db7359a078cdd060eb9"
+    },
+    {
+      "file": "backend/operator_first_super_admin.sql",
+      "sha256": "bd1fab5d468bc42ab8c38d624ff0df130bbbbc8e25ad1317825f28a7e46012e8"
+    }
+  ]
+}

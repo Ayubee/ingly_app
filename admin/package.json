@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/build-real-data.cjs && vite build",
+    "build:staging": "npm run build -- --mode staging",
+    "verify:staging": "node ../scripts/staging-readiness.cjs verify",
+    "build:staging:checked": "node ../scripts/staging-readiness.cjs admin-build",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,5 +1,9 @@
 # Ingly Mobile App
 
+> **First staging connection:** Follow [the connection checklist](../docs/STAGING_CONNECTION_SETUP.md). `npm.cmd run verify:staging` checks both private client files. `npm.cmd run export:staging:android` / `export:staging:ios` pin those values with Expo dotenv disabled; the existing mobile `.env` is preserved.
+
+> **Explicit environment required:** See [staging preparation](../docs/STAGING_ENVIRONMENT_PREPARATION.md). Configure all EXPO_PUBLIC_APP_ENV / SUPABASE_URL / SUPABASE_PROJECT_REF / SUPABASE_ANON_KEY values from the matching placeholder template. No production fallback. For explicit process-based export use EXPO_NO_DOTENV=1; NODE_ENV is not the target selector. Staging has separate native app IDs and storage; production journals remain in place.
+
 Paul Nation'ning mashhur "4000 Essential English Words" kitoblar to'plami asosidagi React Native (Expo) mobil ilovasi.
 
 ## 📱 Ekranlar va Arxitektura

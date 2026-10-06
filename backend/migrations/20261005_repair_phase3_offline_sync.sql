@@ -21,13 +21,21 @@ CREATE TABLE IF NOT EXISTS public.learning_sync_versions (
   PRIMARY KEY(user_id,entity_key,device)
 );
 DO $$
-DECLARE t TEXT;
+DECLARE t TEXT; c RECORD; p RECORD;
 BEGIN
   FOREACH t IN ARRAY ARRAY['learning_sync_accounts','learning_sync_entities','learning_sync_receipts','learning_sync_versions'] LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY',t);
     EXECUTE format('REVOKE ALL ON TABLE public.%I FROM PUBLIC, anon, authenticated',t);
     EXECUTE format('GRANT ALL ON TABLE public.%I TO service_role',t);
-    EXECUTE format('DROP POLICY IF EXISTS own_learning_read ON public.%I',t);
+    -- Table revocation does not remove earlier column grants. Remove additive
+    -- policies too, so a reviewed rerun cannot retain a permissive legacy policy.
+    FOR c IN SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=t LOOP
+      EXECUTE format('REVOKE SELECT (%I), INSERT (%I), UPDATE (%I), REFERENCES (%I) ON public.%I FROM PUBLIC, anon, authenticated',
+        c.column_name,c.column_name,c.column_name,c.column_name,t);
+    END LOOP;
+    FOR p IN SELECT policyname FROM pg_policies WHERE schemaname='public' AND tablename=t LOOP
+      EXECUTE format('DROP POLICY %I ON public.%I',p.policyname,t);
+    END LOOP;
     EXECUTE format('CREATE POLICY own_learning_read ON public.%I FOR SELECT TO authenticated USING (user_id=auth.uid() AND ingly_private.active_account())',t);
   END LOOP;
 END $$;
@@ -165,7 +173,7 @@ BEGIN
         ON CONFLICT(user_id,entity_key,device) DO UPDATE SET sequence=EXCLUDED.sequence;
       IF change.key='preferences' THEN
         UPDATE public.users SET full_name=COALESCE(merged->>'name',full_name),avatar_url=COALESCE(merged->>'avatar',avatar_url),
-          daily_goal=GREATEST(1,LEAST(500,COALESCE((merged->>'dailyGoal')::INT,daily_goal))) WHERE id=actor AND auth_user_id=actor;
+          daily_goal=GREATEST(5,LEAST(100,COALESCE((merged->>'dailyGoal')::INT,daily_goal))) WHERE id=actor AND auth_user_id=actor;
       ELSIF change.key LIKE 'word:%' THEN
         word := substring(change.key FROM 6)::BIGINT;
         -- Bundled IDs can exist before DB content import. Keep their sync entity;

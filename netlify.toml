@@ -1,5 +1,6 @@
 [build]
-  publish = "admin"
+  command = "npm --prefix admin ci && npm --prefix admin run build -- --mode $APP_ENV"
+  publish = "admin/dist"
 
 [[redirects]]
   from = "/*"

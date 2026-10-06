@@ -1,8 +1,9 @@
 -- Read-only deployed verification. Run as the project database operator AFTER migration.
+-- Supports the Phase 2 baseline AND the later Phase 3 RPC retirement.
 -- This checks catalogs, not real JWT/RLS request behavior. Follow the staging matrix in docs.
 BEGIN READ ONLY;
 DO $$
-DECLARE t TEXT; f TEXT;
+DECLARE t TEXT; f TEXT; phase3 BOOLEAN;
 BEGIN
   FOREACH t IN ARRAY ARRAY['users','admins','admin_audit_logs','user_progress','user_streaks','app_settings','books','units','words'] LOOP
     IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
@@ -22,11 +23,27 @@ BEGIN
     OR has_table_privilege('authenticated','public.admin_audit_logs','INSERT') THEN
     RAISE EXCEPTION 'Private/privileged column or table grant survived';
   END IF;
-  FOREACH f IN ARRAY ARRAY['public.record_user_activity(integer)','public.sync_user_offline_progress(jsonb)','public.get_my_admin_access()'] LOOP
+  phase3 := to_regprocedure('public.read_learning_sync(bigint)') IS NOT NULL
+    OR to_regprocedure('public.sync_learning_operations(jsonb)') IS NOT NULL;
+  FOREACH f IN ARRAY ARRAY['public.get_my_admin_access()'] LOOP
     IF has_function_privilege('anon',f,'EXECUTE') OR NOT has_function_privilege('authenticated',f,'EXECUTE') THEN
       RAISE EXCEPTION 'Incorrect effective RPC grants (including inherited PUBLIC grants): %',f;
     END IF;
   END LOOP;
+  FOREACH f IN ARRAY ARRAY['public.record_user_activity(integer)','public.sync_user_offline_progress(jsonb)'] LOOP
+    IF has_function_privilege('anon',f,'EXECUTE')
+      OR has_function_privilege('authenticated',f,'EXECUTE') IS DISTINCT FROM (NOT phase3) THEN
+      RAISE EXCEPTION 'Incorrect phase-specific legacy RPC grants: %',f;
+    END IF;
+  END LOOP;
+  IF phase3 THEN
+    FOREACH f IN ARRAY ARRAY['public.read_learning_sync(bigint)','public.sync_learning_operations(jsonb)'] LOOP
+      IF to_regprocedure(f) IS NULL THEN RAISE EXCEPTION 'Incomplete Phase 3 migration: %',f; END IF;
+      IF has_function_privilege('anon',f,'EXECUTE') OR NOT has_function_privilege('authenticated',f,'EXECUTE') THEN
+        RAISE EXCEPTION 'Incorrect Phase 3 RPC grants: %',f;
+      END IF;
+    END LOOP;
+  END IF;
   FOREACH f IN ARRAY ARRAY['public.verify_user_credentials(text,text)','public.set_user_password_secure(uuid,text,text)',
     'public.get_safe_user_status(text)','public.record_user_activity(uuid,integer)','public.sync_user_offline_progress(uuid,jsonb)'] LOOP
     IF to_regprocedure(f) IS NOT NULL THEN RAISE EXCEPTION 'Legacy RPC still exists: %',f; END IF;

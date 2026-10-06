@@ -18,6 +18,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <!-- Supabase JS Client CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/environment.js"></script>
   <script src="/auth.js"></script>
   <script src="/real-data.js"></script>
   <script src="/real-data-ui.js"></script>
@@ -61,6 +62,7 @@
   </style>
 </head>
 <body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+  <div id="ingly-environment" role="status" style="position:fixed;right:8px;top:8px;z-index:10000;padding:4px 8px;border-radius:6px;background:#fef3c7;color:#78350f;font:600 10px sans-serif;pointer-events:none">CONFIG REQUIRED</div>
   <div id="root"></div>
 
   <script type="text/babel">
@@ -147,7 +149,7 @@
 
       const [tab, setTab] = useState('dashboard');
       const [videosEnabled, setVideosEnabled] = useState(() => {
-        const saved = localStorage.getItem('ingly_videos_enabled');
+        const saved = window.inglyAuth.localStorage.getItem('ingly_videos_enabled');
         return saved !== null ? JSON.parse(saved) : true;
       });
       useEffect(() => {
@@ -165,7 +167,7 @@
         screen: "MyWords",
       });
       const [currentAnnouncement, setCurrentAnnouncement] = useState(() => {
-        const saved = localStorage.getItem('ingly_latest_announcement');
+        const saved = window.inglyAuth.localStorage.getItem('ingly_latest_announcement');
         try { return saved ? JSON.parse(saved) : null; } catch (e) { return null; }
       });
 
@@ -260,8 +262,8 @@
       });
       const [isSavingNewUser, setIsSavingNewUser] = useState(false);
 
-      const LIVE_SUPABASE_URL = 'https://lbsqxownrjfmjoojdsfk.supabase.co';
-      const LIVE_SUPABASE_KEY = 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
+      const LIVE_SUPABASE_URL = window.inglyAuth.url;
+      const LIVE_SUPABASE_KEY = window.inglyAuth.anonKey;
 
       const [supabaseUrl, setSupabaseUrl] = useState(LIVE_SUPABASE_URL);
       const [supabaseKey, setSupabaseKey] = useState(LIVE_SUPABASE_KEY);
@@ -338,13 +340,13 @@
                   if (item.setting_key === 'videos_enabled') {
                     const val = item.setting_value === true || item.setting_value === 'true';
                     setVideosEnabled(val);
-                    localStorage.setItem('ingly_videos_enabled', JSON.stringify(val));
+                    window.inglyAuth.localStorage.setItem('ingly_videos_enabled', JSON.stringify(val));
                   } else if (item.setting_key === 'latest_announcement') {
                     const parsed = typeof item.setting_value === 'string' && item.setting_value.startsWith('{')
                       ? JSON.parse(item.setting_value)
                       : item.setting_value;
                     setCurrentAnnouncement(parsed || null);
-                    if (parsed) localStorage.setItem('ingly_latest_announcement', JSON.stringify(parsed));
+                    if (parsed) window.inglyAuth.localStorage.setItem('ingly_latest_announcement', JSON.stringify(parsed));
                   }
                 });
                 showToast('Supabase sozlamalari yuklandi!');
@@ -380,7 +382,7 @@
           .then(r => r.json())
           .then(data => {
             // LocalStorage'dagi maxsus tahrirlangan so'zlarni birlashtirish
-            const customWordsStr = localStorage.getItem('ingly_custom_words');
+            const customWordsStr = window.inglyAuth.localStorage.getItem('ingly_custom_words');
             let merged = data;
             if (customWordsStr) {
               try {
@@ -438,7 +440,7 @@
           created_at: new Date().toISOString()
         };
         setCurrentAnnouncement(newAnn);
-        localStorage.setItem('ingly_latest_announcement', JSON.stringify(newAnn));
+        window.inglyAuth.localStorage.setItem('ingly_latest_announcement', JSON.stringify(newAnn));
         showToast('Yangi e\'lon barcha foydalanuvchilar Home sahifasiga chiqarildi! 🚀');
 
         if (supabaseClient) {
@@ -457,7 +459,7 @@
       // Home Page Yangilik / E'lonini O'chirish
       const handleClearAnnouncement = async () => {
         setCurrentAnnouncement(null);
-        localStorage.removeItem('ingly_latest_announcement');
+        window.inglyAuth.localStorage.removeItem('ingly_latest_announcement');
         showToast('E\'lon Home sahifadan olib tashlandi! 🗑️');
 
         if (supabaseClient) {
@@ -669,7 +671,7 @@
 
         // LocalStorage'ga yozish (sahifa yangilanganda yo'qolmasligi uchun)
         try {
-          const customWordsStr = localStorage.getItem('ingly_custom_words');
+          const customWordsStr = window.inglyAuth.localStorage.getItem('ingly_custom_words');
           let customList = customWordsStr ? JSON.parse(customWordsStr) : [];
           if (editingWord) {
             customList = customList.map(cw => cw.id === editingWord.id ? savedWordObj : cw);
@@ -677,7 +679,7 @@
           } else {
             customList.unshift(savedWordObj);
           }
-          localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
+          window.inglyAuth.localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
         } catch (e) {}
 
         // Supabase bazasiga ham yozish
@@ -708,10 +710,10 @@
         const updated = allWords.filter(w => w.id !== id);
         setAllWords(updated);
         try {
-          const customWordsStr = localStorage.getItem('ingly_custom_words');
+          const customWordsStr = window.inglyAuth.localStorage.getItem('ingly_custom_words');
           if (customWordsStr) {
             const customList = JSON.parse(customWordsStr).filter(cw => cw.id !== id);
-            localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
+            window.inglyAuth.localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
           }
         } catch (e) {}
         showToast('So\'z o\'chirildi!');
@@ -810,14 +812,18 @@
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                     </div>
                     <input 
-                      type="text" 
+                      type="email"
+                      autoComplete="username"
+                      inputMode="email"
                       required
                       value={adminLoginInput}
-                      onChange={(e) => setAdminLoginInput(e.target.value)}
+                      onChange={(e) => { e.target.setCustomValidity(''); setAdminLoginInput(e.target.value); }}
+                      onInvalid={(e) => e.target.setCustomValidity('Admin emailingizni kiriting.')}
                       placeholder="admin@example.com"
                       class="w-full bg-slate-900/80 border border-slate-700 rounded-2xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                     />
                   </div>
+                  <p class="mt-2 text-xs text-slate-400">Supabase Auth emailingiz bilan kiring. Eski username orqali kirish qo‘llab-quvvatlanmaydi.</p>
                 </div>
 
                 <div>
@@ -1373,13 +1379,13 @@
                                     const updated = allWords.map(w => w.id === selectedMovie.id ? { ...w, video_clip_url: val, uzbek: uzbekVal || w.uzbek } : w);
                                     setAllWords(updated);
                                     try {
-                                      const customWordsStr = localStorage.getItem('ingly_custom_words');
+                                      const customWordsStr = window.inglyAuth.localStorage.getItem('ingly_custom_words');
                                       let customList = customWordsStr ? JSON.parse(customWordsStr) : [];
                                       customList = customList.map(cw => cw.id === selectedMovie.id ? { ...cw, video_clip_url: val, uzbek: uzbekVal || cw.uzbek } : cw);
                                       if (!customList.some(cw => cw.id === selectedMovie.id)) {
                                         customList.push({ ...selectedMovie, video_clip_url: val, uzbek: uzbekVal || selectedMovie.uzbek });
                                       }
-                                      localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
+                                      window.inglyAuth.localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
                                     } catch (e) {}
                                     if (supabaseClient) {
                                       const updatePayload = { video_clip_url: val || null };
@@ -1402,10 +1408,10 @@
                                     const updated = allWords.map(w => w.id === selectedMovie.id ? { ...w, video_clip_url: '' } : w);
                                     setAllWords(updated);
                                     try {
-                                      const customWordsStr = localStorage.getItem('ingly_custom_words');
+                                      const customWordsStr = window.inglyAuth.localStorage.getItem('ingly_custom_words');
                                       let customList = customWordsStr ? JSON.parse(customWordsStr) : [];
                                       customList = customList.map(cw => cw.id === selectedMovie.id ? { ...cw, video_clip_url: '' } : cw);
-                                      localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
+                                      window.inglyAuth.localStorage.setItem('ingly_custom_words', JSON.stringify(customList));
                                     } catch (e) {}
                                     if (supabaseClient) {
                                       supabaseClient.from('words').update({ video_clip_url: null }).eq('word', selectedMovie.word).then(() => {});
@@ -2009,8 +2015,8 @@
                 <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                   <button 
                     onClick={() => {
-                      localStorage.removeItem('ingly_supabase_url');
-                      localStorage.removeItem('ingly_supabase_key');
+                      window.inglyAuth.localStorage.removeItem('ingly_supabase_url');
+                      window.inglyAuth.localStorage.removeItem('ingly_supabase_key');
                       setSupabaseUrl('');
                       setSupabaseKey('');
                       setSupabaseConnected(false);

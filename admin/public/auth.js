@@ -1,9 +1,13 @@
 (() => {
-  const url = 'https://lbsqxownrjfmjoojdsfk.supabase.co';
-  const anonKey = 'sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W';
-  const client = window.supabase.createClient(url, anonKey, { auth: { storage: sessionStorage, storageKey: 'ingly_admin_auth_v2' } });
+  if (!window.InglyEnvironment || !window.inglyDeployment) throw new Error('Ingly configuration: use an explicitly configured admin build/dev server.');
+  const config = window.InglyEnvironment.resolveEnvironment(window.inglyDeployment);
+  const url = config.url;
+  const anonKey = config.publicKey;
+  const local = window.InglyEnvironment.scopeBrowserStorage(localStorage, config);
+  const session = window.InglyEnvironment.scopeBrowserStorage(sessionStorage, config);
+  const client = window.supabase.createClient(url, anonKey, { auth: { storage: session, storageKey: 'ingly_admin_auth_v2' } });
   let endingSession = false;
-  for (const store of [localStorage, sessionStorage]) {
+  for (const store of [local, session]) {
     for (const key of ['ingly_admin_session','ingly_admin_auth','ingly_admin_user','ingly_admin_list','ingly_users','ingly_supabase_key','ingly_transactions','ingly_card_receiver_number']) store.removeItem(key);
   }
   async function authorize() {
@@ -28,8 +32,8 @@
     endingSession = true;
     try { return await client.auth.signOut({ scope: 'local' }); }
     finally {
-      sessionStorage.removeItem('ingly_admin_auth_v2');
-      sessionStorage.removeItem('ingly_admin_auth_v2-user');
+      session.removeItem('ingly_admin_auth_v2');
+      session.removeItem('ingly_admin_auth_v2-user');
       endingSession = false;
     }
   }
@@ -47,5 +51,6 @@
     if (!data?.data) throw new Error('Server confirmation missing.');
     return data.data;
   }
-  window.inglyAuth = { client, url, anonKey, authorize, login, logout, manage, getAccessToken };
+  window.inglyAuth = { client, url, anonKey, environment: config.environment, projectRef: config.projectRef,
+    localStorage: local, authorize, login, logout, manage, getAccessToken };
 })();

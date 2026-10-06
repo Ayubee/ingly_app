@@ -1,3 +1,9 @@
+> **First staging connection:** Use [the checkpoint guide](../docs/STAGING_CONNECTION_SETUP.md), the local client verifier and checksum manifest. Fresh projects use `supabase_fresh_preflight.sql` BEFORE the first schema; existing baseline projects use `supabase_migration_preflight.sql`. Both inventories are read-only. Stop before migrations pending owner approval.
+
+> **Staging workflow:** [The current environment preparation report](../docs/STAGING_ENVIRONMENT_PREPARATION.md) describes explicit isolated clients and the local `scripts/prepare-staging-plan.cjs` PLAN ONLY manifest generator. It never executes SQL. Confirm the actual Dashboard/DB connection separately before any approved staging action.
+
+> **Migration/bootstrap readiness:** Before any future rollout, use [the readiness and first-admin report](../docs/SUPABASE_MIGRATION_AND_ADMIN_BOOTSTRAP_READINESS.md). It distinguishes existing/fresh staging paths, operator-only inventories, a rollback-default first-admin template and production gates. None of these scripts has been run remotely. Do not automatically deploy the operator template or rerun the fresh schema on an existing database.
+
 > **Security Phase 2:** Use [the deployment guide](../docs/SECURITY_PHASE_2.md). Existing projects apply only `migrations/20261005_security_phase2.sql`; fresh Supabase projects apply the complete `schema.sql`. There is no default admin/password. This schema requires Supabase Auth and PostgreSQL 15+. Vanilla PostgreSQL instructions below require a Supabase-compatible local environment.
 
 > **Current Phase 3 mobile:** Both existing and fresh projects additionally need `migrations/20261005_repair_phase3_offline_sync.sql` after the Phase 2 baseline. See [the offline-sync report](../docs/REPAIR_PHASE_3_OFFLINE_SYNC.md); this migration has not been deployed or verified against a live database.

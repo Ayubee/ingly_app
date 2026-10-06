@@ -2,11 +2,13 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
 const babel=require('../mobile/node_modules/@babel/core');
 const root=path.resolve(__dirname,'..');
+const {mobileEnvironment}=require('./helpers/environment.cjs');
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 const plain=v=>JSON.parse(JSON.stringify(v));
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};}
 function moduleAt(file,deps={},globals={}){
+  if(file==='mobile/src/services/storage.js')deps={...deps,'./environment.js':mobileEnvironment};
   const code=babel.transformSync(read(file),{filename:file,babelrc:false,configFile:false,plugins:[
     require.resolve('../mobile/node_modules/@babel/plugin-transform-react-jsx'),
     require.resolve('../mobile/node_modules/@babel/plugin-transform-modules-commonjs')]}).code;

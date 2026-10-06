@@ -1,5 +1,9 @@
 # Ingly Web Admin Panel
 
+> **First staging connection:** Follow [the connection checklist](../docs/STAGING_CONNECTION_SETUP.md). `npm.cmd run verify:staging` checks both private client files without connecting; `npm.cmd run build:staging:checked` pins the verified config for a local build. Stop before remote migrations.
+
+> **Explicit environment required:** Configure the appropriate ignored env file from `.env.example`, `.env.staging.example` or `.env.production.example`. `APP_ENV` must match the Vite mode. Staging: `npm.cmd run build:staging` or `npm.cmd run dev -- --mode staging`. Production: explicit production config + `npm.cmd run build`. No URL/key fallback or raw-HTML deployment. See [staging preparation](../docs/STAGING_ENVIRONMENT_PREPARATION.md).
+
 > Dashboard + Finance now use shared authorized real-data panels. The shipped entrypoints are `index.html` and `preview.html`; `src/` also contains alternate React wrappers. Run `npm.cmd run build` to regenerate `public/real-data-ui.js` and build both pages. See [the current audit/repair report](../docs/ADMIN_REAL_DATA_AUDIT_REPAIR.md) for exact metrics, finance rules and required migration. Missing server RPCs show unavailable; no demo fallback is used. Unrelated legacy page descriptions below do not establish deployed functionality.
 
 "Ingly - 4000 Essential English Words" loyihasining boshqaruv tizimi (Web Admin Panel).

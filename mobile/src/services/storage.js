@@ -1,3 +1,4 @@
+import { isolateStorage } from './environment.js';
 // One atomic account journal: learning state and its pending operations commit together.
 export const STORAGE_KEYS = {
   WORD_PROGRESS: '@ingly_word_progress',
@@ -32,7 +33,7 @@ function adapter() {
     };
   }
 }
-const nativeStorage = adapter();
+const nativeStorage = isolateStorage(adapter());
 let accountId = null,
   generation = 0,
   sessionMarker;

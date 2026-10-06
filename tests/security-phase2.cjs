@@ -6,9 +6,11 @@ const assert = require('node:assert/strict');
 const babel = require('../mobile/node_modules/@babel/core');
 const parser = require('../mobile/node_modules/@babel/parser');
 const root = path.resolve(__dirname, '..');
+const { mobileEnvironment, browserEnvironment } = require('./helpers/environment.cjs');
 const read = f => fs.readFileSync(path.join(root, f), 'utf8').replace(/\r\n/g, '\n');
 const plain = x => JSON.parse(JSON.stringify(x));
 function moduleAt(file, dependencies = {}, globals = {}) {
+  if (file === 'mobile/src/services/storage.js') dependencies = { ...dependencies, './environment.js': mobileEnvironment };
   const plugins = [require.resolve('../mobile/node_modules/@babel/plugin-transform-modules-commonjs')];
   if (file.endsWith('.ts')) plugins.unshift(require.resolve('../mobile/node_modules/@babel/plugin-transform-typescript'));
   const code = babel.transformSync(read(file), { filename: file, babelrc: false, configFile: false, plugins }).code;
@@ -120,7 +122,7 @@ async function browserTests() {
   const client = { auth: {
     getUser: async () => valid ? { data: { user: { id: 'A' } }, error: null } : { data: { user: null }, error: new Error('Invalid JWT') },
   }, rpc: async () => { rpcCalls++; return { data: null, error: new Error('No role') }; } };
-  const context = { window: { supabase: { createClient: () => client } }, localStorage: store, sessionStorage: store };
+  const context = { window: { ...browserEnvironment(), supabase: { createClient: () => client } }, localStorage: store, sessionStorage: store };
   vm.runInNewContext(read('admin/public/auth.js'), context);
   await assert.rejects(context.window.inglyAuth.authorize()); assert.equal(rpcCalls, 0);
   valid = true; await assert.rejects(context.window.inglyAuth.authorize()); assert.equal(rpcCalls, 1);
@@ -176,7 +178,7 @@ function adminRenderTests() {
       const store = { getItem: () => null, removeItem: () => {}, setItem: () => {} };
       const context = { React, ReactDOM: { createRoot: () => ({ render: () => {} }) },
         document: { getElementById: () => ({}) }, localStorage: store, sessionStorage: store,
-        window: { inglyAuth: { url: 'fixed', anonKey: 'public' } }, console, Date, Map, Set };
+        window: { inglyAuth: { url: 'fixed', anonKey: 'public', localStorage: store } }, console, Date, Map, Set };
       vm.runInNewContext(code + '\nApp();', context, { filename: file });
     }
   }
