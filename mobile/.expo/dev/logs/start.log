@@ -443,3 +443,13 @@
 {"_e":"metro:bundling:done","_t":1791172175499,"id":"19","total":1,"ms":23.74}
 {"_e":"metro:client_log","_t":1791172176103,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}
 {"_e":"metro:client_log","_t":1791172214198,"level":"error","data":["[ReferenceError: Property 'KeyboardAvoidingView' doesn't exist]"]}
+{"_e":"root:init","_t":1791544300413,"format":"v0-jsonl","version":"57.0.27"}
+{"_e":"env:mode","_t":1791544300413,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1791544300415,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_ALLOW_LOCAL_HTTP":"false","EXPO_PUBLIC_APP_ENV":"production","EXPO_PUBLIC_ENABLE_MOCK_PAYMENTS":"false","EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_Kbpya9vZpqll4KuUXQrpHQ_Tq3qcZ1W","EXPO_PUBLIC_SUPABASE_PROJECT_REF":"lbsqxownrjfmjoojdsfk","EXPO_PUBLIC_SUPABASE_URL":"https://lbsqxownrjfmjoojdsfk.supabase.co"}}
+{"_e":"devserver:start","_t":1791544304504,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1791544309501,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1791544311666,"plugins":[]}
+{"_e":"metro:instantiate","_t":1791544316551,"atlas":false,"workers":10,"host":"::","port":8081}
+{"_e":"metro:bundling:started","_t":1791544321444,"id":"3","platform":"ios","environment":null,"entry":"node_modules\\expo\\AppEntry.js"}
+{"_e":"metro:bundling:done","_t":1791544329022,"id":"3","total":793,"ms":7578.4796}
+{"_e":"metro:client_log","_t":1791544329644,"level":"warn","data":["SafeAreaView has been deprecated and will be removed in a future release. Please use 'react-native-safe-area-context' instead. See https://github.com/AppAndFlow/react-native-safe-area-context"]}

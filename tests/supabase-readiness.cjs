@@ -140,10 +140,10 @@ test('Auth failures stop before roles; ordinary users are signed out after autho
   await assert.rejects(window.inglyAuth.login('owner@example.invalid','mock-test-input'),/Invalid login credentials/);
   assert.equal(roleCalls,0); assert.equal(submitted.email,'owner@example.invalid'); assert(!('username' in submitted));
   authError = null;
-  await assert.rejects(window.inglyAuth.login('owner@example.invalid','mock-test-input'),/Admin authorization denied/);
+  await assert.rejects(window.inglyAuth.login('owner@example.invalid','mock-test-input'),error=>error.code==='admin_access_denied');
   assert.equal(signouts,1);
   access = {auth_user_id:'another-id',role:'super_admin'};
-  await assert.rejects(window.inglyAuth.login('owner@example.invalid','mock-test-input'),/Admin authorization denied/);
+  await assert.rejects(window.inglyAuth.login('owner@example.invalid','mock-test-input'),error=>error.code==='admin_access_denied');
   assert.equal(signouts,2);
   access = {auth_user_id:userId,role:'super_admin'};
   assert.equal((await window.inglyAuth.login('owner@example.invalid','mock-test-input')).role,'super_admin');

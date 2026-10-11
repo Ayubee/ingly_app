@@ -1,0 +1,28 @@
+{
+  "environment": "staging",
+  "projectRef": "dkyrpciabqtnluitpafx",
+  "checks": [
+    {
+      "name": "auth_settings",
+      "result": "FAIL",
+      "networkCode": "ENOTFOUND"
+    },
+    {
+      "name": "profile_schema",
+      "result": "FAIL",
+      "networkCode": "ENOTFOUND"
+    },
+    {
+      "name": "admin_schema",
+      "result": "FAIL",
+      "networkCode": "ENOTFOUND"
+    },
+    {
+      "name": "admin_rpc",
+      "result": "FAIL",
+      "networkCode": "ENOTFOUND"
+    }
+  ],
+  "authenticatedFlows": "BLOCKED — requires dedicated verified user/admin accounts",
+  "ready": false
+}

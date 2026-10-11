@@ -48,7 +48,7 @@ function harness(result) {
 (async () => {
   for (const f of ['admin/index.html','admin/preview.html']) {
     let blocked=false;
-    const login={adminLoginInput:'secondary@example.com',adminPasswordInput:'configured',window:{inglyAuth:{login:async()=>{throw new Error('Not authorized')}}},setAdminPasswordInput:()=>{},setAuthError:()=>{blocked=true}};
+    const login={adminLoginInput:'secondary@example.com',adminPasswordInput:'configured',authBusy:false,setAuthBusy:()=>{},window:{inglyAuth:{login:async()=>{throw new Error('Not authorized')},errorMessage:()=> 'Access denied'}},setAdminPasswordInput:()=>{},setAuthError:value=>{if(value)blocked=true}};
     vm.createContext(login);
     await vm.runInContext('('+extract(scripts[f],'handleAdminLogin')+')',login)();
     assert(blocked);

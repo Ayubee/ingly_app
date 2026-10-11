@@ -1,0 +1,48 @@
+{
+  "projectRef": "lbsqxownrjfmjoojdsfk",
+  "execution": "headless actual AuthScreen + installed SDK + real HTTP",
+  "requests": [
+    {
+      "path": "/auth/v1/signup",
+      "method": "POST",
+      "status": 400,
+      "code": "phone_provider_disabled",
+      "userCreated": false
+    },
+    {
+      "path": "/auth/v1/token",
+      "method": "POST",
+      "status": 400,
+      "code": "invalid_credentials",
+      "userCreated": false
+    }
+  ],
+  "result": {
+    "success": false,
+    "code": "phone_provider_disabled",
+    "message": "Serverda telefon orqali ro‘yxatdan o‘tish yoqilmagan. Administratorga murojaat qiling."
+  },
+  "invalidMobileCredentials": [
+    [
+      "Kirishda xatolik ❌",
+      "Telefon/email yoki parol noto‘g‘ri."
+    ]
+  ],
+  "invalidAdminCredentials": {
+    "requests": [
+      {
+        "path": "/auth/v1/token",
+        "status": 400,
+        "code": "invalid_credentials"
+      }
+    ],
+    "result": {
+      "success": false,
+      "code": "invalid_credentials",
+      "message": "Email yoki parol noto‘g‘ri."
+    },
+    "roleStageReached": false
+  },
+  "nativeDeviceUI": "BLOCKED — no connected device/browser runtime",
+  "profileLoginLogoutRestart": "BLOCKED — signup rejected, no account/session created"
+}

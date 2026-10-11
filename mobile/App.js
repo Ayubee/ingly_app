@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
 import { colors } from './src/theme.js';
 import { UserProvider, useUser } from './src/context/UserContext.js';
 import { LanguageProvider } from './src/context/LanguageContext.js';
@@ -22,7 +22,7 @@ import LeaderboardScreen from './src/screens/LeaderboardScreen.js';
 import BottomNavigation from './src/components/BottomNavigation.js';
 
 function MainAppContent() {
-  const { user, isLoading } = useUser();
+  const { user, isLoading, profileError, retryProfile, logout } = useUser();
   const [currentTab, setCurrentTab] = useState('Home');
 
   useEffect(() => {
@@ -66,6 +66,11 @@ function MainAppContent() {
   return (
     <View style={styles.appContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      {profileError && <View accessibilityRole="alert" style={{ padding: 12, backgroundColor: '#FEF3C7' }}>
+        <Text>{profileError}</Text>
+        <TouchableOpacity onPress={retryProfile}><Text>Profilni qayta yuklash</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => logout().catch(() => Alert.alert('Chiqish', 'Chiqishni to‘liq yakunlab bo‘lmadi. Qayta urinib ko‘ring.'))}><Text>Akkauntdan chiqish</Text></TouchableOpacity>
+      </View>}
       {/* Active Screen View */}
       <View key={user.id} style={styles.screenContainer}>{renderScreen()}</View>
 

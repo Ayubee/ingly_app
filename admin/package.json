@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:production": "vite --mode production",
+    "verify:auth:production": "node ../scripts/auth-backend-check.cjs production",
+    "build:production:checked": "npm run verify:auth:production && npm run build -- --mode production",
     "build": "node scripts/build-real-data.cjs && vite build",
     "build:staging": "npm run build -- --mode staging",
     "verify:staging": "node ../scripts/staging-readiness.cjs verify",

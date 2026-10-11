@@ -8,7 +8,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Alert } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import { getStorageItem, STORAGE_KEYS, setStorageAccountId, purgeLegacyCredentials, authStorage,
   captureStorageSession, isStorageSessionCurrent, onLocalStateChange, mutateUserProfile, saveWordProgress,
   recordLocalQuiz, resetLocalProgress, normalizeDailyProfile, getLocalMutationState } from '../services/storage.js';
@@ -18,7 +18,7 @@ import { readCachedAuthSession } from '../services/sessionCache.js';
 import allWords from '../data/all_words.json';
 import { syncUserLeaderboardScore } from '../services/leaderboardService.js';
 import { supabase } from '../services/supabaseClient.js';
-import { registerAccount, loginAccount, verifyRegistration, changeAccountPassword } from '../services/authService.js';
+import { registerAccount, loginAccount, verifyRegistration, resendRegistration, changeAccountPassword, authErrorMessage } from '../services/authService.js';
 
 const UserContext = createContext();
 function mergeLocalUser(trusted, local) {
@@ -108,6 +108,7 @@ export const INITIAL_USER = {
 export function UserProvider({ children }) {
   const [user, setUser] = useState(INITIAL_USER);
   const [isLoading, setIsLoading] = useState(true);
+  const [profileError, setProfileError] = useState(null);
 
   const identityRef = useRef(null);
   const generation = useRef(0);
@@ -130,6 +131,7 @@ export function UserProvider({ children }) {
     const token = captureStorageSession(id);
     if (!isStorageSessionCurrent(oldToken)) stopAutoSync();
     if (switched || !id) {
+      setProfileError(null);
       setUser(INITIAL_USER);
       setMockEntitlements({ vip: false, books: [] });
     }
@@ -157,7 +159,10 @@ export function UserProvider({ children }) {
       const before = await getLocalMutationState(token);
       const profile = await fetchUserRemoteStatus(token);
       if (turn !== generation.current || !isStorageSessionCurrent(token)) return;
-      if (!profile || profile.id !== id || profile.auth_user_id !== id || profile.is_blocked) {
+      if (!profile) throw new Error('ProfileUnavailable');
+      if (profile.id !== id || profile.auth_user_id !== id) throw new Error('ProfileIdentityMismatch');
+      if (profile.is_blocked) {
+        Alert.alert('Akkaunt bloklangan', 'Administratorga murojaat qiling.');
         await logout();
         return;
       }
@@ -170,9 +175,14 @@ export function UserProvider({ children }) {
         isPremium: profile.is_premium, premiumUntil: profile.premium_until,
         unlockedBooks: profile.is_premium ? [1,2,3,4,5,6] : [1], purchasedBooks: [] });
       }, INITIAL_USER, () => ({}), token);
-      if (isStorageSessionCurrent(token)) setUser(next);
-    } catch {
-      // Only the Auth SDK session can restore offline identity; never legacy local credentials.
+      if (isStorageSessionCurrent(token)) { setUser(next); setProfileError(null); }
+    } catch (error) {
+      if (turn !== generation.current || !isStorageSessionCurrent(token)) return;
+      // Profile failure must not destroy the SDK session or the account journal.
+      const reason = error.message === 'ProfileUnavailable' ? 'Profil topilmadi yoki uni o‘qishga ruxsat yo‘q. Administrator profil bog‘lanishi va RLSni tekshirishi kerak.'
+        : error.message === 'ProfileIdentityMismatch' ? 'Profil va Auth akkaunti bog‘lanishi mos emas. Administratorga murojaat qiling.'
+        : authErrorMessage(error);
+      setProfileError('Sessiya mavjud. ' + reason);
     } })();
   };
   useEffect(() => {
@@ -184,7 +194,10 @@ export function UserProvider({ children }) {
       if (mounted && authEvent === 0) await applySession(cached);
       const eventBefore = authEvent;
       const { data, error } = await supabase.auth.getSession();
-      if (mounted && eventBefore === authEvent) await applySession(error ? null : data.session);
+      if (mounted && eventBefore === authEvent) {
+        if (!error) await applySession(data.session);
+        else if (error.name !== 'AuthRetryableFetchError') await applySession(null);
+      }
     })().catch(() => { if (mounted && authEvent === 0) applySession(null); });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       const event = ++authEvent;
@@ -203,7 +216,13 @@ export function UserProvider({ children }) {
           setUser(prev => isStorageSessionCurrent(token) ? mergeLocalUser(prev, next) : prev);
       } catch {}
     });
-    return () => { mounted = false; generation.current++; listener.subscription.unsubscribe(); offLocal(); stopAutoSync(); setStorageAccountId(null); };
+    const refresh = state => {
+      if (state === 'active') supabase.auth.startAutoRefresh?.();
+      else supabase.auth.stopAutoRefresh?.();
+    };
+    refresh(AppState?.currentState || 'active');
+    const lifecycle = AppState?.addEventListener('change', refresh);
+    return () => { mounted = false; generation.current++; listener.subscription.unsubscribe(); lifecycle?.remove(); supabase.auth.stopAutoRefresh?.(); offLocal(); stopAutoSync(); setStorageAccountId(null); };
   }, []);
 
   const saveUserData = async (patch, changesFor = () => ({}), token = renderSession) => {
@@ -223,12 +242,12 @@ export function UserProvider({ children }) {
       if (!data.session) return { success: true, needsVerification: true, phone: data.phone };
       await applySession(data.session);
       return { success: true };
-    } catch (error) { return { success: false, error: error.message }; }
+    } catch (error) { return { success: false, error: authErrorMessage(error) }; }
   };
   const confirmRegistration = async (phone, token) => {
     if (loggingOut.current) return { success: false, error: 'Chiqish yakunlanishini kuting.' };
     try { const data = await verifyRegistration(phone, token); await applySession(data.session); return { success: true }; }
-    catch (error) { return { success: false, error: error.message }; }
+    catch (error) { return { success: false, error: authErrorMessage(error) }; }
   };
   const login = async (form) => {
     if (loggingOut.current) return { success: false, error: 'Chiqish yakunlanishini kuting.' };
@@ -237,11 +256,22 @@ export function UserProvider({ children }) {
       if (data.needsVerification) return { success: true, needsVerification: true, phone: data.phone };
       await applySession(data.session); return { success: true };
     }
-    catch (error) { return { success: false, error: error.message }; }
+    catch (error) { return { success: false, error: authErrorMessage(error) }; }
   };
   const loginWithGoogle = async () => {
     Alert.alert('Google', 'Google OAuth hali sozlanmagan. Telefon va parol orqali kiring.');
     return { success: false, error: 'Google OAuth is disabled.' };
+  };
+  const resendConfirmation = async phone => {
+    try { await resendRegistration(phone); return { success: true }; }
+    catch (error) { return { success: false, error: authErrorMessage(error) }; }
+  };
+  const retryProfile = async () => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      await applySession(data.session);
+    } catch (error) { setProfileError(authErrorMessage(error)); }
   };
   const logout = async () => {
     // Detach immediately; retain per-account progress/outbox for Phase 3 synchronization.
@@ -251,10 +281,13 @@ export function UserProvider({ children }) {
       const { error } = await supabase.auth.signOut({ scope: 'local' });
       if (error) throw error;
     } finally {
-      await authStorage.removeItem('ingly_supabase_auth_v2');
-      await authStorage.removeItem('ingly_supabase_auth_v2-user');
-      await applySession(null);
-      loggingOut.current = false;
+      try {
+        await authStorage.removeItem('ingly_supabase_auth_v2');
+        await authStorage.removeItem('ingly_supabase_auth_v2-user');
+      } finally {
+        await applySession(null);
+        loggingOut.current = false;
+      }
     }
   };
 
@@ -374,10 +407,13 @@ export function UserProvider({ children }) {
       value={{
         user,
         isLoading,
+        profileError,
+        retryProfile,
         register,
         login,
         loginWithGoogle,
         confirmRegistration,
+        resendConfirmation,
         logout,
         updateProfile,
         recordWordLearned,

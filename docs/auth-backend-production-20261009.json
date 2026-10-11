@@ -1,0 +1,40 @@
+{
+  "environment": "production",
+  "projectRef": "lbsqxownrjfmjoojdsfk",
+  "checks": [
+    {
+      "name": "auth_settings",
+      "status": 200,
+      "result": "PASS",
+      "email": true,
+      "phone": false,
+      "signup": true,
+      "emailConfirmation": true,
+      "phoneConfirmation": true
+    },
+    {
+      "name": "mobile_phone_signup",
+      "result": "FAIL"
+    },
+    {
+      "name": "profile_schema",
+      "status": 400,
+      "code": "42703",
+      "result": "FAIL"
+    },
+    {
+      "name": "admin_schema",
+      "status": 400,
+      "code": "42703",
+      "result": "FAIL"
+    },
+    {
+      "name": "admin_rpc",
+      "status": 404,
+      "code": "PGRST202",
+      "result": "FAIL"
+    }
+  ],
+  "authenticatedFlows": "BLOCKED — requires dedicated verified user/admin accounts",
+  "ready": false
+}

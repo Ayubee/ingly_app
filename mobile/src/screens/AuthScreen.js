@@ -6,7 +6,7 @@
  * 8.3. Tizimga kirish: Login/Telefon va Parol.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -31,7 +31,16 @@ const GOALS = [
 ];
 
 export default function AuthScreen() {
-  const { register, login, loginWithGoogle, confirmRegistration } = useUser();
+  const { register, login, loginWithGoogle, confirmRegistration, resendConfirmation } = useUser();
+  const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
+  const runAuth = async action => {
+    if (submitting.current) return { success: false, error: 'Amal yakunlanishini kuting.' };
+    submitting.current = true; setBusy(true);
+    try { return await action(); }
+    catch { return { success: false, error: 'Serverga ulanib bo‘lmadi. Qayta urinib ko‘ring.' }; }
+    finally { submitting.current = false; setBusy(false); }
+  };
   const [pendingPhone, setPendingPhone] = useState(null);
   const [confirmationCode, setConfirmationCode] = useState('');
 
@@ -63,10 +72,10 @@ export default function AuthScreen() {
       return;
     }
 
-    const res = await login({
+    const res = await runAuth(() => login({
       loginOrPhone: loginIdentifier.trim(),
       password: loginPassword,
-    });
+    }));
 
     if (res.success && res.needsVerification) { setPendingPhone(res.phone); setConfirmationCode(''); }
     if (res.success) setLoginPassword('');
@@ -84,7 +93,7 @@ export default function AuthScreen() {
     const cleanPhoneDigits = cleanPhone.replace(/\D/g, '');
     const cleanPassword = regPassword;
 
-    if (!cleanFullName) {
+    if (!cleanFullName || cleanFullName.length > 255) {
       Alert.alert('Diqqat', 'Iltimos, Ism va familiyangizni kiriting!');
       return;
     }
@@ -92,27 +101,27 @@ export default function AuthScreen() {
       Alert.alert('Diqqat', 'Iltimos, to\'g\'ri telefon raqamingizni kiriting (+998...)!');
       return;
     }
-    if (!cleanUsername || cleanUsername.length < 3) {
-      Alert.alert('Diqqat', 'Login kamida 3 ta belgidan iborat bo\'lishi shart!');
+    if (!/^[a-z0-9_]{3,100}$/.test(cleanUsername)) {
+      Alert.alert('Diqqat', 'Login: 3–100 ta lotin harfi, raqam yoki _.');
       return;
     }
     if (/\s/.test(cleanUsername)) {
       Alert.alert('Diqqat', 'Login tarkibida bo\'sh joy (probel) bo\'lishi mumkin emas!');
       return;
     }
-    if (!cleanPassword || cleanPassword.length < 6) {
+    if (!cleanPassword.trim() || cleanPassword.length < 6) {
       Alert.alert('Diqqat', 'Parol kamida 6 ta belgidan iborat bo\'lishi va faqat probellardan iborat bo\'lmasligi kerak!');
       return;
     }
 
-    const res = await register({
+    const res = await runAuth(() => register({
       fullName: cleanFullName,
       phone: cleanPhone,
       username: cleanUsername,
       password: cleanPassword,
       avatar: regAvatar,
       dailyGoal: regGoal,
-    });
+    }));
 
     if (!res.success) {
       Alert.alert('Ro\'yxatdan o\'tishda xatolik', res.error);
@@ -128,13 +137,17 @@ export default function AuthScreen() {
 
   if (pendingPhone) return (
     <View style={{ flex: 1, justifyContent: 'center', padding: 24 }}>
-      <Text>Telefon tasdiqlash: {pendingPhone}</Text>
+      <Text>Telefon tasdiqlash: {pendingPhone}. SMS orqali kelgan kodni kiriting. Tasdiqlash tugamaguncha sessiya ochilmaydi.</Text>
       <TextInput placeholder="SMS kod" value={confirmationCode} onChangeText={setConfirmationCode} keyboardType="numeric" />
-      <TouchableOpacity onPress={async () => {
-        const result = await confirmRegistration(pendingPhone, confirmationCode);
+      <TouchableOpacity disabled={busy} onPress={async () => {
+        const result = await runAuth(() => confirmRegistration(pendingPhone, confirmationCode));
         if (!result.success) Alert.alert('Tasdiqlash', result.error);
         else setPendingPhone(null);
       }}><Text>Tasdiqlash</Text></TouchableOpacity>
+      <TouchableOpacity disabled={busy} onPress={async () => {
+        const result = await runAuth(() => resendConfirmation(pendingPhone));
+        Alert.alert('SMS', result.success ? 'Yangi kod yuborildi. Xabarni kuting.' : result.error);
+      }}><Text>Kodni qayta yuborish</Text></TouchableOpacity>
       <TouchableOpacity onPress={() => setPendingPhone(null)}><Text>Bekor qilish</Text></TouchableOpacity>
     </View>
   );
@@ -246,8 +259,9 @@ export default function AuthScreen() {
                   style={styles.submitBtn}
                   activeOpacity={0.85}
                   onPress={handleLoginSubmit}
+                  disabled={busy}
                 >
-                  <Text style={styles.submitBtnText}>Kirish ➔</Text>
+                  <Text style={styles.submitBtnText}>{busy ? 'Kutilmoqda…' : 'Kirish ➔'}</Text>
                 </TouchableOpacity>
 
                 {/* Divider */}
@@ -363,8 +377,9 @@ export default function AuthScreen() {
                   style={styles.submitBtn}
                   activeOpacity={0.85}
                   onPress={handleRegisterSubmit}
+                  disabled={busy}
                 >
-                  <Text style={styles.submitBtnText}>Ro'yxatdan o'tish va Boshlash 🚀</Text>
+                  <Text style={styles.submitBtnText}>{busy ? 'Kutilmoqda…' : "Ro'yxatdan o'tish va Boshlash 🚀"}</Text>
                 </TouchableOpacity>
 
                 {/* Divider */}
